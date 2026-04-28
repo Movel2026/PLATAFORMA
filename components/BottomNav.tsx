@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, MagnifyingGlass, Heart, User } from "@phosphor-icons/react";
+import { House, MagnifyingGlass, ChatCircle, User } from "@phosphor-icons/react";
 
 const tabs = [
-  { label: "Inicio",    href: "/",          icon: House },
-  { label: "Buscar",    href: "/buscar",    icon: MagnifyingGlass },
-  { label: "Favoritos", href: "/favoritos", icon: Heart },
-  { label: "Perfil",    href: "/perfil",    icon: User },
+  { label: "Inicio",  href: "/",       icon: House },
+  { label: "Buscar",  href: "/buscar", icon: MagnifyingGlass },
+  { label: "Foro",    href: "/foro",   icon: ChatCircle },
+  { label: "Perfil",  href: "/perfil", icon: User },
 ];
 
 export default function BottomNav() {
@@ -19,12 +19,37 @@ export default function BottomNav() {
     return pathname.startsWith(href);
   }
 
+  // dark background pages
+  const isDark =
+    pathname.startsWith("/buscar") ||
+    pathname.startsWith("/publicar") ||
+    pathname.startsWith("/subastas") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/foro") ||
+    pathname.startsWith("/perfil") ||
+    pathname.startsWith("/auth");
+
   return (
     // Only visible on mobile (md:hidden)
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t border-[#f0f2f4] bg-white px-4 pb-3 pt-2 z-50">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-3 pt-2 z-50"
+      style={isDark
+        ? {
+            background: "rgba(8,16,30,0.96)",
+            backdropFilter: "blur(14px)",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+          }
+        : {
+            background: "white",
+            borderTop: "1px solid #f0f2f4",
+          }
+      }
+    >
       <div className="flex justify-around items-center max-w-lg mx-auto">
         {tabs.map(({ label, href, icon: Icon }) => {
           const active = isActive(href);
+          const activeColor  = isDark ? "#60a5fa" : "#111418";
+          const inactiveColor = isDark ? "rgba(255,255,255,0.35)" : "#637488";
           return (
             <Link
               key={href}
@@ -34,11 +59,11 @@ export default function BottomNav() {
               <Icon
                 size={24}
                 weight={active ? "fill" : "regular"}
-                color={active ? "#111418" : "#637488"}
+                color={active ? activeColor : inactiveColor}
               />
               <span
                 className="text-[12px] font-medium"
-                style={{ color: active ? "#111418" : "#637488" }}
+                style={{ color: active ? activeColor : inactiveColor }}
               >
                 {label}
               </span>

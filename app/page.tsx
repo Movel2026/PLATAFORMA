@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +13,6 @@ import {
 import { vehicles, getAuctionVehicles, formatCOP } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
-import { LampContainer } from "@/components/ui/lamp";
 
 // ── Shared transition helpers (framer-motion v12 needs `as const` on ease) ──
 
@@ -126,6 +125,17 @@ export default function HomePage() {
   const [fPrecioMax, setFPrecio]    = useState("200000000");
   const auctionVehicles             = getAuctionVehicles();
 
+  // ── Video intro state ──────────────────────────────────────────────────
+  const [introEnded, setIntroEnded] = useState(false);
+  const [introDismissed, setIntroDismissed] = useState(false);
+  const logoVideoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // Auto-dismiss intro after 6 s in case onEnded doesn't fire
+    const t = setTimeout(() => setIntroEnded(true), 6000);
+    return () => clearTimeout(t);
+  }, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
@@ -141,172 +151,216 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
 
       {/* ══════════════════════════════════════════════════════
-          HERO — LampContainer
+          INTRO — Video logo MOVEL (plays once, then desaparece)
       ══════════════════════════════════════════════════════ */}
-      <LampContainer>
-
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
-          className="mb-6"
-        >
-          <span className="inline-flex items-center gap-2 bg-[#1978e5]/20 border border-[#1978e5]/40 text-[#93c5fd] text-[12px] font-bold px-4 py-2 rounded-full">
-            <span className="w-2 h-2 bg-[#60a5fa] rounded-full animate-pulse" />
-            🇨🇴 El marketplace de carros más confiable de Colombia
-          </span>
-        </motion.div>
-
-        {/* MOVEL logo — illuminated by the lamp */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 1.0, duration: 0.8, ease: EASE_OUT }}
-          className="mb-6"
-          style={{ filter: "drop-shadow(0 0 36px rgba(25,120,229,0.65))" }}
-        >
-          <svg width="300" height="90" viewBox="0 0 120 36" fill="none" aria-label="MOVEL">
-            <text x="0" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">M</text>
-            <g>
-              <text x="23" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">O</text>
-              <circle cx="36" cy="16" r="7" fill="#1565c0" />
-              <circle cx="36" cy="16" r="7" fill="none" stroke="white" strokeWidth="1.2" />
-              <line x1="36" y1="16" x2="40.5" y2="10.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="36" cy="16" r="1.2" fill="white" />
-              <line x1="29.5" y1="16" x2="31" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
-              <line x1="36" y1="9.5" x2="36" y2="11" stroke="white" strokeWidth="1" strokeLinecap="round" />
-              <line x1="42.5" y1="16" x2="41" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
-            </g>
-            <text x="51" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">VEL</text>
-          </svg>
-        </motion.div>
-
-        {/* Tagline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.1, duration: 0.65 }}
-          className="text-center text-[26px] md:text-[42px] font-black leading-[1.1] tracking-[-0.025em] text-white mb-3 max-w-2xl"
-        >
-          Compra y vende tu carro{" "}
-          <span className="gradient-text">con total confianza</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.18, duration: 0.5 }}
-          className="text-[15px] text-white/55 text-center mb-8 max-w-md"
-        >
-          Historial verificado · Peritaje profesional · Financiamiento en 24h
-        </motion.p>
-
-        {/* Search */}
-        <motion.form
-          onSubmit={handleSearch}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.24, duration: 0.55 }}
-          className="w-full max-w-xl bg-white rounded-2xl p-2 flex gap-2 shadow-2xl shadow-black/40 mb-7"
-        >
-          <div className="flex-1 flex items-center gap-3 bg-[#f0f2f4] rounded-xl px-4 py-3">
-            <MagnifyingGlass size={18} color="#637488" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Marca, modelo, ciudad..."
-              className="flex-1 bg-transparent text-[#111418] text-[14px] outline-none placeholder-[#637488]"
+      <AnimatePresence>
+        {!introDismissed && (
+          <motion.div
+            key="intro"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.9 }}
+            onAnimationComplete={() => { if (introEnded) setIntroDismissed(true); }}
+            className="fixed inset-0 z-[100] bg-black flex items-center justify-center cursor-pointer"
+            onClick={() => { setIntroEnded(true); setIntroDismissed(true); }}
+          >
+            <video
+              ref={logoVideoRef}
+              src="/videos/logo-movel.mp4"
+              autoPlay
+              muted
+              playsInline
+              onEnded={() => setIntroEnded(true)}
+              className="w-full h-full object-cover"
             />
-          </div>
-          <button type="submit" className="btn-primary px-6 py-3 text-[14px] rounded-xl font-bold flex-shrink-0">
-            Buscar
-          </button>
-        </motion.form>
-
-        {/* ── Action buttons: Vender + Filtros ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.32, duration: 0.55 }}
-          className="flex gap-3 mb-4 w-full max-w-xl"
-        >
-          <Link
-            href="/publicar"
-            className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-white/12 hover:bg-white/20 border-2 border-white/25 text-white font-black text-[15px] rounded-2xl transition-all hover:-translate-y-0.5"
-          >
-            <ArrowRight size={18} weight="bold" />
-            Vender mi carro
-          </Link>
-          <button
-            type="button"
-            onClick={() => setFilters((v) => !v)}
-            className={`flex items-center gap-2 px-5 py-3.5 font-bold text-[15px] rounded-2xl border-2 transition-all hover:-translate-y-0.5 ${
-              showFilters
-                ? "bg-[#1978e5] border-[#1978e5] text-white"
-                : "bg-white/12 border-white/25 text-white hover:bg-white/20"
-            }`}
-          >
-            <SlidersHorizontal size={18} weight="bold" />
-            Filtros
-            <motion.span animate={{ rotate: showFilters ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <CaretDown size={14} />
-            </motion.span>
-          </button>
-        </motion.div>
-
-        {/* ── Collapsible filter panel ── */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, y: -8 }}
-              animate={{ opacity: 1, height: "auto", y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -8 }}
-              transition={{ duration: 0.3, ease: "easeOut" as const }}
-              className="w-full max-w-xl overflow-hidden mb-6"
+            {/* Skip hint */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5 }}
+              className="absolute bottom-8 right-8 text-white/40 text-[12px] font-semibold"
             >
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                {/* Marca */}
-                <select value={fMarca} onChange={(e) => setFMarca(e.target.value)}
-                  className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none focus:border-[#60a5fa] [&>option]:bg-[#0d1b2e]">
-                  <option value="">Marca</option>
-                  {["Toyota","Mazda","Chevrolet","Kia","Renault","Hyundai","Nissan","Ford"].map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-                {/* Tipo */}
-                <select value={fTipo} onChange={(e) => setFTipo(e.target.value)}
-                  className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none focus:border-[#60a5fa] [&>option]:bg-[#0d1b2e]">
-                  <option value="">Tipo</option>
-                  {["SUV","Sedán","Hatchback","Camioneta","Coupé"].map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                {/* Transmisión */}
-                <select value={fTransmision} onChange={(e) => setFTrans(e.target.value)}
-                  className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none focus:border-[#60a5fa] [&>option]:bg-[#0d1b2e]">
-                  <option value="">Transmisión</option>
-                  <option value="Automático">Automático</option>
-                  <option value="Manual">Manual</option>
-                </select>
-                {/* Precio máx */}
-                <select value={fPrecioMax} onChange={(e) => setFPrecio(e.target.value)}
-                  className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none focus:border-[#60a5fa] [&>option]:bg-[#0d1b2e]">
-                  <option value="200000000">Precio máx</option>
-                  <option value="30000000">$30M</option>
-                  <option value="50000000">$50M</option>
-                  <option value="80000000">$80M</option>
-                  <option value="120000000">$120M</option>
-                </select>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Scroll caret */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8, duration: 0.6 }}>
-          <motion.div animate={{ y: [0, 7, 0] }} transition={{ repeat: Infinity, duration: 1.9, ease: "easeInOut" }}>
-            <CaretDown size={22} color="rgba(255,255,255,0.25)" />
+              Toca para continuar
+            </motion.p>
           </motion.div>
-        </motion.div>
-      </LampContainer>
+        )}
+      </AnimatePresence>
+
+      {/* ══════════════════════════════════════════════════════
+          HERO — Video de fondo con contenido superpuesto
+      ══════════════════════════════════════════════════════ */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+        {/* Video de fondo en loop */}
+        <video
+          src="/videos/video-fondo.mp4"
+          autoPlay muted loop playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Overlay oscuro sobre el video */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-[#08101e]" />
+
+        {/* Contenido del hero */}
+        <div className="relative z-10 flex flex-col items-center px-4 pt-20 pb-16 w-full">
+
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="mb-6"
+          >
+            <span className="inline-flex items-center gap-2 bg-[#1978e5]/20 border border-[#1978e5]/40 text-[#93c5fd] text-[12px] font-bold px-4 py-2 rounded-full">
+              <span className="w-2 h-2 bg-[#60a5fa] rounded-full animate-pulse" />
+              🇨🇴 El marketplace de carros más confiable de Colombia
+            </span>
+          </motion.div>
+
+          {/* MOVEL logo SVG animado */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.88 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.8, ease: EASE_OUT }}
+            className="mb-6"
+            style={{ filter: "drop-shadow(0 0 40px rgba(25,120,229,0.8))" }}
+          >
+            <svg width="320" height="96" viewBox="0 0 120 36" fill="none" aria-label="MOVEL">
+              <text x="0" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">M</text>
+              <g>
+                <text x="23" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">O</text>
+                <circle cx="36" cy="16" r="7" fill="#1565c0" />
+                <circle cx="36" cy="16" r="7" fill="none" stroke="white" strokeWidth="1.2" />
+                <motion.line x1="36" y1="16" x2="36" y2="16"
+                  animate={{ x2: 40.5, y2: 10.5 }}
+                  transition={{ delay: 0.9, duration: 0.5, ease: EASE_OUT }}
+                  stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="36" cy="16" r="1.2" fill="white" />
+                <line x1="29.5" y1="16" x2="31" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                <line x1="36" y1="9.5" x2="36" y2="11" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                <line x1="42.5" y1="16" x2="41" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
+              </g>
+              <text x="51" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">VEL</text>
+            </svg>
+          </motion.div>
+
+          {/* Tagline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65, duration: 0.65 }}
+            className="text-center text-[26px] md:text-[44px] font-black leading-[1.1] tracking-[-0.025em] text-white mb-3 max-w-2xl"
+          >
+            Compra y vende tu carro{" "}
+            <span className="gradient-text">con total confianza</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75, duration: 0.5 }}
+            className="text-[15px] text-white/60 text-center mb-8 max-w-md"
+          >
+            Historial verificado · Peritaje profesional · Financiamiento en 24h
+          </motion.p>
+
+          {/* Buscador */}
+          <motion.form
+            onSubmit={handleSearch}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.85, duration: 0.55 }}
+            className="w-full max-w-xl bg-white rounded-2xl p-2 flex gap-2 shadow-2xl shadow-black/50 mb-7"
+          >
+            <div className="flex-1 flex items-center gap-3 bg-[#f0f2f4] rounded-xl px-4 py-3">
+              <MagnifyingGlass size={18} color="#637488" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Marca, modelo, ciudad..."
+                className="flex-1 bg-transparent text-[#111418] text-[14px] outline-none placeholder-[#637488]"
+              />
+            </div>
+            <button type="submit" className="btn-primary px-6 py-3 text-[14px] rounded-xl font-bold flex-shrink-0">
+              Buscar
+            </button>
+          </motion.form>
+
+          {/* Botones de acción */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.95, duration: 0.5 }}
+            className="flex gap-3 mb-4 w-full max-w-xl"
+          >
+            <Link href="/publicar"
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-white/12 hover:bg-white/20 border-2 border-white/25 text-white font-black text-[15px] rounded-2xl transition-all hover:-translate-y-0.5"
+            >
+              <ArrowRight size={18} weight="bold" />
+              Vender mi carro
+            </Link>
+            <button
+              type="button"
+              onClick={() => setFilters((v) => !v)}
+              className={`flex items-center gap-2 px-5 py-3.5 font-bold text-[15px] rounded-2xl border-2 transition-all hover:-translate-y-0.5 ${
+                showFilters ? "bg-[#1978e5] border-[#1978e5] text-white" : "bg-white/12 border-white/25 text-white hover:bg-white/20"
+              }`}
+            >
+              <SlidersHorizontal size={18} weight="bold" />
+              Filtros
+              <motion.span animate={{ rotate: showFilters ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <CaretDown size={14} />
+              </motion.span>
+            </button>
+          </motion.div>
+
+          {/* Panel de filtros colapsable */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, y: -8 }}
+                animate={{ opacity: 1, height: "auto", y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: "easeOut" as const }}
+                className="w-full max-w-xl overflow-hidden mb-6"
+              >
+                <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <select value={fMarca} onChange={(e) => setFMarca(e.target.value)}
+                    className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none [&>option]:bg-[#0d1b2e]">
+                    <option value="">Marca</option>
+                    {["Toyota","Mazda","Chevrolet","Kia","Renault","Hyundai","Nissan","Ford"].map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <select value={fTipo} onChange={(e) => setFTipo(e.target.value)}
+                    className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none [&>option]:bg-[#0d1b2e]">
+                    <option value="">Tipo</option>
+                    {["SUV","Sedán","Hatchback","Camioneta","Coupé"].map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <select value={fTransmision} onChange={(e) => setFTrans(e.target.value)}
+                    className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none [&>option]:bg-[#0d1b2e]">
+                    <option value="">Transmisión</option>
+                    <option value="Automático">Automático</option>
+                    <option value="Manual">Manual</option>
+                  </select>
+                  <select value={fPrecioMax} onChange={(e) => setFPrecio(e.target.value)}
+                    className="bg-white/15 border border-white/20 text-white text-[13px] rounded-xl px-3 py-2.5 outline-none [&>option]:bg-[#0d1b2e]">
+                    <option value="200000000">Precio máx</option>
+                    <option value="30000000">$30M</option>
+                    <option value="50000000">$50M</option>
+                    <option value="80000000">$80M</option>
+                    <option value="120000000">$120M</option>
+                  </select>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Scroll caret */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
+            <motion.div animate={{ y: [0, 7, 0] }} transition={{ repeat: Infinity, duration: 1.9, ease: "easeInOut" }}>
+              <CaretDown size={22} color="rgba(255,255,255,0.3)" />
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════════════════
           BRIDGE — dark feature strip connecting hero to content

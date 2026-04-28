@@ -35,6 +35,7 @@ const navLinks = [
   { label: "Comprar", href: "/buscar" },
   { label: "Subastas", href: "/subastas", hot: true },
   { label: "Vender", href: "/publicar" },
+  { label: "Foro", href: "/foro" },
   { label: "¿Cómo funciona?", href: "/#como-funciona" },
 ];
 
@@ -48,6 +49,17 @@ export default function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Páginas con su propio header — ocultar Navbar (hooks ya llamados arriba)
+  if (
+    pathname.startsWith("/buscar") ||
+    pathname.startsWith("/publicar") ||
+    pathname.startsWith("/subastas") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/foro") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/perfil")
+  ) return null;
 
   return (
     <nav className={`bg-white border-b border-[#dce0e5] sticky top-0 z-50 transition-all duration-300 ${scrolled ? "navbar-scrolled border-transparent" : ""}`}>

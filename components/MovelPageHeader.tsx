@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { WhatsappLogo, Gavel } from "@phosphor-icons/react";
+import { WhatsappLogo, Gavel, ChatCircle, ShieldCheck } from "@phosphor-icons/react";
 
 /**
  * Animated MOVEL logo header for inner pages (/buscar, /publicar, /subastas…).
@@ -55,7 +55,7 @@ export default function MovelPageHeader() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
-          className="hidden md:flex items-center gap-6"
+          className="hidden md:flex items-center gap-5"
         >
           <Link href="/buscar" className="text-[13px] font-semibold text-white/60 hover:text-white transition-colors">
             Comprar
@@ -66,6 +66,14 @@ export default function MovelPageHeader() {
           <Link href="/subastas" className="flex items-center gap-1 text-[13px] font-semibold text-[#60a5fa] hover:text-white transition-colors">
             <Gavel size={14} weight="fill" />
             Subastas
+          </Link>
+          <Link href="/foro" className="flex items-center gap-1 text-[13px] font-semibold text-white/60 hover:text-white transition-colors">
+            <ChatCircle size={14} weight="fill" />
+            Foro
+          </Link>
+          <Link href="/admin" className="flex items-center gap-1 text-[13px] font-semibold text-white/35 hover:text-white/70 transition-colors">
+            <ShieldCheck size={14} weight="fill" />
+            Admin
           </Link>
         </motion.nav>
 
@@ -85,6 +93,16 @@ export default function MovelPageHeader() {
             <WhatsappLogo size={16} weight="fill" />
             <span>Asesor</span>
           </a>
+          <Link
+            href="/perfil"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 transition-all"
+            title="Mi perfil"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" fill="rgba(255,255,255,0.6)" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" fill="none"/>
+            </svg>
+          </Link>
           <Link
             href="/publicar"
             className="px-4 py-2 bg-[#1978e5] hover:bg-[#1565c0] text-white text-[13px] font-black rounded-xl transition-all"
