@@ -1,0 +1,291 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #1978e5;
+  --primary-dark: #1565c0;
+  --primary-light: #e8f0fd;
+  --text-primary: #111418;
+  --text-secondary: #637488;
+  --bg: #ffffff;
+  --surface: #f0f2f4;
+  --border: #dce0e5;
+  --ease-apple: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+  font-family: var(--font-space-grotesk), "Noto Sans", sans-serif;
+  background-color: #ffffff;
+  color: #111418;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar hide ─────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f0f2f4; }
+::-webkit-scrollbar-thumb { background: #1978e5; border-radius: 3px; }
+
+/* ── Keyframes ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes scaleInBounce {
+  from { opacity: 0; transform: scale(0.7); }
+  60%  { transform: scale(1.05); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse-blue {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(25,120,229,0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(25,120,229,0); }
+}
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50%       { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-10px) rotate(1deg); }
+  66%       { transform: translateY(-5px) rotate(-1deg); }
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-16px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes ripple {
+  0%   { transform: scale(0); opacity: 1; }
+  100% { transform: scale(4); opacity: 0; }
+}
+@keyframes bidPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); color: #ef4444; }
+  100% { transform: scale(1); }
+}
+@keyframes countdownTick {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50%       { transform: translateY(-4px); opacity: 0.6; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(60px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(25,120,229,0.3); }
+  50%       { box-shadow: 0 0 40px rgba(25,120,229,0.6); }
+}
+
+/* ── Animation utility classes ── */
+.animate-fade-in-up    { animation: fadeInUp 0.7s var(--ease-apple) forwards; }
+.animate-fade-in-down  { animation: fadeInDown 0.6s var(--ease-apple) forwards; }
+.animate-fade-in       { animation: fadeIn 0.5s ease forwards; }
+.animate-slide-left    { animation: slideInLeft 0.65s var(--ease-apple) forwards; }
+.animate-slide-right   { animation: slideInRight 0.65s var(--ease-apple) forwards; }
+.animate-scale-in      { animation: scaleIn 0.5s var(--ease-apple) forwards; }
+.animate-scale-bounce  { animation: scaleInBounce 0.6s var(--ease-spring) forwards; }
+.animate-float         { animation: float 4s ease-in-out infinite; }
+.animate-float-slow    { animation: floatSlow 6s ease-in-out infinite; }
+.animate-pulse-blue    { animation: pulse-blue 2s infinite; }
+.animate-pulse-red     { animation: pulse-red 1.5s infinite; }
+.animate-marquee       { animation: marquee 30s linear infinite; }
+.animate-glow          { animation: glow 2.5s ease-in-out infinite; }
+.animate-bid           { animation: bidPulse 0.4s ease; }
+.animate-gradient {
+  background-size: 300% 300%;
+  animation: gradientShift 7s ease infinite;
+}
+
+/* Stagger delays */
+.delay-50  { animation-delay: 0.05s; }
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+.delay-700 { animation-delay: 0.7s; }
+.delay-800 { animation-delay: 0.8s; }
+
+/* Start hidden for scroll reveals */
+.reveal { opacity: 0; }
+.reveal.visible { animation: fadeInUp 0.7s var(--ease-apple) forwards; }
+
+/* ── Shimmer skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, #f0f2f4 25%, #e4e6e8 50%, #f0f2f4 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 8px;
+}
+
+/* ── Card hover — Apple-like lift ── */
+.card-hover {
+  transition: transform 0.3s var(--ease-apple), box-shadow 0.3s var(--ease-apple);
+  will-change: transform;
+}
+.card-hover:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 48px rgba(25,120,229,0.13), 0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* ── Image zoom on hover ── */
+.img-zoom {
+  overflow: hidden;
+}
+.img-zoom img, .img-zoom > div {
+  transition: transform 0.5s var(--ease-apple);
+}
+.img-zoom:hover img, .img-zoom:hover > div {
+  transform: scale(1.05);
+}
+
+/* ── Button primary ── */
+.btn-primary {
+  background: linear-gradient(135deg, #1565c0, #1978e5);
+  color: white;
+  font-weight: 700;
+  border-radius: 14px;
+  transition: all 0.25s var(--ease-apple);
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.2s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(25,120,229,0.4);
+}
+.btn-primary:hover::after { background: rgba(255,255,255,0.08); }
+.btn-primary:active { transform: translateY(0); }
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #1978e5, #42a5f5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-warm {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glass card ── */
+.glass {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+.glass-dark {
+  background: rgba(13,27,46,0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Section transitions ── */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s var(--ease-apple), transform 0.8s var(--ease-apple);
+}
+.section-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Auction live badge ── */
+.badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  animation: pulse-red 1.5s infinite;
+}
+.badge-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  display: inline-block;
+  animation: fadeIn 0.8s ease infinite alternate;
+}
+
+/* ── Offer input focus ── */
+.offer-input:focus {
+  outline: none;
+  border-color: #1978e5;
+  box-shadow: 0 0 0 3px rgba(25,120,229,0.15);
+}
+
+/* ── Smooth scroll ── */
+html { scroll-behavior: smooth; }
+
+/* ── Interactive scale ── */
+.interactive {
+  transition: transform 0.18s var(--ease-spring);
+}
+.interactive:hover { transform: scale(1.03); }
+.interactive:active { transform: scale(0.97); }
+
+/* ── Navbar scroll style ── */
+.navbar-scrolled {
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 20px rgba(0,0,0,0.08);
+}
