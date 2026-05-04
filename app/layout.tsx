@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import dynamic from "next/dynamic";
 const ChatWidget = dynamic(() => import("@/components/ChatWidget"), { ssr: false });
+const SocialBar  = dynamic(() => import("@/components/SocialBar"),  { ssr: false });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -52,6 +53,7 @@ export default function RootLayout({
         <Navbar />
         <main>{children}</main>
         <ChatWidget />
+        <SocialBar />
       </body>
     </html>
   );

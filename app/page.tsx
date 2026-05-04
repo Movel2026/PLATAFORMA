@@ -126,13 +126,13 @@ export default function HomePage() {
   const auctionVehicles             = getAuctionVehicles();
 
   // ── Video intro state ──────────────────────────────────────────────────
-  const [introEnded, setIntroEnded] = useState(false);
-  const [introDismissed, setIntroDismissed] = useState(false);
+  // showLogo = logo video is the active BG; when it ends we cross-fade to car video
+  const [showLogo, setShowLogo] = useState(true);
   const logoVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Auto-dismiss intro after 6 s in case onEnded doesn't fire
-    const t = setTimeout(() => setIntroEnded(true), 6000);
+    // Fallback: switch to car video after 7 s if onEnded doesn't fire
+    const t = setTimeout(() => setShowLogo(false), 7000);
     return () => clearTimeout(t);
   }, []);
 
@@ -151,56 +151,33 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
 
       {/* ══════════════════════════════════════════════════════
-          INTRO — Video logo MOVEL (plays once, then desaparece)
-      ══════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {!introDismissed && (
-          <motion.div
-            key="intro"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.9 }}
-            onAnimationComplete={() => { if (introEnded) setIntroDismissed(true); }}
-            className="fixed inset-0 z-[100] bg-black flex items-center justify-center cursor-pointer"
-            onClick={() => { setIntroEnded(true); setIntroDismissed(true); }}
-          >
-            <video
-              ref={logoVideoRef}
-              src="/videos/logo-movel.mp4"
-              autoPlay
-              muted
-              playsInline
-              onEnded={() => setIntroEnded(true)}
-              className="w-full h-full object-cover"
-            />
-            {/* Skip hint */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
-              className="absolute bottom-8 right-8 text-white/40 text-[12px] font-semibold"
-            >
-              Toca para continuar
-            </motion.p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ══════════════════════════════════════════════════════
-          HERO — Video de fondo con contenido superpuesto
+          HERO — Intro orgánico: logo video → cross-fade → car video
       ══════════════════════════════════════════════════════ */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Video de fondo en loop */}
+
+        {/* Logo intro video — empieza visible, desaparece con cross-fade */}
+        <video
+          ref={logoVideoRef}
+          src="/videos/logo-movel.mp4"
+          autoPlay muted playsInline
+          onEnded={() => setShowLogo(false)}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
+          style={{ opacity: showLogo ? 1 : 0, zIndex: 2 }}
+        />
+
+        {/* Car video en loop — empieza invisible, aparece cuando intro termina */}
         <video
           src="/videos/video-fondo.mp4"
           autoPlay muted loop playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
+          style={{ opacity: showLogo ? 0 : 1, zIndex: 1 }}
         />
-        {/* Overlay oscuro sobre el video */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-[#08101e]" />
+
+        {/* Overlay: más suave para dejar ver las luces del carro */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-[#08101e]" style={{ zIndex: 3 }} />
 
         {/* Contenido del hero */}
-        <div className="relative z-10 flex flex-col items-center px-4 pt-20 pb-16 w-full">
+        <div className="relative flex flex-col items-center px-4 pt-20 pb-16 w-full" style={{ zIndex: 10 }}>
 
           {/* Badge */}
           <motion.div

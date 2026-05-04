@@ -9,6 +9,7 @@ import {
   Warning, Info,
 } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
+import MovelPageHeader from "@/components/MovelPageHeader";
 import { getVersiones, EspecificacionesTecnicas } from "@/lib/specs-data";
 import { OfertasToggle }           from "@/components/publicar/OfertasToggle";
 import { EspecificacionesVehiculo, SpecsOutput } from "@/components/publicar/EspecificacionesVehiculo";
@@ -287,9 +288,12 @@ export default function PublicarPage() {
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
 
-      {/* Header */}
+      {/* Navigation */}
+      <MovelPageHeader />
+
+      {/* Header banner */}
       <div
-        className="text-white py-10 px-4"
+        className="text-white py-8 px-4"
         style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1565c0 60%, #1978e5 100%)" }}
       >
         <div className="max-w-4xl mx-auto">

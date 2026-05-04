@@ -32,10 +32,10 @@ function MovelLogo() {
 }
 
 const navLinks = [
-  { label: "Comprar", href: "/buscar" },
-  { label: "Subastas", href: "/subastas", hot: true },
-  { label: "Vender", href: "/publicar" },
-  { label: "Foro", href: "/foro" },
+  { label: "Comprar",        href: "/buscar" },
+  { label: "Subastas",       href: "/subastas", hot: true },
+  { label: "Vender",         href: "/publicar" },
+  { label: "Foro",           href: "/foro" },
   { label: "¿Cómo funciona?", href: "/#como-funciona" },
 ];
 

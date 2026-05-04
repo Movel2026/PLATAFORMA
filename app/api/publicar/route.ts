@@ -25,6 +25,22 @@ export async function POST(req: NextRequest) {
     const msgWA = `🚗 *MOVEL - Nueva Publicación*\n\n*${data.marca} ${data.modelo} ${data.año}*\nPrecio: $${data.precio}\nCiudad: ${data.ciudad || "N/A"}\nFotos: ${data.totalFotos || 0}\n\n👤 ${data.nombre}\n📧 ${data.email}\n📱 ${data.celular}`;
     await notificarWhatsApp(msgWA);
 
+    // Notificación Telegram (si está configurado)
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/telegram`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "nueva_publicacion",
+          data: {
+            nombre: data.nombre, celular: data.celular, email: data.email,
+            marca: data.marca, modelo: data.modelo, año: data.año,
+            precio: data.precio, ciudad: data.ciudad,
+          },
+        }),
+      });
+    } catch (_) { /* Telegram es opcional — no bloquear si falla */ }
+
     // Si no hay config SMTP, retornamos OK de todas formas (MVP sin configurar)
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.log("📧 [MOVEL] Publicación recibida (sin SMTP configurado):", data);

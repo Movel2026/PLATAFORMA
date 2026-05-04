@@ -6,8 +6,78 @@ import MovelPageHeader from "@/components/MovelPageHeader";
 import {
   Car, CheckCircle, Clock, XCircle, TrendUp, CurrencyCircleDollar,
   Gavel, Eye, MagnifyingGlass, Funnel, ArrowRight, User,
-  ChartBar, Warning, Wrench, WhatsappLogo,
+  ChartBar, Warning, Wrench, WhatsappLogo, ShieldCheck, Lock,
 } from "@phosphor-icons/react";
+
+// ─── PIN gate ─────────────────────────────────────────────────────────────
+// Cambia este PIN por el que quieras (o muévelo a una variable de entorno .env.local)
+const ADMIN_PIN = "MOVEL2025";
+
+function PinGate({ onUnlock }: { onUnlock: () => void }) {
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState(false);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (pin === ADMIN_PIN) {
+      onUnlock();
+    } else {
+      setError(true);
+      setPin("");
+      setTimeout(() => setError(false), 2000);
+    }
+  }
+
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-4"
+      style={{ background: "linear-gradient(160deg, #08101e 0%, #0d1b2e 55%, #0f2040 100%)" }}
+    >
+      <div className="w-full max-w-sm text-center">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+          style={{ background: "linear-gradient(135deg, #1565c0, #42a5f5)" }}>
+          <ShieldCheck size={32} color="white" weight="fill" />
+        </div>
+        <h1 className="text-white text-[22px] font-black mb-1">Panel de Administración</h1>
+        <p className="text-white/40 text-[13px] mb-8">Acceso exclusivo para el equipo MOVEL</p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative">
+            <Lock size={18} color="rgba(255,255,255,0.35)"
+              className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="password"
+              required
+              placeholder="Ingresa el PIN de acceso"
+              value={pin}
+              onChange={e => setPin(e.target.value)}
+              className={`w-full h-12 pl-11 pr-4 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 transition-all ${
+                error
+                  ? "ring-2 ring-red-500 bg-red-500/10"
+                  : "focus:ring-[#1978e5]/60"
+              }`}
+              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+            />
+          </div>
+          {error && (
+            <p className="text-red-400 text-[13px] font-semibold">PIN incorrecto. Intenta de nuevo.</p>
+          )}
+          <button
+            type="submit"
+            className="w-full h-12 rounded-xl font-black text-[15px] text-white"
+            style={{ background: "linear-gradient(135deg, #1565c0, #42a5f5)" }}
+          >
+            Acceder al panel →
+          </button>
+        </form>
+
+        <p className="text-white/20 text-[11px] mt-8">
+          Esta página no es de acceso público · Solo equipo MOVEL
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // ── Mock data ─────────────────────────────────────────────────────────────
 const solicitudes = [
@@ -64,6 +134,14 @@ function formatCOP(n: number) {
 }
 
 export default function AdminPage() {
+  const [unlocked, setUnlocked] = useState(false);
+
+  if (!unlocked) return <PinGate onUnlock={() => setUnlocked(true)} />;
+
+  return <AdminDashboard />;
+}
+
+function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("Solicitudes");
   const [search, setSearch] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("todos");

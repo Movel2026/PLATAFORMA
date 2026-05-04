@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { WhatsappLogo, Gavel, ChatCircle, ShieldCheck } from "@phosphor-icons/react";
+import { WhatsappLogo, Gavel, ChatCircle } from "@phosphor-icons/react";
 
 /**
  * Animated MOVEL logo header for inner pages (/buscar, /publicar, /subastas…).
@@ -70,10 +70,6 @@ export default function MovelPageHeader() {
           <Link href="/foro" className="flex items-center gap-1 text-[13px] font-semibold text-white/60 hover:text-white transition-colors">
             <ChatCircle size={14} weight="fill" />
             Foro
-          </Link>
-          <Link href="/admin" className="flex items-center gap-1 text-[13px] font-semibold text-white/35 hover:text-white/70 transition-colors">
-            <ShieldCheck size={14} weight="fill" />
-            Admin
           </Link>
         </motion.nav>
 
