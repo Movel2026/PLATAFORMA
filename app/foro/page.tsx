@@ -13,13 +13,11 @@ import {
   Globe,
   MagnifyingGlass,
   X,
-  CarProfile,
   MapPin,
   Clock,
   User,
   Image as ImageIcon,
   YoutubeLogo,
-  Link as LinkIcon,
   Play,
 } from "@phosphor-icons/react";
 import MovelPageHeader from "@/components/MovelPageHeader";

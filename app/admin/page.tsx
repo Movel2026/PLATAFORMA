@@ -5,8 +5,8 @@ import Link from "next/link";
 import MovelPageHeader from "@/components/MovelPageHeader";
 import {
   Car, CheckCircle, Clock, XCircle, TrendUp, CurrencyCircleDollar,
-  Gavel, Eye, MagnifyingGlass, Funnel, ArrowRight, User,
-  ChartBar, Warning, Wrench, WhatsappLogo, ShieldCheck, Lock,
+  Gavel, Eye, MagnifyingGlass, ArrowRight, User,
+  ChartBar, Warning, WhatsappLogo, ShieldCheck, Lock,
 } from "@phosphor-icons/react";
 
 // ─── PIN gate ─────────────────────────────────────────────────────────────

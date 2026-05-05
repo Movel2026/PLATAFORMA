@@ -14,7 +14,6 @@ import {
   CheckCircle,
   ArrowLeft,
 } from "@phosphor-icons/react";
-import MovelPageHeader from "@/components/MovelPageHeader";
 
 /* ─── tiny helpers ─────────────────────────────────────────────── */
 function MovelLogoWhite() {

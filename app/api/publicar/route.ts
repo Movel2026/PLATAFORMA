@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
           },
         }),
       });
-    } catch (_) { /* Telegram es opcional — no bloquear si falla */ }
+    } catch { /* Telegram es opcional — no bloquear si falla */ }
 
     // Si no hay config SMTP, retornamos OK de todas formas (MVP sin configurar)
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
