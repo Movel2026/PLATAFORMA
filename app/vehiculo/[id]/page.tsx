@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getVehicleById, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
 import {
@@ -29,6 +29,16 @@ export default function VehicleDetailPage({ params }: Props) {
   const [offerPhone, setOfferPhone] = useState("");
   const [offerSent, setOfferSent] = useState(false);
   const [offerLoading, setOfferLoading] = useState(false);
+
+  // Pre-rellenar nombre y celular si el usuario ya está registrado
+  useEffect(() => {
+    const stored = localStorage.getItem("movel_user");
+    if (stored) {
+      const u = JSON.parse(stored);
+      if (u.name)  setOfferName(u.name);
+      if (u.phone) setOfferPhone(u.phone);
+    }
+  }, []);
 
   const specs = [
     { icon: <Car size={18} />, label: "Modelo", value: vehicle.modelo },
@@ -327,6 +337,16 @@ export default function VehicleDetailPage({ params }: Props) {
                       <div className="bg-[#e8f0fd] rounded-xl px-4 py-2.5 text-[13px] text-[#1978e5] font-semibold">
                         Precio publicado: {formatCOP(vehicle.precio)}
                       </div>
+
+                      {/* Aviso si datos ya están cargados */}
+                      {offerName && offerPhone && (
+                        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                          <CheckCircle size={15} color="#16a34a" weight="fill" />
+                          <p className="text-[12px] text-green-700 font-semibold">
+                            Datos cargados de tu cuenta. Solo escribe tu oferta.
+                          </p>
+                        </div>
+                      )}
 
                       <div>
                         <label className="text-[12px] font-semibold text-[#637488] mb-1 block">Tu oferta (COP)</label>
