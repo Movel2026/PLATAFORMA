@@ -247,10 +247,10 @@ export default function PerfilPage() {
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
 
                 {[
-                  { icon: Bell, label: "Notificaciones", sub: "Alertas de precios y mensajes", href: "#" },
-                  { icon: WhatsappLogo, label: "WhatsApp vinculado", sub: mockUser.phone, href: "#" },
-                  { icon: CurrencyDollar, label: "Historial de pagos", sub: "Ver transacciones", href: "#" },
-                  { icon: Star, label: "Mis reseñas", sub: "Ver y gestionar reseñas", href: "#" },
+                  { icon: Bell, label: "Notificaciones", sub: "Alertas de precios y mensajes", href: "/foro" },
+                  { icon: WhatsappLogo, label: "WhatsApp vinculado", sub: mockUser.phone, href: `https://wa.me/${mockUser.phone.replace(/\D/g,"")}` },
+                  { icon: CurrencyDollar, label: "Historial de pagos", sub: "Ver transacciones", href: "/favoritos" },
+                  { icon: Star, label: "Mis reseñas", sub: "Ver y gestionar reseñas", href: "/foro" },
                 ].map(({ icon: Icon, label, sub, href }, i, arr) => (
                   <Link key={label} href={href}
                     className={`flex items-center justify-between px-4 py-4 hover:bg-white/5 transition-colors ${
@@ -271,7 +271,10 @@ export default function PerfilPage() {
                 ))}
               </div>
 
-              <button className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-bold text-[14px] text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors">
+              <button
+                onClick={() => { window.location.href = "/auth"; }}
+                className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-bold text-[14px] text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors"
+              >
                 <SignOut size={18} />
                 Cerrar sesión
               </button>

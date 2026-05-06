@@ -6,6 +6,7 @@ import Image from "next/image";
 import { getAuctionVehicles, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
 import ScrollReveal from "@/components/ScrollReveal";
+import MovelPageHeader from "@/components/MovelPageHeader";
 import {
   Gavel, Clock, WhatsappLogo, ArrowRight,
   Users, TrendUp, Fire, Warning
@@ -164,6 +165,7 @@ export default function SubastasPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
+      <MovelPageHeader />
       {/* Hero */}
       <div
         className="text-white py-12 px-4 relative overflow-hidden"

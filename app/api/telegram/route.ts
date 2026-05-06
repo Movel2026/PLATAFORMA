@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
           `💰 *Precio:* ${data.precio ?? "-"}`,
           `📍 *Ciudad:* ${data.ciudad ?? "-"}`,
           "",
-          "👉 Revisa el panel: localhost:3000/admin",
+          `👉 Revisa el panel: ${process.env.NEXT_PUBLIC_BASE_URL ?? "https://project-plfci.vercel.app"}/admin`,
         ].join("\n");
         break;
 
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
           `🚘 *Vehículo:* ${data.vehiculo ?? "-"}`,
           `💰 *Oferta:* ${data.monto ?? "-"}`,
           "",
-          "👉 Ver subasta: localhost:3000/subastas",
+          `👉 Ver subasta: ${process.env.NEXT_PUBLIC_BASE_URL ?? "https://project-plfci.vercel.app"}/subastas`,
         ].join("\n");
         break;
 
