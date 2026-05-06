@@ -13,6 +13,7 @@ import {
   ShoppingCart,
   CheckCircle,
   ArrowLeft,
+  Check,
 } from "@phosphor-icons/react";
 
 /* ─── tiny helpers ─────────────────────────────────────────────── */
@@ -38,11 +39,26 @@ function MovelLogoWhite() {
 type Tab = "login" | "register";
 type AccountType = "comprador" | "vendedor" | "";
 
+/* Qué puede hacer cada tipo */
+const FEATURES_COMUN = [
+  "Buscar y explorar vehículos",
+  "Guardar favoritos",
+  "Participar en subastas",
+  "Contactar vendedores",
+];
+const FEATURES_VENDEDOR = [
+  "Publicar vehículos en venta",
+  "Recibir consultas directas",
+  "Gestionar tus publicaciones",
+  "Acceso a panel de vendedor",
+];
+
 export default function AuthPage() {
   const [tab, setTab] = useState<Tab>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [accountType, setAccountType] = useState<AccountType>("");
   const [success, setSuccess] = useState(false);
+  const [successName, setSuccessName] = useState("");
 
   /* login form state */
   const [loginEmail, setLoginEmail] = useState("");
@@ -55,12 +71,29 @@ export default function AuthPage() {
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    // Guardar sesión en localStorage
+    const stored = localStorage.getItem("movel_user");
+    const nombre = stored ? JSON.parse(stored).name : loginEmail.split("@")[0];
+    localStorage.setItem("movel_session", JSON.stringify({ email: loginEmail, loggedIn: true }));
+    setSuccessName(nombre);
     setSuccess(true);
     setTimeout(() => { window.location.href = "/perfil"; }, 1400);
   }
 
   function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    // Guardar usuario en localStorage para que el perfil lo pueda leer
+    const userData = {
+      name: regName,
+      email: regEmail,
+      accountType,
+      phone: "",
+      city: "",
+      joinDate: new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" }),
+    };
+    localStorage.setItem("movel_user", JSON.stringify(userData));
+    localStorage.setItem("movel_session", JSON.stringify({ email: regEmail, loggedIn: true }));
+    setSuccessName(regName.split(" ")[0]);
     setSuccess(true);
     setTimeout(() => { window.location.href = "/perfil"; }, 1400);
   }
@@ -76,7 +109,9 @@ export default function AuthPage() {
           className="flex flex-col items-center gap-4 text-center"
         >
           <CheckCircle size={72} color="#4ade80" weight="fill" />
-          <p className="text-white text-[22px] font-black">¡Bienvenido a MOVEL!</p>
+          <p className="text-white text-[22px] font-black">
+            ¡Bienvenido{successName ? `, ${successName}` : ""}!
+          </p>
           <p className="text-white/50 text-[14px]">Redirigiendo a tu perfil…</p>
         </motion.div>
       </div>
@@ -217,32 +252,93 @@ export default function AuthPage() {
               >
                 {/* Account type selector */}
                 <div>
-                  <label className="block text-white/60 text-[12px] font-bold mb-2 uppercase tracking-wider">
-                    Tipo de cuenta
+                  <label className="block text-white/60 text-[12px] font-bold mb-1 uppercase tracking-wider">
+                    ¿Qué quieres hacer en MOVEL?
                   </label>
+                  <p className="text-white/35 text-[11px] mb-2.5">
+                    Ambos tipos de cuenta pueden buscar y guardar vehículos favoritos.
+                  </p>
                   <div className="grid grid-cols-2 gap-3">
                     {([
-                      { type: "comprador", icon: ShoppingCart, title: "Comprador", desc: "Busco y guardo favoritos" },
-                      { type: "vendedor", icon: CarProfile, title: "Vendedor", desc: "Publico mis vehículos" },
-                    ] as { type: AccountType; icon: React.ElementType; title: string; desc: string }[]).map(({ type, icon: Icon, title, desc }) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setAccountType(type)}
-                        className={`p-4 rounded-xl text-left transition-all duration-200 ${
-                          accountType === type
-                            ? "border-2 border-[#1978e5] bg-[#1978e5]/15"
-                            : "border border-white/10 bg-white/5 hover:bg-white/10"
-                        }`}
-                      >
-                        <Icon size={22} color={accountType === type ? "#60a5fa" : "rgba(255,255,255,0.4)"} weight="fill" />
-                        <p className={`text-[13px] font-black mt-2 ${accountType === type ? "text-white" : "text-white/60"}`}>
-                          {title}
-                        </p>
-                        <p className="text-[11px] text-white/35 mt-0.5">{desc}</p>
-                      </button>
-                    ))}
+                      {
+                        type: "comprador",
+                        icon: ShoppingCart,
+                        title: "Comprador",
+                        desc: "Busco, comparo y guardo favoritos",
+                        badge: "Ideal para explorar",
+                      },
+                      {
+                        type: "vendedor",
+                        icon: CarProfile,
+                        title: "Vendedor",
+                        desc: "Vendo mis vehículos y también compro",
+                        badge: "Publica gratis",
+                      },
+                    ] as { type: AccountType; icon: React.ElementType; title: string; desc: string; badge: string }[]).map(
+                      ({ type, icon: Icon, title, desc, badge }) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setAccountType(type)}
+                          className={`p-4 rounded-xl text-left transition-all duration-200 relative ${
+                            accountType === type
+                              ? "border-2 border-[#1978e5] bg-[#1978e5]/15"
+                              : "border border-white/10 bg-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          {/* Badge */}
+                          <span className={`absolute top-2 right-2 text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                            accountType === type
+                              ? "bg-[#1978e5] text-white"
+                              : "bg-white/10 text-white/40"
+                          }`}>
+                            {badge}
+                          </span>
+
+                          <Icon size={22} color={accountType === type ? "#60a5fa" : "rgba(255,255,255,0.4)"} weight="fill" />
+                          <p className={`text-[13px] font-black mt-2 ${accountType === type ? "text-white" : "text-white/60"}`}>
+                            {title}
+                          </p>
+                          <p className="text-[11px] text-white/35 mt-0.5 leading-tight">{desc}</p>
+                        </button>
+                      )
+                    )}
                   </div>
+
+                  {/* Features list — shown when type is selected */}
+                  <AnimatePresence>
+                    {accountType && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-3 rounded-xl p-3"
+                          style={{ background: "rgba(25,120,229,0.1)", border: "1px solid rgba(25,120,229,0.2)" }}>
+                          <p className="text-[11px] font-black text-[#60a5fa] uppercase tracking-wider mb-2">
+                            Con tu cuenta puedes:
+                          </p>
+                          <div className="space-y-1.5">
+                            {FEATURES_COMUN.map((f) => (
+                              <div key={f} className="flex items-center gap-2">
+                                <Check size={12} color="#4ade80" weight="bold" />
+                                <span className="text-[12px] text-white/70">{f}</span>
+                              </div>
+                            ))}
+                            {accountType === "vendedor" &&
+                              FEATURES_VENDEDOR.map((f) => (
+                                <div key={f} className="flex items-center gap-2">
+                                  <Check size={12} color="#60a5fa" weight="bold" />
+                                  <span className="text-[12px] text-[#60a5fa] font-semibold">{f}</span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Name */}

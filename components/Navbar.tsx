@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { MagnifyingGlass, List, X, WhatsappLogo } from "@phosphor-icons/react";
+import { MagnifyingGlass, List, X, WhatsappLogo, UserCircle } from "@phosphor-icons/react";
 
 function MovelLogo() {
   return (
@@ -95,8 +95,16 @@ export default function Navbar() {
             <Link
               href="/buscar"
               className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[#f0f2f4] transition-colors"
+              title="Buscar vehículos"
             >
               <MagnifyingGlass size={20} color="#637488" />
+            </Link>
+            <Link
+              href="/perfil"
+              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[#f0f2f4] transition-colors"
+              title="Mi cuenta"
+            >
+              <UserCircle size={22} color="#637488" weight="regular" />
             </Link>
             <a
               href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20quisiera%20hablar%20con%20un%20asesor"
@@ -140,7 +148,15 @@ export default function Navbar() {
               {link.hot && <span className="badge-live">En vivo</span>}
             </Link>
           ))}
-          <div className="pt-3 border-t border-[#dce0e5]">
+          <div className="pt-3 border-t border-[#dce0e5] flex flex-col gap-2">
+            <Link
+              href="/perfil"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 px-4 py-3 rounded-lg text-[15px] font-semibold text-[#111418] hover:bg-[#f0f2f4] transition-colors"
+            >
+              <UserCircle size={20} color="#637488" />
+              Mi cuenta
+            </Link>
             <Link
               href="/publicar"
               onClick={() => setMobileOpen(false)}

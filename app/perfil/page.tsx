@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -24,15 +24,13 @@ import MovelPageHeader from "@/components/MovelPageHeader";
 import BottomNav from "@/components/BottomNav";
 
 /* ─── mock data ─────────────────────────────────────────────────── */
-const IS_LOGGED_IN = true; // toggle for demo
-
-const mockUser = {
-  name: "Juan Esteban García",
-  email: "juanesteban@gmail.com",
+const defaultUser = {
+  name: "Invitado MOVEL",
+  email: "",
   phone: "+57 317 573 7083",
-  city: "Medellín, Antioquia",
-  accountType: "vendedor" as "comprador" | "vendedor",
-  joinDate: "Febrero 2024",
+  city: "Colombia",
+  accountType: "comprador" as "comprador" | "vendedor",
+  joinDate: "Mayo 2025",
   avatar: null as string | null,
 };
 
@@ -127,6 +125,32 @@ type ProfileTab = "info" | "publicaciones" | "favoritos";
 
 export default function PerfilPage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("info");
+  const [mockUser, setMockUser] = useState(defaultUser);
+  const [IS_LOGGED_IN, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Leer datos guardados en localStorage al registrarse/iniciar sesión
+    const session = localStorage.getItem("movel_session");
+    const userData = localStorage.getItem("movel_user");
+    if (session) {
+      const s = JSON.parse(session);
+      setIsLoggedIn(!!s.loggedIn);
+    }
+    if (userData) {
+      const u = JSON.parse(userData);
+      setMockUser({
+        name: u.name || defaultUser.name,
+        email: u.email || defaultUser.email,
+        phone: u.phone || defaultUser.phone,
+        city: u.city || defaultUser.city,
+        accountType: u.accountType || defaultUser.accountType,
+        joinDate: u.joinDate || defaultUser.joinDate,
+        avatar: u.avatar || null,
+      });
+      // Si hay datos de usuario, consideramos que está logueado
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   /* ── not logged in ── */
   if (!IS_LOGGED_IN) {
@@ -272,7 +296,10 @@ export default function PerfilPage() {
               </div>
 
               <button
-                onClick={() => { window.location.href = "/auth"; }}
+                onClick={() => {
+                  localStorage.removeItem("movel_session");
+                  window.location.href = "/auth";
+                }}
                 className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-bold text-[14px] text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-colors"
               >
                 <SignOut size={18} />
