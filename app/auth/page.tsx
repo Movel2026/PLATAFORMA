@@ -184,9 +184,14 @@ export default function AuthPage() {
                 </Field>
 
                 <div className="flex justify-end">
-                  <button type="button" className="text-[13px] text-[#60a5fa] hover:text-white font-semibold transition-colors">
+                  <a
+                    href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20olvid%C3%A9%20mi%20contrase%C3%B1a%20y%20necesito%20recuperarla"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[13px] text-[#60a5fa] hover:text-white font-semibold transition-colors"
+                  >
                     ¿Olvidaste tu contraseña?
-                  </button>
+                  </a>
                 </div>
 
                 <button type="submit"
