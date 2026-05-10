@@ -75,7 +75,7 @@ export default function AuthPage() {
     setTimeout(() => { window.location.href = "/perfil"; }, 1400);
   }
 
-  function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     const userData = {
       name:      regName,
@@ -86,6 +86,16 @@ export default function AuthPage() {
     };
     localStorage.setItem("movel_user",    JSON.stringify(userData));
     localStorage.setItem("movel_session", JSON.stringify({ email: regEmail, loggedIn: true }));
+
+    // Backup a Telegram (no bloquea si falla)
+    fetch("/api/registro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: regName, email: regEmail, phone: regPhone, source: "web",
+      }),
+    }).catch(() => {});
+
     setSuccessName(regName.split(" ")[0]);
     setSuccess(true);
     setTimeout(() => { window.location.href = "/perfil"; }, 1400);

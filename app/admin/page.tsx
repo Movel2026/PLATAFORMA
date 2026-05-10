@@ -215,6 +215,30 @@ function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
 
+        {/* ── Banner de backup en vivo ── */}
+        <div className="mb-5 rounded-2xl p-4 flex items-start gap-3"
+          style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", border: "1px solid #f59e0b" }}>
+          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
+            <Warning size={20} color="white" weight="fill" />
+          </div>
+          <div className="flex-1">
+            <p className="text-[14px] font-black text-amber-900">
+              📋 Datos en tiempo real disponibles en Telegram
+            </p>
+            <p className="text-[12px] text-amber-800 mt-0.5 leading-snug">
+              Cada nuevo registro, publicación, oferta y consulta se envía automáticamente al bot de Telegram con todos los datos del usuario y fotos. Las métricas mostradas abajo son de demostración mientras conectamos la base de datos.
+            </p>
+            <a
+              href="https://t.me/movelcol_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 mt-2 text-[12px] font-bold text-amber-900 hover:text-amber-700 transition-colors"
+            >
+              Abrir Telegram → ver registros en vivo
+            </a>
+          </div>
+        </div>
+
         {/* ── TAB: SOLICITUDES ── */}
         {tab === "Solicitudes" && (
           <div>

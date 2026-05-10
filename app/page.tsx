@@ -340,33 +340,36 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          BRIDGE — dark feature strip connecting hero to content
+          TRUST STRIP — inspirado en Kavak/Carvana
       ══════════════════════════════════════════════════════ */}
       <div style={{ background: "#0d1b2e" }} className="border-t border-white/10">
-        <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-7">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="flex flex-wrap justify-center items-center gap-x-10 gap-y-4"
+            className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-5"
           >
             {[
-              { num: "+500", label: "Vehículos verificados" },
-              { num: "98%",  label: "Clientes satisfechos" },
-              { num: "24h",  label: "Tiempo de respuesta" },
-              { num: "3",    label: "Años en el mercado" },
-            ].map((s, i) => (
+              { icon: "🛡️", title: "Garantía 90 días", desc: "Motor y transmisión cubiertos" },
+              { icon: "🔄", title: "Devolución 7 días", desc: "Si no te convence, lo cambias" },
+              { icon: "✅", title: "Inspección 150 puntos", desc: "Cada vehículo verificado" },
+              { icon: "📋", title: "Historial transparente", desc: "Sin sorpresas, sin trampas" },
+            ].map((item, i) => (
               <motion.div
-                key={s.label}
+                key={item.title}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: EASE_OUT }}
                 viewport={{ once: true }}
-                className="text-center px-6 py-2"
+                className="flex items-start gap-3"
               >
-                <p className="text-[28px] font-black text-white">{s.num}</p>
-                <p className="text-[12px] text-white/45 font-medium mt-0.5">{s.label}</p>
+                <span className="text-[26px] flex-shrink-0">{item.icon}</span>
+                <div>
+                  <p className="text-[14px] font-black text-white leading-tight">{item.title}</p>
+                  <p className="text-[12px] text-white/55 mt-0.5">{item.desc}</p>
+                </div>
               </motion.div>
             ))}
           </motion.div>

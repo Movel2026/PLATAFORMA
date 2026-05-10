@@ -20,6 +20,22 @@ export async function POST(req: NextRequest) {
   const msgWA = `💰 *MOVEL - Nueva Oferta*\n\n*${data.vehiculo}*\nPrecio: $${precioNum.toLocaleString("es-CO")}\n*Oferta: $${ofertaNum.toLocaleString("es-CO")}* (${pct}%)\n\n👤 ${data.nombre}\n📱 ${data.celular}`;
   await notificarWhatsApp(msgWA);
 
+  // Backup a Telegram
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "oferta",
+        data: {
+          nombre: data.nombre, celular: data.celular,
+          vehiculo: data.vehiculo,
+          monto: `$${ofertaNum.toLocaleString("es-CO")} (${pct}% del precio)`,
+        },
+      }),
+    });
+  } catch { /* opcional */ }
+
   const smtpConfigured =
     process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
 

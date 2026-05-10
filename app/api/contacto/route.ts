@@ -5,6 +5,21 @@ export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
+    // Backup a Telegram (ocurre siempre, aunque no haya SMTP)
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/telegram`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "consulta_servicio",
+          data: {
+            nombre: data.nombre, celular: data.celular, email: data.email,
+            mensaje: data.mensaje, servicio: data.vehiculo || "General",
+          },
+        }),
+      });
+    } catch { /* opcional */ }
+
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.log("📧 [MOVEL] Consulta recibida (sin SMTP):", data);
       return NextResponse.json({ ok: true });
