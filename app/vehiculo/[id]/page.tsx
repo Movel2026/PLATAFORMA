@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getVehicleById, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
+import { showToast } from "@/components/Toast";
 import {
   ArrowLeft, ShareNetwork, Heart, WhatsappLogo,
   Gauge, Gear, Car, Drop, Palette, Star,
@@ -147,7 +148,9 @@ export default function VehicleDetailPage({ params }: Props) {
                     if (navigator.share) {
                       navigator.share({ title: vehicle.titulo, text: `Mira este ${vehicle.titulo} en MOVEL`, url });
                     } else {
-                      navigator.clipboard.writeText(url).then(() => alert("¡Link copiado al portapapeles!"));
+                      navigator.clipboard.writeText(url).then(() =>
+                        showToast("¡Link copiado al portapapeles!", "success")
+                      );
                     }
                   }}
                   className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
@@ -421,6 +424,37 @@ export default function VehicleDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── BARRA CTA FIJA MÓVIL (solo mobile) ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3 flex gap-3"
+        style={{
+          background: "rgba(255,255,255,0.97)",
+          backdropFilter: "blur(12px)",
+          borderTop: "1px solid #e5e7eb",
+          boxShadow: "0 -4px 24px rgba(0,0,0,0.08)",
+        }}
+      >
+        <a
+          href={`https://wa.me/${vehicle.whatsapp}?text=${whatsappMsg}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 flex items-center justify-center gap-2 h-12 bg-[#25d366] text-white rounded-xl font-bold text-[14px] hover:bg-[#20b858] transition-colors"
+        >
+          <WhatsappLogo size={20} weight="fill" />
+          WhatsApp
+        </a>
+        <button
+          onClick={() => { setShowOffer(true); window.scrollTo({ top: 9999, behavior: "smooth" }); }}
+          className="flex-1 flex items-center justify-center gap-2 h-12 text-white rounded-xl font-bold text-[14px] transition-colors"
+          style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}
+        >
+          <Tag size={18} weight="fill" />
+          Hacer oferta
+        </button>
+      </div>
+
+      {/* Espacio para que el contenido no quede tapado por la barra fija en móvil */}
+      <div className="md:hidden h-20" />
 
       <BottomNav />
     </div>

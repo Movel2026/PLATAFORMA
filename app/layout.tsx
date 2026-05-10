@@ -3,8 +3,9 @@ import { Space_Grotesk, Noto_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import dynamic from "next/dynamic";
-const ChatWidget = dynamic(() => import("@/components/ChatWidget"), { ssr: false });
-const SocialBar  = dynamic(() => import("@/components/SocialBar"),  { ssr: false });
+const ChatWidget     = dynamic(() => import("@/components/ChatWidget"), { ssr: false });
+const SocialBar      = dynamic(() => import("@/components/SocialBar"),  { ssr: false });
+const ToastContainer = dynamic(() => import("@/components/Toast"),      { ssr: false });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -54,6 +55,7 @@ export default function RootLayout({
         <main>{children}</main>
         <ChatWidget />
         <SocialBar />
+        <ToastContainer />
       </body>
     </html>
   );

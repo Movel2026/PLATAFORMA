@@ -285,8 +285,8 @@ export default function BuscarPage() {
 
       {/* Search bar normal */}
       {!iaIds && (
-        <div className="bg-white border-b border-[#dce0e5] py-4 sticky top-16 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-3">
+        <div className="bg-white border-b border-[#dce0e5] sticky top-16 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-3 flex gap-3">
             <div className="flex-1 flex items-center gap-3 bg-[#f0f2f4] rounded-xl h-12 px-4">
               <MagnifyingGlass size={18} color="#637488" />
               <input
@@ -310,6 +310,40 @@ export default function BuscarPage() {
               Filtros {hasFilters && <span className="w-2 h-2 bg-[#1978e5] rounded-full" />}
             </button>
           </div>
+
+          {/* Chips de filtros activos */}
+          {hasFilters && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3 flex flex-wrap gap-2">
+              {selectedMarca && (
+                <button onClick={() => setSelectedMarca("")}
+                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  {selectedMarca} <X size={11} weight="bold" />
+                </button>
+              )}
+              {selectedTipo && (
+                <button onClick={() => setSelectedTipo("")}
+                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  {selectedTipo} <X size={11} weight="bold" />
+                </button>
+              )}
+              {selectedTransmision && (
+                <button onClick={() => setSelectedTransmision("")}
+                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  {selectedTransmision} <X size={11} weight="bold" />
+                </button>
+              )}
+              {selectedCiudad && (
+                <button onClick={() => setSelectedCiudad("")}
+                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  {selectedCiudad} <X size={11} weight="bold" />
+                </button>
+              )}
+              <button onClick={clearFilters}
+                className="flex items-center gap-1.5 text-[12px] font-semibold text-[#637488] bg-[#f0f2f4] px-3 py-1.5 rounded-full hover:bg-[#e5e7eb] transition-colors">
+                Limpiar todo
+              </button>
+            </div>
+          )}
         </div>
       )}
 
