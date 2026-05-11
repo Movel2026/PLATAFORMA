@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase";
 
 async function notificarWhatsApp(mensaje: string) {
   const phone = process.env.CALLMEBOT_PHONE || "573175737083";
@@ -13,14 +14,29 @@ async function notificarWhatsApp(mensaje: string) {
 export async function POST(req: NextRequest) {
   const data = await req.json();
 
-  // Notificación WhatsApp inmediata
   const ofertaNum = Number(data.oferta);
   const precioNum = Number(data.precio);
   const pct = precioNum > 0 ? Math.round((ofertaNum / precioNum) * 100) : 0;
+
+  // ── 1. Guardar en Supabase ────────────────────────────────
+  if (supabaseConfigured()) {
+    const { error } = await supabaseAdmin.from("ofertas").insert({
+      vehiculo:     data.vehiculo    ?? "",
+      precio_pub:   precioNum,
+      monto_oferta: ofertaNum,
+      porcentaje:   pct,
+      nombre:       data.nombre     ?? "",
+      celular:      data.celular    ?? "",
+      estado:       "nueva",
+    });
+    if (error) console.error("[Supabase oferta]:", error.message);
+  }
+
+  // ── 2. WhatsApp inmediato ─────────────────────────────────
   const msgWA = `💰 *MOVEL - Nueva Oferta*\n\n*${data.vehiculo}*\nPrecio: $${precioNum.toLocaleString("es-CO")}\n*Oferta: $${ofertaNum.toLocaleString("es-CO")}* (${pct}%)\n\n👤 ${data.nombre}\n📱 ${data.celular}`;
   await notificarWhatsApp(msgWA);
 
-  // Backup a Telegram
+  // ── 3. Backup Telegram ───────────────────────────────────
   try {
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/telegram`, {
       method: "POST",
@@ -36,9 +52,8 @@ export async function POST(req: NextRequest) {
     });
   } catch { /* opcional */ }
 
-  const smtpConfigured =
-    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
-
+  // ── 4. Email SMTP (si configurado) ───────────────────────
+  const smtpConfigured = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
   if (!smtpConfigured) {
     console.log("[OFERTA RECIBIDA]", data);
     return NextResponse.json({ ok: true });
@@ -65,11 +80,11 @@ export async function POST(req: NextRequest) {
           <table style="width: 100%; border-collapse: collapse;">
             <tr style="border-bottom: 1px solid #f0f2f4;">
               <td style="padding: 10px 0; color: #637488; font-size: 14px;">Precio publicado</td>
-              <td style="padding: 10px 0; font-weight: bold; color: #111418; text-align: right;">$${Number(data.precio).toLocaleString("es-CO")}</td>
+              <td style="padding: 10px 0; font-weight: bold; color: #111418; text-align: right;">$${precioNum.toLocaleString("es-CO")}</td>
             </tr>
             <tr style="border-bottom: 1px solid #f0f2f4;">
               <td style="padding: 10px 0; color: #637488; font-size: 14px;">Oferta del comprador</td>
-              <td style="padding: 10px 0; font-weight: bold; color: #1978e5; font-size: 20px; text-align: right;">$${Number(data.oferta).toLocaleString("es-CO")}</td>
+              <td style="padding: 10px 0; font-weight: bold; color: #1978e5; font-size: 20px; text-align: right;">$${ofertaNum.toLocaleString("es-CO")}</td>
             </tr>
             <tr style="border-bottom: 1px solid #f0f2f4;">
               <td style="padding: 10px 0; color: #637488; font-size: 14px;">% del precio</td>

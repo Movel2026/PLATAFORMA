@@ -1,26 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 import MovelPageHeader from "@/components/MovelPageHeader";
 import {
   Car, CheckCircle, Clock, XCircle, TrendUp, CurrencyCircleDollar,
-  Gavel, Eye, MagnifyingGlass, ArrowRight, User,
-  ChartBar, Warning, WhatsappLogo, ShieldCheck, Lock,
+  Gavel, MagnifyingGlass, User, ChartBar, Warning, WhatsappLogo,
+  ShieldCheck, Lock, ChatCircle, ArrowClockwise, Spinner,
+  Database, Users, Envelope,
 } from "@phosphor-icons/react";
 
-// ─── PIN gate ─────────────────────────────────────────────────────────────
-// Cambia este PIN por el que quieras (o muévelo a una variable de entorno .env.local)
+// ─── PIN gate ────────────────────────────────────────────────
 const ADMIN_PIN = "MOVEL2025";
 
-function PinGate({ onUnlock }: { onUnlock: () => void }) {
+function PinGate({ onUnlock }: { onUnlock: (pin: string) => void }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (pin === ADMIN_PIN) {
-      onUnlock();
+      onUnlock(pin);
     } else {
       setError(true);
       setPin("");
@@ -40,7 +39,6 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
         </div>
         <h1 className="text-white text-[22px] font-black mb-1">Panel de Administración</h1>
         <p className="text-white/40 text-[13px] mb-8">Acceso exclusivo para el equipo MOVEL</p>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <Lock size={18} color="rgba(255,255,255,0.35)"
@@ -50,483 +48,758 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
               required
               placeholder="Ingresa el PIN de acceso"
               value={pin}
-              onChange={e => setPin(e.target.value)}
-              className={`w-full h-12 pl-11 pr-4 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 transition-all ${
-                error
-                  ? "ring-2 ring-red-500 bg-red-500/10"
-                  : "focus:ring-[#1978e5]/60"
-              }`}
-              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}
+              onChange={(e) => setPin(e.target.value)}
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl text-white text-[15px] outline-none transition-all"
+              style={{
+                background: error ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.08)",
+                border: `1.5px solid ${error ? "#ef4444" : "rgba(255,255,255,0.12)"}`,
+              }}
             />
           </div>
-          {error && (
-            <p className="text-red-400 text-[13px] font-semibold">PIN incorrecto. Intenta de nuevo.</p>
-          )}
+          {error && <p className="text-red-400 text-[13px]">PIN incorrecto. Intenta de nuevo.</p>}
           <button
             type="submit"
-            className="w-full h-12 rounded-xl font-black text-[15px] text-white"
-            style={{ background: "linear-gradient(135deg, #1565c0, #42a5f5)" }}
+            className="w-full py-3.5 rounded-xl font-bold text-white text-[15px] transition-all active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}
           >
-            Acceder al panel →
+            Entrar al panel
           </button>
         </form>
-
-        <p className="text-white/20 text-[11px] mt-8">
-          Esta página no es de acceso público · Solo equipo MOVEL
-        </p>
       </div>
     </div>
   );
 }
 
-// ── Mock data ─────────────────────────────────────────────────────────────
-const solicitudes = [
-  { id: "SOL-001", nombre: "Carlos Méndez", tel: "+57 310 234 5678", vehiculo: "Toyota Corolla 2021", precio: 65000000, estado: "pendiente", fecha: "2025-04-26", fotos: 8, ciudad: "Bogotá" },
-  { id: "SOL-002", nombre: "María López", tel: "+57 315 876 5432", vehiculo: "Mazda CX-5 2022", precio: 98000000, estado: "revisando", fecha: "2025-04-25", fotos: 12, ciudad: "Medellín" },
-  { id: "SOL-003", nombre: "Andrés Torres", tel: "+57 320 111 2233", vehiculo: "Chevrolet Spark 2020", precio: 28000000, estado: "aprobado", fecha: "2025-04-24", fotos: 6, ciudad: "Cali" },
-  { id: "SOL-004", nombre: "Paula Gómez", tel: "+57 318 444 5566", vehiculo: "Kia Sportage 2023", precio: 112000000, estado: "pendiente", fecha: "2025-04-24", fotos: 15, ciudad: "Barranquilla" },
-  { id: "SOL-005", nombre: "Javier Ruiz", tel: "+57 312 999 8877", vehiculo: "Renault Duster 2021", precio: 54000000, estado: "rechazado", fecha: "2025-04-23", fotos: 4, ciudad: "Bogotá" },
-  { id: "SOL-006", nombre: "Lucía Herrera", tel: "+57 316 333 2211", vehiculo: "Hyundai Tucson 2022", precio: 88000000, estado: "aprobado", fecha: "2025-04-22", fotos: 10, ciudad: "Medellín" },
-  { id: "SOL-007", nombre: "Diego Vargas", tel: "+57 319 777 6655", vehiculo: "Nissan Kicks 2023", precio: 72000000, estado: "revisando", fecha: "2025-04-21", fotos: 9, ciudad: "Bogotá" },
-  { id: "SOL-008", nombre: "Ana Martínez", tel: "+57 313 555 4433", vehiculo: "Ford Escape 2021", precio: 79000000, estado: "pendiente", fecha: "2025-04-20", fotos: 7, ciudad: "Cali" },
-];
+// ─── Tipos ───────────────────────────────────────────────────
+interface StatsData {
+  configured: boolean;
+  totales: { usuarios: number; publicaciones: number; ofertas: number; contactos: number };
+  registrosPorDia: Record<string, number>;
+  publicacionesPorEstado: Record<string, number>;
+  publicaciones: Publicacion[];
+  ofertas: Oferta[];
+  contactos: Contacto[];
+  usuarios: Usuario[];
+}
 
-const metricas = [
-  { label: "Publicaciones activas", valor: "142", cambio: "+12 esta semana", color: "#1978e5", icon: Car },
-  { label: "Pendientes revisión", valor: "8", cambio: "3 urgentes", color: "#f59e0b", icon: Clock },
-  { label: "Ventas cerradas (mes)", valor: "34", cambio: "+8 vs mes anterior", color: "#10b981", icon: CheckCircle },
-  { label: "Valor total en plataforma", valor: "$4.2B", cambio: "COP en inventario", color: "#8b5cf6", icon: CurrencyCircleDollar },
-  { label: "Subastas activas", valor: "7", cambio: "2 terminan hoy", color: "#ef4444", icon: Gavel },
-  { label: "Usuarios registrados", valor: "1,247", cambio: "+89 este mes", color: "#0ea5e9", icon: User },
-];
+interface Publicacion {
+  id: string; nombre: string; email: string; celular: string;
+  marca: string; modelo: string; ano: number; precio: number;
+  ciudad: string; total_fotos: number; estado: string;
+  notas_admin: string; created_at: string;
+}
+interface Oferta {
+  id: string; vehiculo: string; precio_pub: number; monto_oferta: number;
+  porcentaje: number; nombre: string; celular: string; estado: string; created_at: string;
+}
+interface Contacto {
+  id: string; nombre: string; email: string; celular: string;
+  mensaje: string; vehiculo: string; estado: string; created_at: string;
+}
+interface Usuario {
+  id: string; nombre: string; email: string; telefono: string;
+  ciudad: string; origen: string; created_at: string;
+}
 
-const marcasStats = [
-  { marca: "Toyota", total: 28, porcentaje: 20 },
-  { marca: "Mazda", total: 22, porcentaje: 15 },
-  { marca: "Chevrolet", total: 19, porcentaje: 13 },
-  { marca: "Kia", total: 17, porcentaje: 12 },
-  { marca: "Hyundai", total: 15, porcentaje: 11 },
-  { marca: "Renault", total: 12, porcentaje: 8 },
-  { marca: "Nissan", total: 11, porcentaje: 8 },
-  { marca: "Otros", total: 18, porcentaje: 13 },
-];
-
-const preciosStats = [
-  { rango: "$10M–$30M", total: 24 },
-  { rango: "$30M–$60M", total: 38 },
-  { rango: "$60M–$100M", total: 45 },
-  { rango: "$100M–$150M", total: 22 },
-  { rango: "+$150M", total: 13 },
-];
-
-const TABS = ["Solicitudes", "Métricas", "Subastas", "Usuarios"] as const;
-type Tab = typeof TABS[number];
-
-const estadoConfig = {
-  pendiente:  { label: "Pendiente",  bg: "bg-amber-100",  text: "text-amber-700",  dot: "bg-amber-500"  },
-  revisando:  { label: "Revisando",  bg: "bg-blue-100",   text: "text-blue-700",   dot: "bg-blue-500"   },
-  aprobado:   { label: "Aprobado",   bg: "bg-green-100",  text: "text-green-700",  dot: "bg-green-500"  },
-  rechazado:  { label: "Rechazado",  bg: "bg-red-100",    text: "text-red-700",    dot: "bg-red-500"    },
-} as const;
-
+// ─── Helpers ─────────────────────────────────────────────────
 function formatCOP(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n);
 }
+function formatFecha(iso: string) {
+  return new Date(iso).toLocaleString("es-CO", {
+    timeZone: "America/Bogota", day: "2-digit", month: "short",
+    year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+function estadoBadge(estado: string) {
+  const map: Record<string, { bg: string; color: string; label: string }> = {
+    pendiente:   { bg: "#fef3c7", color: "#d97706", label: "Pendiente" },
+    activo:      { bg: "#dcfce7", color: "#16a34a", label: "Activo" },
+    rechazado:   { bg: "#fee2e2", color: "#dc2626", label: "Rechazado" },
+    vendido:     { bg: "#ede9fe", color: "#7c3aed", label: "Vendido" },
+    nueva:       { bg: "#dbeafe", color: "#1d4ed8", label: "Nueva" },
+    contactado:  { bg: "#fef3c7", color: "#d97706", label: "Contactado" },
+    cerrada:     { bg: "#dcfce7", color: "#16a34a", label: "Cerrada" },
+    nuevo:       { bg: "#dbeafe", color: "#1d4ed8", label: "Nuevo" },
+    respondido:  { bg: "#dcfce7", color: "#16a34a", label: "Respondido" },
+    archivado:   { bg: "#f3f4f6", color: "#6b7280", label: "Archivado" },
+  };
+  const s = map[estado] ?? { bg: "#f3f4f6", color: "#6b7280", label: estado };
+  return (
+    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold"
+      style={{ background: s.bg, color: s.color }}>{s.label}</span>
+  );
+}
+
+// ─── Minibar chart ──────────────────────────────────────────
+function MiniChart({ data }: { data: Record<string, number> }) {
+  const entries = Object.entries(data).slice(-14);
+  const max = Math.max(...entries.map(([, v]) => v), 1);
+  return (
+    <div className="flex items-end gap-1 h-10">
+      {entries.map(([day, val]) => (
+        <div key={day} title={`${day}: ${val}`}
+          className="flex-1 rounded-sm min-w-[4px] transition-all"
+          style={{
+            height: `${Math.max(8, (val / max) * 40)}px`,
+            background: "linear-gradient(180deg, #42a5f5, #1565c0)",
+          }} />
+      ))}
+      {entries.length === 0 && <span className="text-[11px] text-gray-400">Sin datos aún</span>}
+    </div>
+  );
+}
+
+// ─── Main Dashboard ──────────────────────────────────────────
+type Tab = "resumen" | "publicaciones" | "ofertas" | "contactos" | "usuarios";
 
 export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
-
-  if (!unlocked) return <PinGate onUnlock={() => setUnlocked(true)} />;
-
-  return <AdminDashboard />;
-}
-
-function AdminDashboard() {
-  const [tab, setTab] = useState<Tab>("Solicitudes");
+  const [adminPin, setAdminPin] = useState("");
+  const [tab, setTab] = useState<Tab>("resumen");
+  const [stats, setStats] = useState<StatsData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState("todos");
-  const [estadosSol, setEstadosSol] = useState<Record<string, string>>(
-    Object.fromEntries(solicitudes.map((s) => [s.id, s.estado]))
-  );
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const filtered = solicitudes.filter((s) => {
-    const matchSearch = !search || s.vehiculo.toLowerCase().includes(search.toLowerCase()) || s.nombre.toLowerCase().includes(search.toLowerCase());
-    const matchEstado = filtroEstado === "todos" || estadosSol[s.id] === filtroEstado;
-    return matchSearch && matchEstado;
-  });
+  const fetchStats = useCallback(async (pin: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/stats", {
+        headers: { "x-admin-pin": pin },
+      });
+      if (!res.ok) throw new Error("Error al cargar datos");
+      const json = await res.json();
+      setStats(json);
+    } catch (e) {
+      setError("No se pudieron cargar las métricas. Verifica la conexión a Supabase.");
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const cambiarEstado = (id: string, nuevoEstado: string) => {
-    setEstadosSol((prev) => ({ ...prev, [id]: nuevoEstado }));
-  };
+  function handleUnlock(pin: string) {
+    setAdminPin(pin);
+    setUnlocked(true);
+    fetchStats(pin);
+  }
+
+  // Auto-refresh cada 90 segundos
+  useEffect(() => {
+    if (!unlocked || !adminPin) return;
+    const interval = setInterval(() => fetchStats(adminPin), 90_000);
+    return () => clearInterval(interval);
+  }, [unlocked, adminPin, fetchStats]);
+
+  async function updateEstado(tabla: string, id: string, estado: string) {
+    setUpdatingId(id);
+    try {
+      await fetch("/api/admin/stats", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-pin": adminPin },
+        body: JSON.stringify({ tabla, id, estado }),
+      });
+      await fetchStats(adminPin);
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  if (!unlocked) return <PinGate onUnlock={handleUnlock} />;
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "resumen",       label: "Resumen",       icon: <ChartBar size={16} /> },
+    { id: "publicaciones", label: "Publicaciones", icon: <Car size={16} /> },
+    { id: "ofertas",       label: "Ofertas",       icon: <Gavel size={16} /> },
+    { id: "contactos",     label: "Consultas",     icon: <ChatCircle size={16} /> },
+    { id: "usuarios",      label: "Usuarios",      icon: <Users size={16} /> },
+  ];
+
+  const noSupabase = stats && !stats.configured;
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5]">
+    <div className="min-h-screen" style={{ background: "#f0f2f5" }}>
       <MovelPageHeader />
 
-      {/* Header admin */}
-      <div style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1565c0 60%, #1978e5 100%)" }} className="px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[#93c5fd] text-[12px] font-bold uppercase tracking-widest mb-1">Panel de Control</p>
-              <h1 className="text-white text-[28px] font-black tracking-tight">Administración MOVEL</h1>
-              <p className="text-white/60 text-[14px] mt-1">Gestión de publicaciones, métricas y usuarios</p>
-            </div>
-            <div className="hidden md:flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <User size={20} color="white" weight="fill" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-[14px]">Administrador</p>
-                <p className="text-white/60 text-[12px]">movelcol@outlook.com</p>
-              </div>
-            </div>
-          </div>
+      <div className="max-w-6xl mx-auto px-4 py-6">
 
-          {/* Mini métricas en header */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-            {metricas.slice(0, 4).map((m) => (
-              <div key={m.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
-                <p className="text-white/60 text-[11px] font-semibold mb-1">{m.label}</p>
-                <p className="text-white text-[22px] font-black">{m.valor}</p>
-                <p className="text-white/40 text-[11px]">{m.cambio}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white border-b border-[#dce0e5] sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4 flex gap-1">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-5 py-4 text-[14px] font-bold border-b-2 transition-colors ${
-                tab === t ? "border-[#1978e5] text-[#1978e5]" : "border-transparent text-[#637488] hover:text-[#111418]"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-6">
-
-        {/* ── Banner de backup en vivo ── */}
-        <div className="mb-5 rounded-2xl p-4 flex items-start gap-3"
-          style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", border: "1px solid #f59e0b" }}>
-          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
-            <Warning size={20} color="white" weight="fill" />
-          </div>
-          <div className="flex-1">
-            <p className="text-[14px] font-black text-amber-900">
-              📋 Datos en tiempo real disponibles en Telegram
-            </p>
-            <p className="text-[12px] text-amber-800 mt-0.5 leading-snug">
-              Cada nuevo registro, publicación, oferta y consulta se envía automáticamente al bot de Telegram con todos los datos del usuario y fotos. Las métricas mostradas abajo son de demostración mientras conectamos la base de datos.
-            </p>
-            <a
-              href="https://t.me/movelcol_bot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 mt-2 text-[12px] font-bold text-amber-900 hover:text-amber-700 transition-colors"
-            >
-              Abrir Telegram → ver registros en vivo
-            </a>
-          </div>
-        </div>
-
-        {/* ── TAB: SOLICITUDES ── */}
-        {tab === "Solicitudes" && (
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
-            {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-5">
-              <div className="flex-1 flex items-center gap-3 bg-white rounded-xl h-11 px-4 border border-[#dce0e5]">
-                <MagnifyingGlass size={16} color="#637488" />
-                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar por nombre o vehículo..." className="flex-1 bg-transparent text-[14px] outline-none" />
-              </div>
-              <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}
-                className="h-11 px-4 bg-white border border-[#dce0e5] rounded-xl text-[14px] text-[#637488] outline-none cursor-pointer">
-                <option value="todos">Todos los estados</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="revisando">Revisando</option>
-                <option value="aprobado">Aprobado</option>
-                <option value="rechazado">Rechazado</option>
-              </select>
-            </div>
+            <h1 className="text-[24px] font-black text-[#111418]">Panel de Administración</h1>
+            <p className="text-[#637488] text-[13px]">Solo visible para el equipo MOVEL</p>
+          </div>
+          <button
+            onClick={() => fetchStats(adminPin)}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-all active:scale-[0.97]"
+            style={{ background: "#1978e5" }}
+          >
+            {loading ? <Spinner size={14} className="animate-spin" /> : <ArrowClockwise size={14} />}
+            Actualizar
+          </button>
+        </div>
 
-            {/* Tabla */}
-            <div className="bg-white rounded-2xl border border-[#dce0e5] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#f0f2f4] bg-[#f8f9fa]">
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">ID</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">Vendedor</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">Vehículo</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">Precio</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">Ciudad</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">Fotos</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">Estado</th>
-                      <th className="text-left px-5 py-3 text-[11px] font-bold text-[#637488] uppercase tracking-widest">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((s, i) => {
-                      const est = estadosSol[s.id] as keyof typeof estadoConfig;
-                      const cfg = estadoConfig[est];
-                      return (
-                        <tr key={s.id} className={`border-b border-[#f0f2f4] hover:bg-[#f8f9fa] transition-colors ${i % 2 === 0 ? "" : "bg-[#fafafa]"}`}>
-                          <td className="px-5 py-4 text-[13px] text-[#637488] font-mono">{s.id}</td>
-                          <td className="px-5 py-4">
-                            <p className="text-[14px] font-semibold text-[#111418]">{s.nombre}</p>
-                            <p className="text-[12px] text-[#637488]">{s.fecha}</p>
-                          </td>
-                          <td className="px-5 py-4">
-                            <p className="text-[14px] font-semibold text-[#111418]">{s.vehiculo}</p>
-                          </td>
-                          <td className="px-5 py-4">
-                            <p className="text-[14px] font-bold text-[#1978e5]">{formatCOP(s.precio)}</p>
-                          </td>
-                          <td className="px-5 py-4 text-[13px] text-[#637488]">{s.ciudad}</td>
-                          <td className="px-5 py-4">
-                            <span className="flex items-center gap-1 text-[13px] text-[#637488]">
-                              📷 {s.fotos}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-bold ${cfg.bg} ${cfg.text}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                              {cfg.label}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-2">
-                              <a href={`https://wa.me/${s.tel.replace(/\s|\+/g, "")}?text=Hola ${s.nombre}, soy del equipo MOVEL. Revisamos tu solicitud ${s.id}`}
-                                target="_blank" rel="noopener noreferrer"
-                                className="w-8 h-8 bg-[#25d366]/10 hover:bg-[#25d366] text-[#25d366] hover:text-white rounded-lg flex items-center justify-center transition-colors">
-                                <WhatsappLogo size={16} weight="fill" />
-                              </a>
-                              {est === "pendiente" || est === "revisando" ? (
-                                <>
-                                  <button onClick={() => cambiarEstado(s.id, "aprobado")}
-                                    className="w-8 h-8 bg-green-50 hover:bg-green-500 text-green-600 hover:text-white rounded-lg flex items-center justify-center transition-colors" title="Aprobar">
-                                    <CheckCircle size={16} weight="fill" />
-                                  </button>
-                                  <button onClick={() => cambiarEstado(s.id, "rechazado")}
-                                    className="w-8 h-8 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-lg flex items-center justify-center transition-colors" title="Rechazar">
-                                    <XCircle size={16} weight="fill" />
-                                  </button>
-                                </>
-                              ) : (
-                                <button onClick={() => cambiarEstado(s.id, "revisando")}
-                                  className="w-8 h-8 bg-blue-50 hover:bg-blue-500 text-blue-500 hover:text-white rounded-lg flex items-center justify-center transition-colors" title="Volver a revisar">
-                                  <Eye size={16} weight="fill" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-5 py-3 border-t border-[#f0f2f4] bg-[#f8f9fa]">
-                <p className="text-[13px] text-[#637488]">Mostrando <strong>{filtered.length}</strong> de {solicitudes.length} solicitudes</p>
-              </div>
+        {/* Banner sin Supabase */}
+        {noSupabase && (
+          <div className="mb-5 rounded-2xl p-4 flex items-start gap-3"
+            style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", border: "1px solid #f59e0b" }}>
+            <Warning size={20} color="#d97706" weight="fill" className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-bold text-[#92400e] text-[14px] mb-1">Supabase no configurado</p>
+              <p className="text-[#92400e] text-[13px]">
+                Los datos en tiempo real no están disponibles. Agrega{" "}
+                <code className="bg-amber-200 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> y{" "}
+                <code className="bg-amber-200 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> en Vercel.
+                Mientras tanto, los datos llegan a{" "}
+                <a href="https://t.me/movelcol_bot" className="underline font-semibold">Telegram →</a>
+              </p>
             </div>
           </div>
         )}
 
-        {/* ── TAB: MÉTRICAS ── */}
-        {tab === "Métricas" && (
+        {error && (
+          <div className="mb-5 rounded-2xl p-4 bg-red-50 border border-red-200 text-red-700 text-[14px]">
+            {error}
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all"
+              style={
+                tab === t.id
+                  ? { background: "#1978e5", color: "white" }
+                  : { background: "white", color: "#637488", border: "1px solid #dce0e5" }
+              }
+            >
+              {t.icon} {t.label}
+              {stats && t.id === "publicaciones" && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px]"
+                  style={{ background: tab === t.id ? "rgba(255,255,255,0.25)" : "#e8f0fd", color: tab === t.id ? "white" : "#1978e5" }}>
+                  {stats.totales.publicaciones}
+                </span>
+              )}
+              {stats && t.id === "ofertas" && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px]"
+                  style={{ background: tab === t.id ? "rgba(255,255,255,0.25)" : "#e8f0fd", color: tab === t.id ? "white" : "#1978e5" }}>
+                  {stats.totales.ofertas}
+                </span>
+              )}
+              {stats && t.id === "contactos" && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px]"
+                  style={{ background: tab === t.id ? "rgba(255,255,255,0.25)" : "#e8f0fd", color: tab === t.id ? "white" : "#1978e5" }}>
+                  {stats.totales.contactos}
+                </span>
+              )}
+              {stats && t.id === "usuarios" && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px]"
+                  style={{ background: tab === t.id ? "rgba(255,255,255,0.25)" : "#e8f0fd", color: tab === t.id ? "white" : "#1978e5" }}>
+                  {stats.totales.usuarios}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Loading skeleton */}
+        {loading && !stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[1,2,3,4].map((i) => (
+              <div key={i} className="bg-white rounded-2xl p-5 animate-pulse h-24" />
+            ))}
+          </div>
+        )}
+
+        {/* ── RESUMEN ── */}
+        {tab === "resumen" && stats?.configured && (
           <div className="space-y-6">
-            {/* Tarjetas métricas */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {metricas.map((m) => {
-                const Icon = m.icon;
-                return (
-                  <div key={m.label} className="bg-white rounded-2xl p-5 border border-[#dce0e5]">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: m.color + "20" }}>
-                        <Icon size={22} color={m.color} weight="fill" />
-                      </div>
-                      <TrendUp size={16} color="#10b981" weight="bold" />
-                    </div>
-                    <p className="text-[28px] font-black text-[#111418]">{m.valor}</p>
-                    <p className="text-[13px] font-semibold text-[#111418] mt-1">{m.label}</p>
-                    <p className="text-[12px] text-[#637488] mt-0.5">{m.cambio}</p>
+
+            {/* KPI cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Usuarios registrados", value: stats.totales.usuarios, icon: <User size={22} />, color: "#1978e5", bg: "#e8f0fd" },
+                { label: "Publicaciones totales", value: stats.totales.publicaciones, icon: <Car size={22} />, color: "#16a34a", bg: "#dcfce7" },
+                { label: "Ofertas recibidas", value: stats.totales.ofertas, icon: <Gavel size={22} />, color: "#d97706", bg: "#fef3c7" },
+                { label: "Consultas recibidas", value: stats.totales.contactos, icon: <ChatCircle size={22} />, color: "#7c3aed", bg: "#ede9fe" },
+              ].map((kpi) => (
+                <div key={kpi.label} className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                    style={{ background: kpi.bg, color: kpi.color }}>
+                    {kpi.icon}
                   </div>
-                );
-              })}
+                  <p className="text-[28px] font-black text-[#111418]">{kpi.value}</p>
+                  <p className="text-[12px] text-[#637488]">{kpi.label}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Marcas más publicadas */}
-            <div className="grid lg:grid-cols-2 gap-5">
-              <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
-                <h3 className="text-[16px] font-bold text-[#111418] mb-4 flex items-center gap-2">
-                  <ChartBar size={18} color="#1978e5" weight="fill" />
-                  Marcas más publicadas
-                </h3>
-                <div className="space-y-3">
-                  {marcasStats.map((m) => (
-                    <div key={m.marca}>
-                      <div className="flex justify-between text-[13px] mb-1">
-                        <span className="font-semibold text-[#111418]">{m.marca}</span>
-                        <span className="text-[#637488]">{m.total} vehículos</span>
-                      </div>
-                      <div className="h-2 bg-[#f0f2f4] rounded-full overflow-hidden">
-                        <div className="h-full rounded-full bg-gradient-to-r from-[#1565c0] to-[#1978e5] transition-all"
-                          style={{ width: `${m.porcentaje}%` }} />
-                      </div>
-                    </div>
-                  ))}
+            {/* Gráfico registros + estado publicaciones */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendUp size={18} color="#1978e5" />
+                  <h3 className="font-bold text-[#111418] text-[15px]">Registros — últimos 14 días</h3>
                 </div>
+                <MiniChart data={stats.registrosPorDia} />
+                <p className="text-[11px] text-[#637488] mt-2">Cada barra = un día</p>
               </div>
 
-              {/* Rangos de precio */}
-              <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
-                <h3 className="text-[16px] font-bold text-[#111418] mb-4 flex items-center gap-2">
-                  <CurrencyCircleDollar size={18} color="#1978e5" weight="fill" />
-                  Distribución por precio
-                </h3>
-                <div className="space-y-3">
-                  {preciosStats.map((p, i) => {
-                    const max = Math.max(...preciosStats.map((x) => x.total));
-                    const pct = Math.round((p.total / max) * 100);
-                    const colors = ["#1978e5","#42a5f5","#60a5fa","#93c5fd","#bfdbfe"];
+              <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <ChartBar size={18} color="#1978e5" />
+                  <h3 className="font-bold text-[#111418] text-[15px]">Estado publicaciones</h3>
+                </div>
+                <div className="space-y-2">
+                  {Object.entries(stats.publicacionesPorEstado).map(([estado, count]) => {
+                    const total = stats.totales.publicaciones || 1;
+                    const pct = Math.round((count / total) * 100);
+                    const colors: Record<string, string> = {
+                      pendiente: "#f59e0b", activo: "#16a34a", rechazado: "#ef4444", vendido: "#7c3aed"
+                    };
+                    const color = colors[estado] ?? "#6b7280";
                     return (
-                      <div key={p.rango}>
-                        <div className="flex justify-between text-[13px] mb-1">
-                          <span className="font-semibold text-[#111418]">{p.rango}</span>
-                          <span className="text-[#637488]">{p.total} vehículos</span>
+                      <div key={estado}>
+                        <div className="flex justify-between text-[12px] mb-1">
+                          <span className="capitalize text-[#637488]">{estado}</span>
+                          <span className="font-bold text-[#111418]">{count}</span>
                         </div>
-                        <div className="h-2 bg-[#f0f2f4] rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: colors[i] }} />
+                        <div className="h-2 rounded-full bg-gray-100">
+                          <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
                         </div>
                       </div>
                     );
                   })}
+                  {Object.keys(stats.publicacionesPorEstado).length === 0 && (
+                    <p className="text-[13px] text-[#637488]">Sin publicaciones aún</p>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Alertas */}
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-4">
-              <Warning size={24} color="#f59e0b" weight="fill" className="flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-amber-800 text-[15px]">Atención requerida</p>
-                <p className="text-amber-700 text-[13px] mt-1">Hay 3 solicitudes urgentes con más de 48h sin revisión. 2 subastas terminan hoy antes de las 6pm.</p>
+            {/* Actividad reciente */}
+            <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+              <h3 className="font-bold text-[#111418] text-[15px] mb-4">Actividad reciente</h3>
+              <div className="space-y-3">
+                {[
+                  ...stats.publicaciones.slice(0, 3).map((p) => ({
+                    icon: <Car size={16} color="#1978e5" />,
+                    text: `Nueva publicación: ${p.marca} ${p.modelo} ${p.ano}`,
+                    sub: p.nombre, time: p.created_at,
+                  })),
+                  ...stats.ofertas.slice(0, 3).map((o) => ({
+                    icon: <Gavel size={16} color="#d97706" />,
+                    text: `Oferta recibida: ${o.vehiculo}`,
+                    sub: `${o.nombre} · $${o.monto_oferta?.toLocaleString("es-CO")}`, time: o.created_at,
+                  })),
+                  ...stats.usuarios.slice(0, 3).map((u) => ({
+                    icon: <User size={16} color="#16a34a" />,
+                    text: `Nuevo usuario: ${u.nombre}`,
+                    sub: u.email, time: u.created_at,
+                  })),
+                ]
+                  .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+                  .slice(0, 8)
+                  .map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < 7 ? "1px solid #f0f2f4" : "none" }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: "#f0f2f4" }}>
+                        {item.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-[#111418] truncate">{item.text}</p>
+                        <p className="text-[12px] text-[#637488] truncate">{item.sub}</p>
+                      </div>
+                      <span className="text-[11px] text-[#637488] shrink-0">{formatFecha(item.time)}</span>
+                    </div>
+                  ))}
+                {stats.publicaciones.length === 0 && stats.ofertas.length === 0 && stats.usuarios.length === 0 && (
+                  <p className="text-[13px] text-[#637488]">Aún no hay actividad registrada.</p>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── TAB: SUBASTAS ── */}
-        {tab === "Subastas" && (
+        {/* ── PUBLICACIONES ── */}
+        {tab === "publicaciones" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[20px] font-black text-[#111418]">Subastas activas</h2>
-              <Link href="/subastas" className="flex items-center gap-2 text-[14px] font-bold text-[#1978e5] hover:underline">
-                Ver plataforma pública <ArrowRight size={14} />
-              </Link>
+            {/* Search */}
+            <div className="relative">
+              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar por marca, modelo, nombre..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                style={{ border: "1px solid #dce0e5" }}
+              />
             </div>
-            {[
-              { id: "AUC-001", vehiculo: "Toyota RAV4 2022", oferta: 95000000, participantes: 12, termina: "Hoy 5:00 PM", estado: "activa" },
-              { id: "AUC-002", vehiculo: "Mazda CX-5 2021", oferta: 82000000, participantes: 8, termina: "Hoy 8:00 PM", estado: "activa" },
-              { id: "AUC-003", vehiculo: "Kia Sportage 2023", oferta: 105000000, participantes: 19, termina: "Mañana 3:00 PM", estado: "activa" },
-              { id: "AUC-004", vehiculo: "Chevrolet Tracker 2022", oferta: 73000000, participantes: 5, termina: "Mañana 6:00 PM", estado: "activa" },
-              { id: "AUC-005", vehiculo: "Hyundai Tucson 2021", oferta: 88000000, participantes: 14, termina: "Ayer 5:00 PM", estado: "terminada" },
-              { id: "AUC-006", vehiculo: "Renault Koleos 2022", oferta: 91000000, participantes: 9, termina: "Hace 2 días", estado: "terminada" },
-            ].map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border border-[#dce0e5] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.estado === "activa" ? "bg-red-100" : "bg-gray-100"}`}>
-                    <Gavel size={20} color={a.estado === "activa" ? "#ef4444" : "#9ca3af"} weight="fill" />
+
+            {!stats?.configured ? (
+              <NoSupabaseCard />
+            ) : stats.publicaciones.length === 0 ? (
+              <EmptyCard icon={<Car size={32} color="#637488" />} text="No hay publicaciones registradas" />
+            ) : (
+              stats.publicaciones
+                .filter((p) =>
+                  !search ||
+                  `${p.marca} ${p.modelo} ${p.nombre} ${p.ciudad}`.toLowerCase().includes(search.toLowerCase())
+                )
+                .map((pub) => (
+                  <div key={pub.id} className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-[#111418] text-[16px]">
+                            {pub.marca} {pub.modelo} {pub.ano}
+                          </h3>
+                          {estadoBadge(pub.estado)}
+                        </div>
+                        <p className="text-[22px] font-black text-[#1978e5]">{formatCOP(pub.precio)}</p>
+                        <p className="text-[13px] text-[#637488]">{pub.ciudad} · {pub.total_fotos} foto(s)</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-semibold text-[#111418] text-[14px]">{pub.nombre}</p>
+                        <a href={`mailto:${pub.email}`} className="text-[#1978e5] text-[13px]">{pub.email}</a>
+                        <p className="text-[13px] text-[#637488]">{pub.celular}</p>
+                        <p className="text-[11px] text-[#9aa5b4] mt-1">{formatFecha(pub.created_at)}</p>
+                      </div>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      {["pendiente", "activo", "rechazado", "vendido"].map((e) => (
+                        <button
+                          key={e}
+                          disabled={pub.estado === e || updatingId === pub.id}
+                          onClick={() => updateEstado("publicaciones", pub.id, e)}
+                          className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all disabled:opacity-40"
+                          style={
+                            pub.estado === e
+                              ? { background: "#1978e5", color: "white" }
+                              : { background: "#f0f2f4", color: "#637488" }
+                          }
+                        >
+                          {updatingId === pub.id ? "..." : e.charAt(0).toUpperCase() + e.slice(1)}
+                        </button>
+                      ))}
+                      {pub.celular && (
+                        <a
+                          href={`https://wa.me/${pub.celular.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white"
+                          style={{ background: "#25d366" }}
+                        >
+                          <WhatsappLogo size={14} /> Contactar
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-[#111418] text-[15px]">{a.vehiculo}</p>
-                    <p className="text-[12px] text-[#637488]">{a.id} · {a.participantes} participantes</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 text-right">
-                  <div>
-                    <p className="text-[11px] text-[#637488]">Oferta actual</p>
-                    <p className="font-black text-[#1978e5] text-[16px]">{formatCOP(a.oferta)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-[#637488]">Termina</p>
-                    <p className="font-bold text-[13px] text-[#111418]">{a.termina}</p>
-                  </div>
-                  <span className={`px-3 py-1.5 rounded-full text-[12px] font-bold ${
-                    a.estado === "activa" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"
-                  }`}>
-                    {a.estado === "activa" ? "🔴 En vivo" : "✓ Terminada"}
-                  </span>
-                </div>
-              </div>
-            ))}
+                ))
+            )}
           </div>
         )}
 
-        {/* ── TAB: USUARIOS ── */}
-        {tab === "Usuarios" && (
+        {/* ── OFERTAS ── */}
+        {tab === "ofertas" && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              {[
-                { label: "Total usuarios", val: "1,247", color: "#1978e5" },
-                { label: "Compradores activos", val: "934", color: "#10b981" },
-                { label: "Vendedores activos", val: "313", color: "#f59e0b" },
-                { label: "Nuevos este mes", val: "89", color: "#8b5cf6" },
-              ].map((u) => (
-                <div key={u.label} className="bg-white rounded-2xl p-5 border border-[#dce0e5]">
-                  <p className="text-[28px] font-black" style={{ color: u.color }}>{u.val}</p>
-                  <p className="text-[13px] text-[#637488] mt-1">{u.label}</p>
-                </div>
-              ))}
+            <div className="relative">
+              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar por vehículo, nombre..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                style={{ border: "1px solid #dce0e5" }}
+              />
             </div>
 
-            <div className="bg-white rounded-2xl border border-[#dce0e5] overflow-hidden">
-              <div className="px-5 py-4 border-b border-[#f0f2f4] bg-[#f8f9fa]">
-                <h3 className="font-bold text-[#111418]">Usuarios recientes</h3>
-              </div>
-              {[
-                { nombre: "Carlos Méndez", email: "c.mendez@gmail.com", tipo: "vendedor", registro: "Hace 2 días", pub: 3 },
-                { nombre: "María López", email: "maria.l@hotmail.com", tipo: "comprador", registro: "Hace 3 días", pub: 0 },
-                { nombre: "Andrés Torres", email: "a.torres@gmail.com", tipo: "vendedor", registro: "Hace 5 días", pub: 1 },
-                { nombre: "Paula Gómez", email: "pgomez@yahoo.com", tipo: "comprador", registro: "Hace 1 semana", pub: 0 },
-                { nombre: "Javier Ruiz", email: "jruiz@gmail.com", tipo: "vendedor", registro: "Hace 1 semana", pub: 2 },
-              ].map((u, i) => (
-                <div key={i} className="px-5 py-4 border-b border-[#f0f2f4] flex items-center justify-between hover:bg-[#f8f9fa]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#1978e5]/10 flex items-center justify-center">
-                      <User size={18} color="#1978e5" weight="fill" />
+            {!stats?.configured ? (
+              <NoSupabaseCard />
+            ) : stats.ofertas.length === 0 ? (
+              <EmptyCard icon={<Gavel size={32} color="#637488" />} text="No hay ofertas registradas" />
+            ) : (
+              stats.ofertas
+                .filter((o) =>
+                  !search ||
+                  `${o.vehiculo} ${o.nombre}`.toLowerCase().includes(search.toLowerCase())
+                )
+                .map((oferta) => (
+                  <div key={oferta.id} className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-[#111418] text-[15px]">{oferta.vehiculo}</h3>
+                          {estadoBadge(oferta.estado)}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div>
+                            <p className="text-[11px] text-[#637488]">Precio publicado</p>
+                            <p className="font-semibold text-[#111418] text-[14px]">{formatCOP(oferta.precio_pub)}</p>
+                          </div>
+                          <div className="w-px h-8 bg-gray-200" />
+                          <div>
+                            <p className="text-[11px] text-[#637488]">Oferta</p>
+                            <p className="font-black text-[#1978e5] text-[20px]">{formatCOP(oferta.monto_oferta)}</p>
+                          </div>
+                          <div className="w-px h-8 bg-gray-200" />
+                          <div>
+                            <p className="text-[11px] text-[#637488]">% del precio</p>
+                            <p className="font-bold text-[18px]"
+                              style={{ color: oferta.porcentaje >= 95 ? "#16a34a" : oferta.porcentaje >= 85 ? "#d97706" : "#dc2626" }}>
+                              {oferta.porcentaje}%
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-[#111418] text-[14px]">{oferta.nombre}</p>
+                        <p className="text-[13px] text-[#637488]">{oferta.celular}</p>
+                        <p className="text-[11px] text-[#9aa5b4] mt-1">{formatFecha(oferta.created_at)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-[14px] text-[#111418]">{u.nombre}</p>
-                      <p className="text-[12px] text-[#637488]">{u.email}</p>
+
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      {["nueva", "contactado", "cerrada", "rechazada"].map((e) => (
+                        <button
+                          key={e}
+                          disabled={oferta.estado === e || updatingId === oferta.id}
+                          onClick={() => updateEstado("ofertas", oferta.id, e)}
+                          className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all disabled:opacity-40"
+                          style={
+                            oferta.estado === e
+                              ? { background: "#1978e5", color: "white" }
+                              : { background: "#f0f2f4", color: "#637488" }
+                          }
+                        >
+                          {updatingId === oferta.id ? "..." : e.charAt(0).toUpperCase() + e.slice(1)}
+                        </button>
+                      ))}
+                      {oferta.celular && (
+                        <a
+                          href={`https://wa.me/${oferta.celular.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white"
+                          style={{ background: "#25d366" }}
+                        >
+                          <WhatsappLogo size={14} /> Contactar
+                        </a>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                      u.tipo === "vendedor" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
-                    }`}>{u.tipo}</span>
-                    <div className="text-right hidden sm:block">
-                      <p className="text-[12px] text-[#637488]">{u.registro}</p>
-                      {u.pub > 0 && <p className="text-[11px] text-[#1978e5] font-semibold">{u.pub} publicaciones</p>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))
+            )}
           </div>
         )}
+
+        {/* ── CONSULTAS ── */}
+        {tab === "contactos" && (
+          <div className="space-y-4">
+            <div className="relative">
+              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, email, vehículo..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                style={{ border: "1px solid #dce0e5" }}
+              />
+            </div>
+
+            {!stats?.configured ? (
+              <NoSupabaseCard />
+            ) : stats.contactos.length === 0 ? (
+              <EmptyCard icon={<ChatCircle size={32} color="#637488" />} text="No hay consultas registradas" />
+            ) : (
+              stats.contactos
+                .filter((c) =>
+                  !search ||
+                  `${c.nombre} ${c.email} ${c.vehiculo} ${c.mensaje}`.toLowerCase().includes(search.toLowerCase())
+                )
+                .map((contacto) => (
+                  <div key={contacto.id} className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-[#111418] text-[15px]">{contacto.nombre}</h3>
+                          {estadoBadge(contacto.estado)}
+                        </div>
+                        {contacto.vehiculo && (
+                          <p className="text-[13px] text-[#1978e5] font-medium mb-1">Re: {contacto.vehiculo}</p>
+                        )}
+                        {contacto.mensaje && (
+                          <p className="text-[13px] text-[#637488] line-clamp-2">{contacto.mensaje}</p>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <a href={`mailto:${contacto.email}`} className="text-[#1978e5] text-[13px] block">{contacto.email}</a>
+                        <p className="text-[13px] text-[#637488]">{contacto.celular}</p>
+                        <p className="text-[11px] text-[#9aa5b4] mt-1">{formatFecha(contacto.created_at)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      {["nuevo", "respondido", "archivado"].map((e) => (
+                        <button
+                          key={e}
+                          disabled={contacto.estado === e || updatingId === contacto.id}
+                          onClick={() => updateEstado("contactos", contacto.id, e)}
+                          className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all disabled:opacity-40"
+                          style={
+                            contacto.estado === e
+                              ? { background: "#1978e5", color: "white" }
+                              : { background: "#f0f2f4", color: "#637488" }
+                          }
+                        >
+                          {updatingId === contacto.id ? "..." : e.charAt(0).toUpperCase() + e.slice(1)}
+                        </button>
+                      ))}
+                      <div className="ml-auto flex gap-2">
+                        {contacto.email && (
+                          <a href={`mailto:${contacto.email}`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold"
+                            style={{ background: "#e8f0fd", color: "#1978e5" }}>
+                            <Envelope size={14} /> Email
+                          </a>
+                        )}
+                        {contacto.celular && (
+                          <a
+                            href={`https://wa.me/${contacto.celular.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white"
+                            style={{ background: "#25d366" }}
+                          >
+                            <WhatsappLogo size={14} /> WA
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        )}
+
+        {/* ── USUARIOS ── */}
+        {tab === "usuarios" && (
+          <div className="space-y-4">
+            <div className="relative">
+              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, email, ciudad..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                style={{ border: "1px solid #dce0e5" }}
+              />
+            </div>
+
+            {!stats?.configured ? (
+              <NoSupabaseCard />
+            ) : stats.usuarios.length === 0 ? (
+              <EmptyCard icon={<User size={32} color="#637488" />} text="No hay usuarios registrados" />
+            ) : (
+              <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1px solid #dce0e5" }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr style={{ background: "#f8f9fa", borderBottom: "1px solid #dce0e5" }}>
+                        {["Nombre", "Email", "Teléfono", "Ciudad", "Origen", "Registro"].map((h) => (
+                          <th key={h} className="px-4 py-3 text-left text-[12px] font-bold text-[#637488] uppercase tracking-wide">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.usuarios
+                        .filter((u) =>
+                          !search ||
+                          `${u.nombre} ${u.email} ${u.ciudad}`.toLowerCase().includes(search.toLowerCase())
+                        )
+                        .map((u, i) => (
+                          <tr key={u.id}
+                            style={{ borderBottom: i < stats.usuarios.length - 1 ? "1px solid #f0f2f4" : "none" }}
+                            className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+                                  style={{ background: "linear-gradient(135deg, #1565c0, #42a5f5)" }}>
+                                  {u.nombre?.charAt(0)?.toUpperCase() ?? "?"}
+                                </div>
+                                <span className="font-semibold text-[#111418] text-[13px]">{u.nombre}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <a href={`mailto:${u.email}`} className="text-[#1978e5] text-[13px]">{u.email}</a>
+                            </td>
+                            <td className="px-4 py-3 text-[13px] text-[#637488]">{u.telefono || "-"}</td>
+                            <td className="px-4 py-3 text-[13px] text-[#637488]">{u.ciudad || "-"}</td>
+                            <td className="px-4 py-3">
+                              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                                style={{ background: "#f0f2f4", color: "#637488" }}>
+                                {u.origen || "web"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-[12px] text-[#9aa5b4]">{formatFecha(u.created_at)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Enlace a Telegram */}
+        <div className="mt-8 p-4 rounded-2xl text-center" style={{ background: "#e8f0fd" }}>
+          <p className="text-[13px] text-[#1978e5] font-semibold">
+            📱 Las notificaciones en tiempo real también llegan a{" "}
+            <a href="https://t.me/movelcol_bot" target="_blank" rel="noopener noreferrer"
+              className="underline">Telegram →</a>
+          </p>
+        </div>
+
       </div>
+    </div>
+  );
+}
+
+// ─── Componentes auxiliares ───────────────────────────────────
+function NoSupabaseCard() {
+  return (
+    <div className="bg-white rounded-2xl p-8 text-center" style={{ border: "1px solid #dce0e5" }}>
+      <Database size={40} color="#9aa5b4" className="mx-auto mb-3" />
+      <h3 className="font-bold text-[#111418] text-[16px] mb-2">Base de datos no conectada</h3>
+      <p className="text-[#637488] text-[14px] max-w-sm mx-auto">
+        Configura Supabase para ver los datos aquí. Sigue las instrucciones del archivo{" "}
+        <code className="bg-gray-100 px-1 rounded">supabase-schema.sql</code>.
+      </p>
+    </div>
+  );
+}
+
+function EmptyCard({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="bg-white rounded-2xl p-8 text-center" style={{ border: "1px solid #dce0e5" }}>
+      <div className="mx-auto mb-3 w-12 h-12 flex items-center justify-center">{icon}</div>
+      <p className="text-[#637488] text-[14px]">{text}</p>
     </div>
   );
 }

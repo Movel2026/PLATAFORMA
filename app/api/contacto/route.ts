@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
-    // Backup a Telegram (ocurre siempre, aunque no haya SMTP)
+    // ── 1. Guardar en Supabase ────────────────────────────────
+    if (supabaseConfigured()) {
+      const { error } = await supabaseAdmin.from("contactos").insert({
+        nombre:   data.nombre   ?? "",
+        email:    data.email    ?? "",
+        celular:  data.celular  ?? "",
+        mensaje:  data.mensaje  ?? "",
+        vehiculo: data.vehiculo ?? "",
+        estado:   "nuevo",
+      });
+      if (error) console.error("[Supabase contacto]:", error.message);
+    }
+
+    // ── 2. Backup Telegram ───────────────────────────────────
     try {
       await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/telegram`, {
         method: "POST",
@@ -20,6 +34,7 @@ export async function POST(req: NextRequest) {
       });
     } catch { /* opcional */ }
 
+    // ── 3. Email SMTP (si configurado) ───────────────────────
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.log("📧 [MOVEL] Consulta recibida (sin SMTP):", data);
       return NextResponse.json({ ok: true });
