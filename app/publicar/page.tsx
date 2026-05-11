@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -60,7 +60,7 @@ const modelosPorMarca: Record<string, string[]> = {
   "Otro":         ["Otro modelo"],
 };
 
-const marcas = Object.keys(modelosPorMarca).sort();
+const marcasCuradas = Object.keys(modelosPorMarca).sort();
 const currentYear = new Date().getFullYear();
 const years  = Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);
 const colores = ["Blanco", "Negro", "Plateado", "Gris", "Rojo", "Azul", "Azul oscuro", "Verde", "Café", "Beige", "Amarillo", "Naranja", "Dorado", "Vinotinto", "Otro"];
@@ -167,6 +167,40 @@ export default function PublicarPage() {
   const [submitting, setSubmitting] = useState(false);
   const [docUploads, setDocUploads] = useState({ tarjeta: false, cedula: false, soat: false, tecno: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Catálogo dinámico — 164 marcas / 4,289 modelos del Excel oficial
+  const [allBrands, setAllBrands] = useState<string[]>([]);
+  const [catalogModels, setCatalogModels] = useState<string[]>([]);
+  const [modelSearch, setModelSearch] = useState("");
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  // Cargar todas las marcas del catálogo
+  useEffect(() => {
+    fetch("/api/catalog/brands")
+      .then(r => r.json())
+      .then((d: { todas: string[] }) => setAllBrands(d.todas ?? []));
+  }, []);
+
+  // Cargar modelos del catálogo según marca + búsqueda
+  useEffect(() => {
+    if (!form.marca) { setCatalogModels([]); return; }
+    setLoadingModels(true);
+    const t = setTimeout(() => {
+      fetch(`/api/catalog/lines?brand=${encodeURIComponent(form.marca.toUpperCase())}&q=${encodeURIComponent(modelSearch)}&limit=80`)
+        .then(r => r.json())
+        .then((d: { lines: string[] }) => setCatalogModels(d.lines ?? []))
+        .finally(() => setLoadingModels(false));
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.marca, modelSearch]);
+
+  // Lista combinada de marcas: curadas primero + resto del catálogo
+  const marcas = useMemo(() => {
+    const curatedSet = new Set(marcasCuradas.map(m => m.toUpperCase()));
+    const extras = allBrands.filter(b => !curatedSet.has(b.toUpperCase()));
+    return [...marcasCuradas, ...extras];
+  }, [allBrands]);
 
   // Formulario válido si los campos obligatorios están completos
   const formValid = !!(
@@ -392,14 +426,57 @@ export default function PublicarPage() {
                 {errors.marca && <p className="text-[12px] text-red-500 mt-1">{errors.marca}</p>}
               </div>
 
-              {/* Modelo */}
+              {/* Modelo — combinación: curado + catálogo completo (4,289) + custom */}
               <div>
                 <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Modelo *</label>
-                <select value={form.modelo} onChange={(e) => handleModeloChange(e.target.value)} disabled={!form.marca} className={`${selectClass} disabled:opacity-50`}>
-                  <option value="">{form.marca ? "Seleccionar modelo" : "Selecciona marca primero"}</option>
-                  {form.marca && modelosPorMarca[form.marca]?.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
+
+                {/* Si la marca tiene modelos curados, mostrarlos como botones rápidos */}
+                {form.marca && modelosPorMarca[form.marca] && modelosPorMarca[form.marca].length > 1 && (
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {modelosPorMarca[form.marca].slice(0, 12).map((m) => (
+                      <button
+                        type="button"
+                        key={m}
+                        onClick={() => handleModeloChange(m)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                          form.modelo === m
+                            ? "bg-[#1978e5] text-white"
+                            : "bg-[#f0f2f4] text-[#637488] hover:bg-[#e8f0fd]"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Input combo — escribe o busca en catálogo completo */}
+                <input
+                  type="text"
+                  list={form.marca ? "catalog-models" : undefined}
+                  value={form.modelo}
+                  onChange={(e) => {
+                    handleModeloChange(e.target.value);
+                    setModelSearch(e.target.value);
+                  }}
+                  disabled={!form.marca}
+                  placeholder={form.marca
+                    ? `Escribe o selecciona — ${catalogModels.length} modelos en catálogo`
+                    : "Selecciona marca primero"}
+                  className={`${selectClass} disabled:opacity-50`}
+                />
+                {form.marca && (
+                  <datalist id="catalog-models">
+                    {catalogModels.map((m) => <option key={m} value={m} />)}
+                  </datalist>
+                )}
                 {errors.modelo && <p className="text-[12px] text-red-500 mt-1">{errors.modelo}</p>}
+                {form.marca && form.modelo && (
+                  <p className="text-[11px] text-[#637488] mt-1 flex items-center gap-1">
+                    <span className="text-[#1978e5]">✨</span>
+                    Las especificaciones se autocompletarán con IA si no las tenemos en nuestra base
+                  </p>
+                )}
               </div>
 
               {/* Año */}
@@ -543,6 +620,7 @@ export default function PublicarPage() {
               marca={form.marca}
               modelo={form.modelo}
               version={form.version}
+              ano={form.año}
               onOutputChange={handleSpecsOutput}
               onCleared={() => setAutoSpecs(null)}
             />

@@ -24,6 +24,8 @@ export interface EspecificacionesVehiculoProps {
   modelo: string;
   /** Versión exacta tal como aparece en specs-data (ej: "LT 1.0 Turbo") */
   version: string;
+  /** Año del vehículo — útil para AI fallback */
+  ano?: number | string;
   /**
    * Llamado cuando se auto-completan o editan los datos.
    * Recibe el objeto EspecificacionesTecnicas completo (null si no hay datos) y
@@ -120,10 +122,12 @@ function SpecField({ icon, label, value, loading, locked, type = "text", options
  * - Campos editables cuando no hay datos o el usuario presiona "Editar".
  */
 export function EspecificacionesVehiculo({
-  marca, modelo, version, onOutputChange, onCleared,
+  marca, modelo, version, ano, onOutputChange, onCleared,
 }: EspecificacionesVehiculoProps) {
   const [autoSpecs, setAutoSpecs] = useState<EspecificacionesTecnicas | null>(null);
   const [loading, setLoading]     = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSource, setAiSource]   = useState<"db" | "ai" | null>(null);
   const [editMode, setEditMode]   = useState(false);
   const [output, setOutput]       = useState<SpecsOutput>(EMPTY_OUTPUT);
 
@@ -132,11 +136,12 @@ export function EspecificacionesVehiculo({
   cbRef.current = { onOutputChange, onCleared };
 
   useEffect(() => {
-    const valid = marca && modelo && version && version !== "__otra__";
+    const valid = marca && modelo;
 
     if (!valid) {
       setAutoSpecs(null);
       setLoading(false);
+      setAiSource(null);
       setEditMode(false);
       setOutput(EMPTY_OUTPUT);
       cbRef.current.onCleared?.();
@@ -145,12 +150,17 @@ export function EspecificacionesVehiculo({
 
     setLoading(true);
     setAutoSpecs(null);
+    setAiSource(null);
     setEditMode(false);
 
-    const timer = setTimeout(() => {
-      const found = getEspecificaciones(marca, modelo, version);
-      setAutoSpecs(found);
-      setLoading(false);
+    let cancelled = false;
+
+    // 1) Buscar primero en la base de datos curada
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      const found = version && version !== "__otra__"
+        ? getEspecificaciones(marca, modelo, version)
+        : null;
 
       if (found) {
         const out: SpecsOutput = {
@@ -161,17 +171,80 @@ export function EspecificacionesVehiculo({
           carroceria:  found.carroceria,
           pasajeros:   String(found.pasajeros),
         };
+        setAutoSpecs(found);
+        setAiSource("db");
         setOutput(out);
+        setLoading(false);
         cbRef.current.onOutputChange?.(found, out);
-      } else {
-        setEditMode(true);
-        setOutput(EMPTY_OUTPUT);
-        cbRef.current.onCleared?.();
+        return;
       }
-    }, 750);
 
-    return () => clearTimeout(timer);
-  }, [marca, modelo, version]);
+      // 2) Si no hay en DB curada → consultar Claude AI
+      setAiLoading(true);
+      try {
+        const res = await fetch("/api/specs/auto-fill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ marca, modelo, version, ano }),
+        });
+
+        if (cancelled) return;
+
+        if (res.ok) {
+          const json = await res.json();
+          const s = json.specs ?? {};
+          const aiSpecs: EspecificacionesTecnicas = {
+            motor:       s.motor ?? "",
+            cilindrada:  s.cilindrada ?? "",
+            cilindros:   "",
+            potencia:    s.potencia ?? "",
+            torque:      s.torque ?? "",
+            combustible: s.combustible ?? "",
+            transmision: s.transmision ?? "",
+            traccion:    s.traccion ?? "",
+            carroceria:  s.carroceria ?? "",
+            puertas:     Number(s.puertas) || 4,
+            pasajeros:   Number(s.pasajeros) || 5,
+            frenos:      "",
+            consumo:     s.consumo ?? "",
+            normaEmision: s.normaEmision ?? "",
+          };
+          const out: SpecsOutput = {
+            motor:       aiSpecs.motor,
+            combustible: aiSpecs.combustible,
+            transmision: aiSpecs.transmision,
+            potencia:    aiSpecs.potencia,
+            carroceria:  aiSpecs.carroceria,
+            pasajeros:   String(aiSpecs.pasajeros),
+          };
+          setAutoSpecs(aiSpecs);
+          setAiSource("ai");
+          setOutput(out);
+          cbRef.current.onOutputChange?.(aiSpecs, out);
+        } else {
+          // AI falló → modo manual
+          setEditMode(true);
+          setOutput(EMPTY_OUTPUT);
+          cbRef.current.onCleared?.();
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setEditMode(true);
+          setOutput(EMPTY_OUTPUT);
+        }
+      } finally {
+        if (!cancelled) {
+          setAiLoading(false);
+          setLoading(false);
+        }
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [marca, modelo, version, ano]);
 
   // Propagate manual edits
   const updateField = (key: keyof SpecsOutput, val: string) => {
@@ -185,13 +258,15 @@ export function EspecificacionesVehiculo({
 
   const locked = !!autoSpecs && !editMode;
 
-  const statusText = loading
+  const statusText = aiLoading
+    ? "🤖 Consultando con IA para autocompletar..."
+    : loading
     ? "Consultando base de datos técnica..."
-    : autoSpecs
+    : autoSpecs && aiSource === "db"
     ? `Datos verificados para ${version} · Cambia la versión si tu carro difiere`
-    : !version || version === "__otra__"
-    ? "Selecciona la versión para ver las especificaciones"
-    : "No tenemos datos para esta versión — ingresa los valores manualmente";
+    : autoSpecs && aiSource === "ai"
+    ? `✨ Especificaciones generadas por IA · Verifica y corrige si es necesario`
+    : "Selecciona marca y modelo para ver las especificaciones";
 
   return (
     <div className="bg-white rounded-2xl border border-[#dce0e5] overflow-hidden">
@@ -209,18 +284,28 @@ export function EspecificacionesVehiculo({
 
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Loading badge */}
-          {loading && (
+          {(loading || aiLoading) && (
             <span className="flex items-center gap-1.5 bg-[#e8f0fd] rounded-full px-3 py-1.5">
               <Sparkle size={12} color="#1978e5" weight="fill" className="animate-spin" />
-              <span className="text-[11px] text-[#1978e5] font-bold">Cargando</span>
+              <span className="text-[11px] text-[#1978e5] font-bold">
+                {aiLoading ? "Consultando IA" : "Cargando"}
+              </span>
             </span>
           )}
 
-          {/* Auto-complete badge */}
-          {autoSpecs && !loading && (
+          {/* Auto-complete badge — DB */}
+          {autoSpecs && !loading && aiSource === "db" && (
             <span className="flex items-center gap-1 bg-green-50 border border-green-200 rounded-full px-2.5 py-1.5">
               <CheckCircle size={11} color="#16a34a" weight="fill" />
-              <span className="text-[11px] text-green-700 font-bold">Auto-completado</span>
+              <span className="text-[11px] text-green-700 font-bold">Verificado</span>
+            </span>
+          )}
+
+          {/* AI-generated badge */}
+          {autoSpecs && !loading && aiSource === "ai" && (
+            <span className="flex items-center gap-1 bg-purple-50 border border-purple-200 rounded-full px-2.5 py-1.5">
+              <Sparkle size={11} color="#9333ea" weight="fill" />
+              <span className="text-[11px] text-purple-700 font-bold">IA</span>
             </span>
           )}
 

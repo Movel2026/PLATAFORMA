@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { getVehicleById, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
 import { showToast } from "@/components/Toast";
+import CalculadoraGastos from "@/components/CalculadoraGastos";
 import {
   ArrowLeft, ShareNetwork, Heart, WhatsappLogo,
   Gauge, Gear, Car, Drop, Palette, Star,
@@ -196,6 +197,9 @@ export default function VehicleDetailPage({ params }: Props) {
               <h2 className="text-[18px] font-bold text-[#111418] mb-3">Descripción</h2>
               <p className="text-[15px] text-[#637488] leading-relaxed">{vehicle.descripcion}</p>
             </div>
+
+            {/* Calculadora de gastos — embebida */}
+            <CalculadoraGastos avaluo={vehicle.precio} defaultOpen={false} theme="light" />
           </div>
 
           {/* ── INFO / CTAs (derecha) ── */}
