@@ -3,6 +3,7 @@ import { Space_Grotesk, Noto_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import dynamic from "next/dynamic";
+import { Analytics } from "@vercel/analytics/next";
 const ChatWidget     = dynamic(() => import("@/components/ChatWidget"), { ssr: false });
 const SocialBar      = dynamic(() => import("@/components/SocialBar"),  { ssr: false });
 const ToastContainer = dynamic(() => import("@/components/Toast"),      { ssr: false });
@@ -56,6 +57,7 @@ export default function RootLayout({
         <ChatWidget />
         <SocialBar />
         <ToastContainer />
+        <Analytics />
       </body>
     </html>
   );
