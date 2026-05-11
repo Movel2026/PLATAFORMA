@@ -1,0 +1,47 @@
+{
+  "totalMarcas": 164,
+  "marcasPopulares": 60,
+  "totalLineas": 4289,
+  "top10MarcasConMasLineas": [
+    {
+      "marca": "BMW",
+      "lineas": 419
+    },
+    {
+      "marca": "MERCEDES BENZ",
+      "lineas": 334
+    },
+    {
+      "marca": "RENAULT",
+      "lineas": 245
+    },
+    {
+      "marca": "VOLKSWAGEN",
+      "lineas": 232
+    },
+    {
+      "marca": "CHEVROLET",
+      "lineas": 226
+    },
+    {
+      "marca": "MAZDA",
+      "lineas": 214
+    },
+    {
+      "marca": "AUDI",
+      "lineas": 197
+    },
+    {
+      "marca": "HYUNDAI",
+      "lineas": 182
+    },
+    {
+      "marca": "PEUGEOT",
+      "lineas": 176
+    },
+    {
+      "marca": "KIA",
+      "lineas": 155
+    }
+  ]
+}

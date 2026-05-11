@@ -1,0 +1,23 @@
+[
+  {
+    "rango": "Rango 1",
+    "desde": 0,
+    "hasta": 54057000,
+    "tarifa": 0.017,
+    "descripcion": "Hasta $54,057,000"
+  },
+  {
+    "rango": "Rango 2",
+    "desde": 54057001,
+    "hasta": 121625000,
+    "tarifa": 0.027,
+    "descripcion": "$54,057,001 a $121,625,000"
+  },
+  {
+    "rango": "Rango 3",
+    "desde": 121625001,
+    "hasta": null,
+    "tarifa": 0.037,
+    "descripcion": "Superior a $121,625,000"
+  }
+]

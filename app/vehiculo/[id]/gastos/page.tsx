@@ -7,14 +7,21 @@ import { getVehicleById, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
 import {
   ArrowLeft, Receipt, WhatsappLogo, Info,
-  Car, FileText, Wrench, Drop, Warning
+  Car, FileText, Wrench, Drop, Warning, Calculator
 } from "@phosphor-icons/react";
 
-// ── Cálculo de impuesto de rodamiento Bogotá 2025 ──
-function calcularImpuesto(precio: number): number {
-  if (precio <= 87208000) return precio * 0.015;
-  if (precio <= 174416000) return precio * 0.025;
-  return precio * 0.035;
+// ── Impuesto de Rodamiento — Tarifas OFICIALES 2026 (Min. Transporte) ──
+// Rango 1: hasta $54.057.000 → 1.7%
+// Rango 2: $54.057.001 a $121.625.000 → 2.7%
+// Rango 3: superior a $121.625.000 → 3.7%
+function calcularImpuesto(avaluo: number): { valor: number; tarifa: string; rango: string } {
+  if (avaluo <= 54_057_000) {
+    return { valor: avaluo * 0.017, tarifa: "1.7%", rango: "Rango 1 · hasta $54.057.000" };
+  }
+  if (avaluo <= 121_625_000) {
+    return { valor: avaluo * 0.027, tarifa: "2.7%", rango: "Rango 2 · $54M a $121M" };
+  }
+  return { valor: avaluo * 0.037, tarifa: "3.7%", rango: "Rango 3 · superior a $121.625.000" };
 }
 
 // ── SOAT Colombia 2025 por cilindraje (tarifa anual aprox.) ──
@@ -63,7 +70,8 @@ export default function GastosPage() {
   const precio = vehicle?.precio ?? 85000000;
   const año = vehicle?.año ?? 2021;
 
-  const impuestoAnual = calcularImpuesto(precio);
+  const impuestoData = calcularImpuesto(precio);
+  const impuestoAnual = impuestoData.valor;
   const soatAnual = calcularSOAT(vehicle?.cilindros ?? "4 Cil");
   const tecnomecanica = calcularTecnomecanica(año);
   const mantenimiento = calcularMantenimiento(precio, año);
@@ -71,7 +79,7 @@ export default function GastosPage() {
 
   const resumen = useMemo(() => {
     const items = [
-      { label: "Impuesto de rodamiento", anual: Math.round(impuestoAnual), icon: "🏛️", desc: "Bogotá · Tarifa según avalúo 2025" },
+      { label: "Impuesto de rodamiento", anual: Math.round(impuestoAnual), icon: "🏛️", desc: `Tarifa oficial ${impuestoData.tarifa} · ${impuestoData.rango}` },
       { label: "SOAT", anual: soatAnual, icon: "📋", desc: "Seguro obligatorio de accidentes" },
       ...(tecnomecanica.aplica ? [{ label: "Tecnomecánica", anual: Math.round(tecnomecanica.anual), icon: "🔧", desc: "Vehículo mayor de 5 años · Cada 2 años" }] : []),
       { label: "Mantenimiento general", anual: mantenimiento.total, icon: "⚙️", desc: "Aceite, filtros, llantas, frenos, imprevistos" },

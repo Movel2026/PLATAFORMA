@@ -35,8 +35,8 @@ const navLinks = [
   { label: "Comprar",        href: "/buscar" },
   { label: "Subastas",       href: "/subastas", hot: true },
   { label: "Vender",         href: "/publicar" },
+  { label: "Calculadora",    href: "/calculadora" },
   { label: "Foro",           href: "/foro" },
-  { label: "¿Cómo funciona?", href: "/#como-funciona" },
 ];
 
 export default function Navbar() {
