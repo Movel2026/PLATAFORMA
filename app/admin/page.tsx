@@ -108,6 +108,7 @@ interface TraficoData {
   paginas: { key: string; total: number; value?: number }[];
   dispositivos: { key: string; total: number; value?: number }[];
   paises: { key: string; total: number; value?: number }[];
+  ciudadesCO: { key: string; total: number }[];
   periodo?: { from: string; to: string };
 }
 
@@ -938,28 +939,41 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Países */}
+                    {/* Ciudades Colombia */}
                     <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
                       <h3 className="font-bold text-[#111418] text-[15px] mb-3 flex items-center gap-2">
-                        <Globe size={16} color="#1978e5" /> Países top
+                        🇨🇴 <span>Top ciudades Colombia</span>
                       </h3>
-                      <div className="space-y-2">
-                        {trafico.paises.length > 0 ? trafico.paises.slice(0, 5).map((p, i) => {
-                          const total  = p.total ?? p.value ?? 0;
-                          const maxVal = Math.max(...trafico.paises.map((x) => x.total ?? x.value ?? 0), 1);
-                          const pct    = Math.round((total / maxVal) * 100);
+                      <div className="space-y-2.5">
+                        {trafico.ciudadesCO && trafico.ciudadesCO.length > 0 ? trafico.ciudadesCO.map((c, i) => {
+                          const maxVal = Math.max(...trafico.ciudadesCO.map((x) => x.total), 1);
+                          const pct    = Math.round((c.total / maxVal) * 100);
+                          const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
                           return (
-                            <div key={i} className="flex items-center gap-2">
-                              <span className="text-[13px] w-4 text-[#637488]">{i + 1}</span>
-                              <span className="text-[13px] flex-1 text-[#111418] font-medium">{p.key}</span>
-                              <span className="text-[12px] text-[#637488]">{total.toLocaleString("es-CO")}</span>
-                              <div className="w-16 h-1.5 rounded-full bg-gray-100">
-                                <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: "#1978e5" }} />
+                            <div key={i}>
+                              <div className="flex items-center justify-between text-[13px] mb-1">
+                                <span className="flex items-center gap-1.5">
+                                  <span>{medals[i] ?? `${i + 1}.`}</span>
+                                  <span className="font-semibold text-[#111418]">{c.key}</span>
+                                </span>
+                                <span className="font-bold text-[#1978e5]">{c.total.toLocaleString("es-CO")} visitas</span>
+                              </div>
+                              <div className="h-2 rounded-full bg-gray-100">
+                                <div className="h-2 rounded-full transition-all"
+                                  style={{
+                                    width: `${pct}%`,
+                                    background: i === 0
+                                      ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
+                                      : "linear-gradient(90deg, #1565c0, #42a5f5)",
+                                  }} />
                               </div>
                             </div>
                           );
                         }) : (
-                          <p className="text-[13px] text-[#637488]">Sin datos</p>
+                          <div className="text-center py-4">
+                            <p className="text-[13px] text-[#637488]">Sin visitas desde Colombia aún</p>
+                            <p className="text-[11px] text-[#9aa5b4] mt-1">Los datos aparecen al acumular tráfico</p>
+                          </div>
                         )}
                       </div>
                     </div>

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // 1. Visitas por día (timeseries)
-    const [timeseriesRes, pagesRes, devicesRes, countriesRes] = await Promise.all([
+    const [timeseriesRes, pagesRes, devicesRes, countriesRes, ciudadesRes] = await Promise.all([
       fetch(
         `${baseUrl}/timeseries?projectId=${projectId}&from=${from}&to=${to}&granularity=day&environment=production${teamParam}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -39,19 +39,38 @@ export async function GET(req: NextRequest) {
         `${baseUrl}/devices?projectId=${projectId}&from=${from}&to=${to}&environment=production${teamParam}`,
         { headers: { Authorization: `Bearer ${token}` } }
       ),
-      // 4. Países
+      // 4. Países (top 5)
       fetch(
         `${baseUrl}/countries?projectId=${projectId}&from=${from}&to=${to}&limit=5&environment=production${teamParam}`,
         { headers: { Authorization: `Bearer ${token}` } }
       ),
+      // 5. Ciudades de Colombia (filtradas por CO)
+      fetch(
+        `${baseUrl}/cities?projectId=${projectId}&from=${from}&to=${to}&limit=20&environment=production${teamParam}&filter=%7B%22country%22%3A%22CO%22%7D`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
     ]);
 
-    const [timeseries, pages, devices, countries] = await Promise.all([
+    const [timeseries, pages, devices, countries, ciudadesRaw] = await Promise.all([
       timeseriesRes.ok ? timeseriesRes.json() : null,
       pagesRes.ok      ? pagesRes.json()      : null,
       devicesRes.ok    ? devicesRes.json()    : null,
       countriesRes.ok  ? countriesRes.json()  : null,
+      ciudadesRes.ok   ? ciudadesRes.json()   : null,
     ]);
+
+    // Filtrar solo ciudades colombianas si la API no lo hizo automáticamente
+    const ciudadesCO: { key: string; total: number }[] = (
+      ciudadesRaw?.data ?? ciudadesRaw ?? []
+    )
+      .filter((c: { country?: string; key: string; total?: number; value?: number }) =>
+        !c.country || c.country === "CO" || c.country === "Colombia"
+      )
+      .slice(0, 5)
+      .map((c: { key: string; total?: number; value?: number }) => ({
+        key:   c.key,
+        total: c.total ?? c.value ?? 0,
+      }));
 
     // Calcular totales
     const visitasPorDia: Record<string, number> = {};
@@ -77,6 +96,7 @@ export async function GET(req: NextRequest) {
       paginas:      pages?.data      ?? pages      ?? [],
       dispositivos: devices?.data    ?? devices    ?? [],
       paises:       countries?.data  ?? countries  ?? [],
+      ciudadesCO,
     });
   } catch (err) {
     console.error("[admin/trafico]", err);
