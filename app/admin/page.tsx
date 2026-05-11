@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import MovelPageHeader from "@/components/MovelPageHeader";
 import {
-  Car, CheckCircle, Clock, XCircle, TrendUp, CurrencyCircleDollar,
-  Gavel, MagnifyingGlass, User, ChartBar, Warning, WhatsappLogo,
-  ShieldCheck, Lock, ChatCircle, ArrowClockwise, Spinner,
-  Database, Users, Envelope,
+  Car, TrendUp, Gavel, MagnifyingGlass, User, ChartBar, Warning,
+  WhatsappLogo, ShieldCheck, Lock, ChatCircle, ArrowClockwise,
+  Spinner, Database, Users, Envelope, Globe, DeviceMobile,
+  Desktop, ArrowUp, ArrowDown, Minus,
 } from "@phosphor-icons/react";
 
 // ─── PIN gate ────────────────────────────────────────────────
@@ -100,6 +100,16 @@ interface Usuario {
   id: string; nombre: string; email: string; telefono: string;
   ciudad: string; origen: string; created_at: string;
 }
+interface TraficoData {
+  configured: boolean;
+  totalVisitas: number;
+  totalSesiones: number;
+  visitasPorDia: Record<string, number>;
+  paginas: { key: string; total: number; value?: number }[];
+  dispositivos: { key: string; total: number; value?: number }[];
+  paises: { key: string; total: number; value?: number }[];
+  periodo?: { from: string; to: string };
+}
 
 // ─── Helpers ─────────────────────────────────────────────────
 function formatCOP(n: number) {
@@ -151,13 +161,15 @@ function MiniChart({ data }: { data: Record<string, number> }) {
 }
 
 // ─── Main Dashboard ──────────────────────────────────────────
-type Tab = "resumen" | "publicaciones" | "ofertas" | "contactos" | "usuarios";
+type Tab = "resumen" | "publicaciones" | "ofertas" | "contactos" | "usuarios" | "trafico";
 
 export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
   const [adminPin, setAdminPin] = useState("");
   const [tab, setTab] = useState<Tab>("resumen");
   const [stats, setStats] = useState<StatsData | null>(null);
+  const [trafico, setTrafico] = useState<TraficoData | null>(null);
+  const [loadingTrafico, setLoadingTrafico] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -181,10 +193,26 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchTrafico = useCallback(async (pin: string) => {
+    setLoadingTrafico(true);
+    try {
+      const res = await fetch("/api/admin/trafico", {
+        headers: { "x-admin-pin": pin },
+      });
+      const json = await res.json();
+      setTrafico(json);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingTrafico(false);
+    }
+  }, []);
+
   function handleUnlock(pin: string) {
     setAdminPin(pin);
     setUnlocked(true);
     fetchStats(pin);
+    fetchTrafico(pin);
   }
 
   // Auto-refresh cada 90 segundos
@@ -216,6 +244,7 @@ export default function AdminPage() {
     { id: "ofertas",       label: "Ofertas",       icon: <Gavel size={16} /> },
     { id: "contactos",     label: "Consultas",     icon: <ChatCircle size={16} /> },
     { id: "usuarios",      label: "Usuarios",      icon: <Users size={16} /> },
+    { id: "trafico",       label: "Tráfico SEO",   icon: <Globe size={16} /> },
   ];
 
   const noSupabase = stats && !stats.configured;
@@ -767,6 +796,190 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ── TRÁFICO SEO ── */}
+        {tab === "trafico" && (
+          <div className="space-y-5">
+
+            {/* Sin Vercel token configurado */}
+            {trafico && !trafico.configured && (
+              <div className="bg-white rounded-2xl p-6" style={{ border: "1px solid #dce0e5" }}>
+                <div className="flex items-start gap-3 mb-5">
+                  <Warning size={22} color="#d97706" weight="fill" className="mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-bold text-[#111418] text-[15px] mb-1">Vercel Analytics no configurado</p>
+                    <p className="text-[#637488] text-[13px]">
+                      Agrega estas 3 variables en <strong>Vercel → Settings → Environment Variables</strong> y redeploya:
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { key: "VERCEL_ACCESS_TOKEN", desc: "Vercel → Account Settings → Tokens → Create Token (scope: Full Account)", link: "https://vercel.com/account/tokens" },
+                    { key: "VERCEL_PROJECT_ID", desc: "Vercel → tu proyecto → Settings → General → Project ID" , link: null },
+                    { key: "VERCEL_TEAM_ID", desc: "Vercel → Account Settings → General → Team ID (opcional si tienes team)", link: null },
+                  ].map(({ key, desc, link }) => (
+                    <div key={key} className="p-3 rounded-xl" style={{ background: "#f8f9fa", border: "1px solid #dce0e5" }}>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <code className="text-[#1978e5] text-[13px] font-bold">{key}</code>
+                        {link && <a href={link} target="_blank" rel="noopener noreferrer" className="text-[11px] text-[#1978e5] underline">Obtener →</a>}
+                      </div>
+                      <p className="text-[#637488] text-[12px]">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 p-3 rounded-xl" style={{ background: "#e8f0fd" }}>
+                  <p className="text-[#1978e5] text-[13px] font-semibold">
+                    💡 Mientras tanto, ve el tráfico en{" "}
+                    <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="underline">
+                      Vercel → Analytics →
+                    </a>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Loading */}
+            {loadingTrafico && !trafico && (
+              <div className="bg-white rounded-2xl p-8 text-center" style={{ border: "1px solid #dce0e5" }}>
+                <Spinner size={28} color="#1978e5" className="animate-spin mx-auto mb-3" />
+                <p className="text-[#637488] text-[14px]">Cargando métricas de tráfico...</p>
+              </div>
+            )}
+
+            {/* Datos de tráfico */}
+            {trafico?.configured && (
+              <>
+                {/* KPIs */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: "Visitas únicas (30d)", value: trafico.totalVisitas.toLocaleString("es-CO"), icon: <Globe size={20} />, color: "#1978e5", bg: "#e8f0fd" },
+                    { label: "Sesiones (30d)", value: trafico.totalSesiones.toLocaleString("es-CO"), icon: <TrendUp size={20} />, color: "#16a34a", bg: "#dcfce7" },
+                    { label: "Promedio diario", value: Math.round(trafico.totalVisitas / 30).toLocaleString("es-CO"), icon: <ChartBar size={20} />, color: "#d97706", bg: "#fef3c7" },
+                    { label: "Período", value: "30 días", icon: <Database size={20} />, color: "#7c3aed", bg: "#ede9fe" },
+                  ].map((kpi) => (
+                    <div key={kpi.label} className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                        style={{ background: kpi.bg, color: kpi.color }}>
+                        {kpi.icon}
+                      </div>
+                      <p className="text-[26px] font-black text-[#111418]">{kpi.value}</p>
+                      <p className="text-[12px] text-[#637488]">{kpi.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Gráfico de visitas por día */}
+                <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <TrendUp size={18} color="#1978e5" />
+                      <h3 className="font-bold text-[#111418] text-[15px]">Visitas diarias — últimos 30 días</h3>
+                    </div>
+                    <button onClick={() => fetchTrafico(adminPin)}
+                      className="text-[12px] text-[#1978e5] flex items-center gap-1">
+                      <ArrowClockwise size={12} /> Actualizar
+                    </button>
+                  </div>
+                  <TrafficBarChart data={trafico.visitasPorDia} />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Páginas más vistas */}
+                  <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                    <h3 className="font-bold text-[#111418] text-[15px] mb-4 flex items-center gap-2">
+                      <ChartBar size={16} color="#1978e5" /> Páginas más visitadas
+                    </h3>
+                    <div className="space-y-2">
+                      {trafico.paginas.length > 0 ? trafico.paginas.slice(0, 8).map((p, i) => {
+                        const total  = p.total ?? p.value ?? 0;
+                        const maxVal = Math.max(...trafico.paginas.map((x) => x.total ?? x.value ?? 0), 1);
+                        const pct    = Math.round((total / maxVal) * 100);
+                        const path   = p.key?.replace("https://movelcar.com", "") || p.key || "/";
+                        return (
+                          <div key={i}>
+                            <div className="flex items-center justify-between text-[12px] mb-1">
+                              <span className="text-[#637488] truncate max-w-[200px]" title={path}>{path || "/"}</span>
+                              <span className="font-bold text-[#111418] ml-2">{total.toLocaleString("es-CO")}</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-gray-100">
+                              <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #1565c0, #42a5f5)" }} />
+                            </div>
+                          </div>
+                        );
+                      }) : (
+                        <p className="text-[13px] text-[#637488]">Sin datos disponibles aún</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Dispositivos + Países */}
+                  <div className="space-y-4">
+                    {/* Dispositivos */}
+                    <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                      <h3 className="font-bold text-[#111418] text-[15px] mb-3 flex items-center gap-2">
+                        <DeviceMobile size={16} color="#1978e5" /> Dispositivos
+                      </h3>
+                      <div className="flex gap-3 flex-wrap">
+                        {trafico.dispositivos.length > 0 ? trafico.dispositivos.map((d, i) => {
+                          const total = d.total ?? d.value ?? 0;
+                          const allTotal = trafico.dispositivos.reduce((s, x) => s + (x.total ?? x.value ?? 0), 0) || 1;
+                          const pct = Math.round((total / allTotal) * 100);
+                          const isMobile = d.key?.toLowerCase().includes("mobile") || d.key?.toLowerCase().includes("phone");
+                          return (
+                            <div key={i} className="flex-1 min-w-[80px] text-center p-3 rounded-xl" style={{ background: "#f8f9fa" }}>
+                              {isMobile ? <DeviceMobile size={20} color="#1978e5" className="mx-auto mb-1" /> : <Desktop size={20} color="#637488" className="mx-auto mb-1" />}
+                              <p className="font-bold text-[#111418] text-[16px]">{pct}%</p>
+                              <p className="text-[11px] text-[#637488] capitalize">{d.key}</p>
+                            </div>
+                          );
+                        }) : (
+                          <p className="text-[13px] text-[#637488]">Sin datos</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Países */}
+                    <div className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
+                      <h3 className="font-bold text-[#111418] text-[15px] mb-3 flex items-center gap-2">
+                        <Globe size={16} color="#1978e5" /> Países top
+                      </h3>
+                      <div className="space-y-2">
+                        {trafico.paises.length > 0 ? trafico.paises.slice(0, 5).map((p, i) => {
+                          const total  = p.total ?? p.value ?? 0;
+                          const maxVal = Math.max(...trafico.paises.map((x) => x.total ?? x.value ?? 0), 1);
+                          const pct    = Math.round((total / maxVal) * 100);
+                          return (
+                            <div key={i} className="flex items-center gap-2">
+                              <span className="text-[13px] w-4 text-[#637488]">{i + 1}</span>
+                              <span className="text-[13px] flex-1 text-[#111418] font-medium">{p.key}</span>
+                              <span className="text-[12px] text-[#637488]">{total.toLocaleString("es-CO")}</span>
+                              <div className="w-16 h-1.5 rounded-full bg-gray-100">
+                                <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: "#1978e5" }} />
+                              </div>
+                            </div>
+                          );
+                        }) : (
+                          <p className="text-[13px] text-[#637488]">Sin datos</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Link a Vercel */}
+                <div className="p-4 rounded-2xl text-center" style={{ background: "#e8f0fd" }}>
+                  <p className="text-[13px] text-[#1978e5] font-semibold">
+                    📊 Ver analytics completo en{" "}
+                    <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="underline font-bold">
+                      Vercel Dashboard → Analytics →
+                    </a>
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Enlace a Telegram */}
         <div className="mt-8 p-4 rounded-2xl text-center" style={{ background: "#e8f0fd" }}>
           <p className="text-[13px] text-[#1978e5] font-semibold">
@@ -777,6 +990,69 @@ export default function AdminPage() {
         </div>
 
       </div>
+    </div>
+  );
+}
+
+// ─── Traffic bar chart (30 días) ─────────────────────────────
+function TrafficBarChart({ data }: { data: Record<string, number> }) {
+  const entries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b)).slice(-30);
+  const max = Math.max(...entries.map(([, v]) => v), 1);
+
+  // Comparar primera y segunda mitad para mostrar tendencia
+  const mid   = Math.floor(entries.length / 2);
+  const first = entries.slice(0, mid).reduce((s, [, v]) => s + v, 0);
+  const last  = entries.slice(mid).reduce((s, [, v]) => s + v, 0);
+  const trend = last > first ? "up" : last < first ? "down" : "flat";
+
+  return (
+    <div>
+      <div className="flex items-end gap-1 h-28 mb-2">
+        {entries.map(([day, val]) => {
+          const height = Math.max(4, (val / max) * 112);
+          return (
+            <div key={day} className="flex-1 flex flex-col items-center gap-1 group relative">
+              {/* Tooltip */}
+              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-[#111418] text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                {day.slice(5)}: {val}
+              </div>
+              <div
+                className="w-full rounded-t-sm transition-all"
+                style={{
+                  height: `${height}px`,
+                  background: val >= max * 0.8
+                    ? "linear-gradient(180deg, #16a34a, #22c55e)"
+                    : val >= max * 0.4
+                    ? "linear-gradient(180deg, #1565c0, #42a5f5)"
+                    : "linear-gradient(180deg, #94a3b8, #cbd5e1)",
+                }}
+              />
+            </div>
+          );
+        })}
+        {entries.length === 0 && (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-[13px] text-[#637488]">Aún no hay datos de tráfico registrados</p>
+          </div>
+        )}
+      </div>
+
+      {/* Eje X — fechas inicio/fin */}
+      {entries.length > 0 && (
+        <div className="flex justify-between text-[10px] text-[#637488] mb-3">
+          <span>{entries[0]?.[0]?.slice(5)}</span>
+          <span>{entries[entries.length - 1]?.[0]?.slice(5)}</span>
+        </div>
+      )}
+
+      {/* Tendencia */}
+      {entries.length > 0 && (
+        <div className="flex items-center gap-2 text-[13px]">
+          {trend === "up"   && <><ArrowUp size={14} color="#16a34a" /><span className="text-[#16a34a] font-semibold">Tráfico en aumento vs quincena anterior</span></>}
+          {trend === "down" && <><ArrowDown size={14} color="#dc2626" /><span className="text-[#dc2626] font-semibold">Tráfico en descenso vs quincena anterior</span></>}
+          {trend === "flat" && <><Minus size={14} color="#637488" /><span className="text-[#637488] font-semibold">Tráfico estable</span></>}
+        </div>
+      )}
     </div>
   );
 }
