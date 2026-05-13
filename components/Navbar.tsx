@@ -3,46 +3,32 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { MagnifyingGlass, List, X, WhatsappLogo, UserCircle } from "@phosphor-icons/react";
+import {
+  List, X, WhatsappLogo, SignIn,
+  Gavel, Calculator, ChatsCircle,
+} from "@phosphor-icons/react";
+import { MovelLogo } from "./MovelLogo";
+import { useCursorGlow } from "@/lib/hooks/useCursorGlow";
 
-function MovelLogo() {
-  return (
-    <svg width="120" height="36" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MOVEL">
-      <defs>
-        <linearGradient id="movel-grad" x1="0" y1="0" x2="120" y2="36" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#1565c0" />
-          <stop offset="55%" stopColor="#1978e5" />
-          <stop offset="100%" stopColor="#42a5f5" />
-        </linearGradient>
-      </defs>
-      <text x="0" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="url(#movel-grad)">M</text>
-      <g>
-        <text x="23" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="url(#movel-grad)">O</text>
-        <circle cx="36" cy="16" r="7" fill="#0d1b2e" opacity="0.85" />
-        <circle cx="36" cy="16" r="7" fill="none" stroke="white" strokeWidth="1.2" />
-        <line x1="36" y1="16" x2="40.5" y2="10.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="36" cy="16" r="1.2" fill="white" />
-        <line x1="29.5" y1="16" x2="31" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
-        <line x1="36" y1="9.5" x2="36" y2="11" stroke="white" strokeWidth="1" strokeLinecap="round" />
-        <line x1="42.5" y1="16" x2="41" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
-      </g>
-      <text x="51" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="url(#movel-grad)">VEL</text>
-    </svg>
-  );
-}
+// Primario (peso visual fuerte): Comprar · Vender
+const navPrimary = [
+  { label: "Comprar", href: "/buscar"   },
+  { label: "Vender",  href: "/publicar" },
+];
 
-const navLinks = [
-  { label: "Comprar",        href: "/buscar" },
-  { label: "Subastas",       href: "/subastas", hot: true },
-  { label: "Vender",         href: "/publicar" },
-  { label: "Calculadora",    href: "/calculadora" },
-  { label: "Foro",           href: "/foro" },
+// Secundario
+const navSecondary = [
+  { label: "Subastas",    href: "/subastas",    icon: Gavel,        hot: true },
+  { label: "Calculadora", href: "/calculadora", icon: Calculator,   hot: false },
+  { label: "Foro",        href: "/foro",        icon: ChatsCircle,  hot: false },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const glowPublicar = useCursorGlow();
+  const glowLogin    = useCursorGlow();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -50,75 +36,88 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Páginas con su propio header — ocultar Navbar (hooks ya llamados arriba)
-  if (
-    pathname.startsWith("/buscar") ||
-    pathname.startsWith("/publicar") ||
-    pathname.startsWith("/subastas") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/foro") ||
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/perfil")
-  ) return null;
+  // Ocultar solo en admin/auth
+  if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return null;
 
   return (
-    <nav className={`bg-white border-b border-[#dce0e5] sticky top-0 z-50 transition-all duration-300 ${scrolled ? "navbar-scrolled border-transparent" : ""}`}>
+    <nav
+      className="sticky top-0 z-50 bg-movel-gradient-dark border-b border-movel-400/15 transition-shadow duration-300"
+      style={{ boxShadow: scrolled ? "0 4px 24px rgba(5,14,38,0.4)" : "none" }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-[68px]">
+
           {/* Logo */}
-          <Link href="/" className="flex items-center flex-shrink-0">
-            <MovelLogo />
+          <Link href="/" className="flex items-center flex-shrink-0 pr-2">
+            <MovelLogo variant="white" size={36} />
           </Link>
 
-          {/* Desktop links */}
+          {/* Desktop nav primario + secundario */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`relative px-4 py-2 rounded-lg text-[15px] font-semibold transition-all duration-200 ${
-                  pathname === link.href
-                    ? "text-[#1978e5] bg-[#e8f0fd]"
-                    : "text-[#637488] hover:text-[#111418] hover:bg-[#f0f2f4]"
-                }`}
-              >
-                {link.label}
-                {link.hot && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse-red" />
-                )}
-              </Link>
-            ))}
+            {navPrimary.map((link) => {
+              const active = pathname === link.href || pathname.startsWith(link.href + "/");
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative px-5 py-2.5 rounded-xl text-[15px] font-bold tracking-tight transition-all duration-200 ${
+                    active
+                      ? "text-white bg-white/15"
+                      : "text-white/95 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            <span className="w-px h-5 bg-white/15 mx-2" aria-hidden />
+
+            {navSecondary.map((link) => {
+              const active = pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative px-3 py-2 rounded-lg text-[14px] font-medium transition-all duration-200 ${
+                    active ? "text-white" : "text-white/65 hover:text-white"
+                  }`}
+                >
+                  {link.label}
+                  {link.hot && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-sunset rounded-full animate-pulse-red" />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Desktop right */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/buscar"
-              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[#f0f2f4] transition-colors"
-              title="Buscar vehículos"
-            >
-              <MagnifyingGlass size={20} color="#637488" />
-            </Link>
-            <Link
-              href="/perfil"
-              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[#f0f2f4] transition-colors"
-              title="Mi cuenta"
-            >
-              <UserCircle size={22} color="#637488" weight="regular" />
-            </Link>
+          {/* Desktop derecha */}
+          <div className="hidden md:flex items-center gap-2.5">
             <a
               href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20quisiera%20hablar%20con%20un%20asesor"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-[#25d366] text-white rounded-lg text-[14px] font-semibold hover:bg-[#20b858] transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#25d366] text-white rounded-xl text-[13px] font-bold hover:bg-[#20b858] transition-colors shadow-sm"
+              title="Hablar con un asesor por WhatsApp"
             >
               <WhatsappLogo size={16} weight="fill" />
-              Hablar con asesor
+              <span className="hidden lg:inline">Asesor</span>
             </a>
+
+            <Link
+              href="/auth"
+              {...glowLogin}
+              className="cursor-glow cursor-glow-dark flex items-center gap-2 px-5 py-2.5 border-2 border-white/40 text-white rounded-xl text-[14px] font-bold hover:bg-white/10 hover:border-white/70 transition-all"
+            >
+              <SignIn size={17} weight="bold" />
+              Iniciar sesión
+            </Link>
+
             <Link
               href="/publicar"
-              className="px-5 py-2.5 text-white rounded-lg text-[14px] font-bold transition-all shadow-sm hover:shadow-md hover:opacity-90 interactive"
-              style={{ background: "linear-gradient(135deg, #1565c0 0%, #1978e5 55%, #42a5f5 100%)" }}
+              {...glowPublicar}
+              className="cursor-glow btn-sky text-[14px] !py-2.5 !px-5 !rounded-xl"
             >
               Publicar vehículo
             </Link>
@@ -126,42 +125,66 @@ export default function Navbar() {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#f0f2f4] transition-colors"
+            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
           >
-            {mobileOpen ? <X size={24} color="#111418" /> : <List size={24} color="#111418" />}
+            {mobileOpen ? <X size={24} color="white" /> : <List size={24} color="white" />}
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-[#dce0e5] bg-white/95 backdrop-blur-lg px-4 py-4 space-y-1 animate-fade-in-down">
-          {navLinks.map((link) => (
+        <div className="md:hidden border-t border-white/10 bg-night/95 backdrop-blur-lg px-4 py-4 space-y-1 animate-fade-in-down">
+          {navPrimary.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-between px-4 py-3 rounded-lg text-[15px] font-semibold text-[#111418] hover:bg-[#f0f2f4] transition-colors"
+              className="flex items-center justify-between px-4 py-3.5 rounded-xl text-[16px] font-bold text-white hover:bg-white/10 transition-colors"
             >
               {link.label}
-              {link.hot && <span className="badge-live">En vivo</span>}
             </Link>
           ))}
-          <div className="pt-3 border-t border-[#dce0e5] flex flex-col gap-2">
+          <div className="h-px bg-white/10 my-2" />
+          {navSecondary.map((link) => (
             <Link
-              href="/perfil"
+              key={link.href}
+              href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg text-[15px] font-semibold text-[#111418] hover:bg-[#f0f2f4] transition-colors"
+              className="flex items-center justify-between px-4 py-3 rounded-lg text-[14px] font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors"
             >
-              <UserCircle size={20} color="#637488" />
-              Mi cuenta
+              <span className="flex items-center gap-2.5">
+                <link.icon size={16} weight="regular" />
+                {link.label}
+              </span>
+              {link.hot && <span className="badge-live">Live</span>}
+            </Link>
+          ))}
+          <div className="pt-3 mt-2 border-t border-white/10 flex flex-col gap-2.5">
+            <a
+              href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20quisiera%20hablar%20con%20un%20asesor"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-[#25d366] text-white rounded-xl text-[14px] font-bold hover:bg-[#20b858] transition-colors"
+            >
+              <WhatsappLogo size={18} weight="fill" />
+              Hablar con asesor
+            </a>
+            <Link
+              href="/auth"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center gap-2 py-3 border-2 border-white/40 text-white rounded-xl text-[14px] font-bold hover:bg-white/10 transition-colors"
+            >
+              <SignIn size={18} weight="bold" />
+              Iniciar sesión
             </Link>
             <Link
               href="/publicar"
               onClick={() => setMobileOpen(false)}
-              className="block w-full text-center py-3 text-white rounded-lg font-bold interactive"
-              style={{ background: "linear-gradient(135deg, #1565c0 0%, #1978e5 55%, #42a5f5 100%)" }}
+              className="btn-sky block w-full text-center !py-3"
             >
               Publicar vehículo
             </Link>

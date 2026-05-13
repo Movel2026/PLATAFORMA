@@ -8,6 +8,7 @@ import { getVehicleById, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
 import { showToast } from "@/components/Toast";
 import CalculadoraGastos from "@/components/CalculadoraGastos";
+import CalculadoraFinanciacion from "@/components/CalculadoraFinanciacion";
 import {
   ArrowLeft, ShareNetwork, Heart, WhatsappLogo,
   Gauge, Gear, Car, Drop, Palette, Star,
@@ -83,11 +84,11 @@ export default function VehicleDetailPage({ params }: Props) {
       {/* ── BREADCRUMB ── */}
       <div className="bg-white border-b border-[#dce0e5] py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-[13px] text-[#637488]">
-          <Link href="/" className="hover:text-[#1978e5] flex items-center gap-1">
+          <Link href="/" className="hover:text-[#0B1E4E] flex items-center gap-1">
             <ArrowLeft size={14} /> Inicio
           </Link>
           <span>/</span>
-          <Link href="/buscar" className="hover:text-[#1978e5]">Vehículos</Link>
+          <Link href="/buscar" className="hover:text-[#0B1E4E]">Vehículos</Link>
           <span>/</span>
           <span className="text-[#111418] font-semibold">{vehicle.titulo}</span>
         </div>
@@ -169,7 +170,7 @@ export default function VehicleDetailPage({ params }: Props) {
                     key={i}
                     onClick={() => setCurrentPhoto(i)}
                     className={`relative flex-shrink-0 w-20 h-16 rounded-xl overflow-hidden border-2 transition-all ${
-                      i === currentPhoto ? "border-[#1978e5] scale-105" : "border-transparent opacity-60 hover:opacity-100"
+                      i === currentPhoto ? "border-[#0B1E4E] scale-105" : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
                     <Image src={foto} alt="" fill className="object-cover" sizes="80px" />
@@ -184,7 +185,7 @@ export default function VehicleDetailPage({ params }: Props) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {specs.map((s) => (
                   <div key={s.label} className="bg-[#f0f2f4] rounded-xl p-3 text-center">
-                    <div className="flex justify-center text-[#1978e5] mb-1">{s.icon}</div>
+                    <div className="flex justify-center text-[#0B1E4E] mb-1">{s.icon}</div>
                     <p className="text-[11px] text-[#637488] uppercase tracking-wide">{s.label}</p>
                     <p className="text-[14px] font-bold text-[#111418] mt-0.5">{s.value}</p>
                   </div>
@@ -198,7 +199,16 @@ export default function VehicleDetailPage({ params }: Props) {
               <p className="text-[15px] text-[#637488] leading-relaxed">{vehicle.descripcion}</p>
             </div>
 
-            {/* Calculadora de gastos — embebida */}
+            {/* Financiación — desplegada por defecto (prioridad alta) */}
+            <CalculadoraFinanciacion
+              precio={vehicle.precio}
+              vehicleId={vehicle.id}
+              whatsapp={vehicle.whatsapp}
+              titulo={vehicle.titulo}
+              defaultOpen={true}
+            />
+
+            {/* Calculadora de gastos — embebida (colapsada por defecto) */}
             <CalculadoraGastos avaluo={vehicle.precio} defaultOpen={false} theme="light" />
           </div>
 
@@ -231,7 +241,7 @@ export default function VehicleDetailPage({ params }: Props) {
                 <p className="text-[32px] font-black text-[#111418]">{formatCOP(vehicle.precio)}</p>
                 {vehicle.precioFinanciado && (
                   <p className="text-[14px] text-[#637488] mt-1">
-                    o desde <strong className="text-[#1978e5]">{formatCOP(vehicle.precioFinanciado)}/mes</strong> con financiamiento
+                    o desde <strong className="text-[#0B1E4E]">{formatCOP(vehicle.precioFinanciado)}/mes</strong> con financiamiento
                   </p>
                 )}
               </div>
@@ -248,7 +258,7 @@ export default function VehicleDetailPage({ params }: Props) {
                 </a>
                 <Link
                   href={`/vehiculo/${vehicle.id}/financiamiento`}
-                  className="flex items-center justify-center gap-2 w-full h-12 bg-[#1978e5] text-white rounded-xl font-bold text-[15px] hover:bg-[#1565c0] transition-colors"
+                  className="flex items-center justify-center gap-2 w-full h-12 bg-[#0B1E4E] text-white rounded-xl font-bold text-[15px] hover:bg-[#050E26] transition-colors"
                 >
                   <CurrencyCircleDollar size={20} />
                   Obtener financiamiento
@@ -268,7 +278,7 @@ export default function VehicleDetailPage({ params }: Props) {
                 <h3 className="text-[16px] font-bold text-[#111418]">Historial del vehículo</h3>
                 <Link
                   href={`/vehiculo/${vehicle.id}/historial`}
-                  className="text-[13px] font-bold text-[#1978e5] hover:underline"
+                  className="text-[13px] font-bold text-[#0B1E4E] hover:underline"
                 >
                   Ver completo →
                 </Link>
@@ -317,7 +327,7 @@ export default function VehicleDetailPage({ params }: Props) {
                 className="w-full flex items-center justify-between p-5 hover:bg-[#f8f9fa] transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}>
                     <Tag size={20} color="white" weight="fill" />
                   </div>
                   <div className="text-left">
@@ -325,7 +335,7 @@ export default function VehicleDetailPage({ params }: Props) {
                     <p className="text-[12px] text-[#637488]">Propón tu precio al vendedor</p>
                   </div>
                 </div>
-                <span className="text-[#1978e5] font-bold text-[20px]">{showOffer ? "−" : "+"}</span>
+                <span className="text-[#0B1E4E] font-bold text-[20px]">{showOffer ? "−" : "+"}</span>
               </button>
 
               {showOffer && (
@@ -335,13 +345,13 @@ export default function VehicleDetailPage({ params }: Props) {
                       <CheckCircle size={48} color="#16a34a" weight="fill" className="mx-auto mb-3" />
                       <p className="text-[16px] font-bold text-[#111418] mb-1">¡Oferta enviada!</p>
                       <p className="text-[13px] text-[#637488]">El vendedor recibirá tu propuesta. Te contactaremos pronto.</p>
-                      <button onClick={() => { setOfferSent(false); setShowOffer(false); }} className="mt-4 text-[13px] text-[#1978e5] font-semibold hover:underline">
+                      <button onClick={() => { setOfferSent(false); setShowOffer(false); }} className="mt-4 text-[13px] text-[#0B1E4E] font-semibold hover:underline">
                         Cerrar
                       </button>
                     </div>
                   ) : (
                     <div className="pt-4 space-y-3">
-                      <div className="bg-[#e8f0fd] rounded-xl px-4 py-2.5 text-[13px] text-[#1978e5] font-semibold">
+                      <div className="bg-[#e8f0fd] rounded-xl px-4 py-2.5 text-[13px] text-[#0B1E4E] font-semibold">
                         Precio publicado: {formatCOP(vehicle.precio)}
                       </div>
 
@@ -399,7 +409,7 @@ export default function VehicleDetailPage({ params }: Props) {
                         onClick={handleOffer}
                         disabled={!offerAmount || !offerName || !offerPhone || offerLoading}
                         className="w-full py-3.5 rounded-xl font-bold text-[15px] text-white transition-all interactive disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}
+                        style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}
                       >
                         {offerLoading ? "Enviando..." : "Enviar oferta"}
                       </button>
@@ -414,8 +424,8 @@ export default function VehicleDetailPage({ params }: Props) {
             </div>
 
             {/* Trust badges */}
-            <div className="bg-[#e8f0fd] rounded-2xl p-5 border border-[#1978e5]/20">
-              <p className="text-[13px] font-bold text-[#1978e5] mb-3 uppercase tracking-wide">Compra con confianza</p>
+            <div className="bg-[#e8f0fd] rounded-2xl p-5 border border-[#0B1E4E]/20">
+              <p className="text-[13px] font-bold text-[#0B1E4E] mb-3 uppercase tracking-wide">Compra con confianza</p>
               <div className="space-y-2">
                 {["Precio fijo, sin regateo", "Documentos al día garantizados", "Entrega en 48 horas"].map((t) => (
                   <div key={t} className="flex items-center gap-2">
@@ -450,7 +460,7 @@ export default function VehicleDetailPage({ params }: Props) {
         <button
           onClick={() => { setShowOffer(true); window.scrollTo({ top: 9999, behavior: "smooth" }); }}
           className="flex-1 flex items-center justify-center gap-2 h-12 text-white rounded-xl font-bold text-[14px] transition-colors"
-          style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}
+          style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}
         >
           <Tag size={18} weight="fill" />
           Hacer oferta
