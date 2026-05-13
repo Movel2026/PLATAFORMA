@@ -2,18 +2,53 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { Star, MapPin, Gauge, Gear, Heart, Images, ShieldCheck } from "@phosphor-icons/react";
+import { useState, useEffect } from "react";
+import { Star, MapPin, Gauge, Gear, Heart, Images, ShieldCheck, SignIn, X } from "@phosphor-icons/react";
 import { formatCOP, Vehicle } from "@/lib/mock-data";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
 }
 
+// Helper simple para detectar si hay sesión (lee de localStorage, MVP)
+function isLoggedIn(): boolean {
+  if (typeof window === "undefined") return false;
+  return !!localStorage.getItem("movel_user");
+}
+
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
   const [liked, setLiked] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [authed, setAuthed] = useState(false);
 
-  // Cursor glow handler inline (sin importar el hook para mantener este componente ligero)
+  // Cargar estado de favoritos del localStorage
+  useEffect(() => {
+    setAuthed(isLoggedIn());
+    if (typeof window !== "undefined") {
+      const favs = JSON.parse(localStorage.getItem("movel_favs") || "[]");
+      setLiked(favs.includes(vehicle.id));
+    }
+  }, [vehicle.id]);
+
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!authed) {
+      setShowAuthPrompt(true);
+      return;
+    }
+    const next = !liked;
+    setLiked(next);
+    if (typeof window !== "undefined") {
+      const favs = JSON.parse(localStorage.getItem("movel_favs") || "[]");
+      const updated = next
+        ? [...new Set([...favs, vehicle.id])]
+        : favs.filter((id: string) => id !== vehicle.id);
+      localStorage.setItem("movel_favs", JSON.stringify(updated));
+    }
+  };
+
+  // Cursor glow handler
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
@@ -70,10 +105,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
 
       {/* Botón corazón — flotante sobre la card */}
       <button
-        onClick={(e) => {
-          e.preventDefault();
-          setLiked(!liked);
-        }}
+        onClick={handleLikeClick}
         className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-md hover:scale-110 active:scale-95 transition-all"
         aria-label={liked ? "Quitar de favoritos" : "Guardar favorito"}
         style={{ top: "44px" }}
@@ -145,6 +177,54 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           </div>
         </div>
       </Link>
+
+      {/* ── Modal: requiere login para guardar favoritos ── */}
+      {showAuthPrompt && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-fade-in"
+          onClick={(e) => { e.stopPropagation(); setShowAuthPrompt(false); }}
+        >
+          <div
+            className="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl animate-scale-bounce relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowAuthPrompt(false)}
+              className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-cloud transition-colors"
+              aria-label="Cerrar"
+            >
+              <X size={20} color="#7A8195" />
+            </button>
+
+            <div className="w-14 h-14 rounded-2xl bg-[#FFE8DC] flex items-center justify-center mb-4">
+              <Heart size={28} color="#FF6B3D" weight="fill" />
+            </div>
+
+            <h3 className="font-display text-[22px] text-movel-900 mb-2">
+              Guarda tus favoritos
+            </h3>
+            <p className="text-[14px] text-mute leading-relaxed mb-5">
+              Crea una cuenta o inicia sesión para guardar este carro en tus favoritos y recibir alertas de cambios de precio.
+            </p>
+
+            <div className="flex flex-col gap-2.5">
+              <Link
+                href={`/auth?return=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`}
+                className="w-full flex items-center justify-center gap-2 py-3 btn-primary text-[14px] !rounded-xl"
+              >
+                <SignIn size={17} weight="bold" />
+                Iniciar sesión
+              </Link>
+              <Link
+                href={`/auth?modo=registro&return=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`}
+                className="w-full text-center py-3 border-2 border-movel-900 text-movel-900 font-bold rounded-xl text-[14px] hover:bg-movel-50 transition-colors"
+              >
+                Crear cuenta gratis
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

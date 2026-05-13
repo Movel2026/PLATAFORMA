@@ -56,10 +56,10 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Display class para titulares (Archivo Black italic) */
+/* Display class para titulares (Archivo Black) */
 .font-display {
   font-family: var(--font-archivo-black), Arial Black, sans-serif;
-  font-style: italic;
+  font-style: normal;
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1.05;

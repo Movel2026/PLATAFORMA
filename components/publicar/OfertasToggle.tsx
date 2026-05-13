@@ -31,8 +31,8 @@ export function OfertasToggle({ value, onChange, disabled = false }: OfertasTogg
         disabled
           ? "opacity-50 cursor-not-allowed border-[#dce0e5] bg-[#f8f9fa]"
           : value
-          ? "cursor-pointer border-[#1978e5] bg-[#e8f0fd]"
-          : "cursor-pointer border-[#dce0e5] bg-[#f8f9fa] hover:border-[#1978e5]/40",
+          ? "cursor-pointer border-[#0B1E4E] bg-[#e8f0fd]"
+          : "cursor-pointer border-[#dce0e5] bg-[#f8f9fa] hover:border-[#0B1E4E]/40",
       ].join(" ")}
     >
       {/* ── Row ── */}
@@ -41,7 +41,7 @@ export function OfertasToggle({ value, onChange, disabled = false }: OfertasTogg
         <div className="flex items-start gap-3">
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-              value && !disabled ? "bg-[#1978e5]" : "bg-[#dce0e5]"
+              value && !disabled ? "bg-[#0B1E4E]" : "bg-[#dce0e5]"
             }`}
           >
             <Tag size={18} color="white" weight="fill" />
@@ -64,7 +64,7 @@ export function OfertasToggle({ value, onChange, disabled = false }: OfertasTogg
           aria-checked={value}
           aria-disabled={disabled}
           className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${
-            value && !disabled ? "bg-[#1978e5]" : "bg-[#cbd5e1]"
+            value && !disabled ? "bg-[#0B1E4E]" : "bg-[#cbd5e1]"
           }`}
         >
           <span
@@ -78,8 +78,8 @@ export function OfertasToggle({ value, onChange, disabled = false }: OfertasTogg
       {/* ── Expanded confirmation ── */}
       {value && !disabled && (
         <div className="mt-3 flex items-center gap-2 bg-white/70 rounded-lg px-3 py-2">
-          <CheckCircle size={14} color="#1978e5" weight="fill" />
-          <p className="text-[12px] text-[#1978e5] font-semibold">
+          <CheckCircle size={14} color="#0B1E4E" weight="fill" />
+          <p className="text-[12px] text-[#0B1E4E] font-semibold">
             Aparecerá el botón &quot;Hacer una oferta&quot; en tu publicación.
           </p>
         </div>

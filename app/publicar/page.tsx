@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
   UploadSimple, X, CheckCircle, Image as ImageIcon,
   Car, FileText, CurrencyCircleDollar, ClipboardText,
-  Warning, Info,
+  Warning, Info, Handshake, WhatsappLogo,
 } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
 import { getVersiones, EspecificacionesTecnicas } from "@/lib/specs-data";
@@ -136,7 +137,11 @@ function DraggablePhotoGrid({ photos, onRemove, onReorder }: {
 }
 
 // ── Página principal ──────────────────────────────────────────────────────
-export default function PublicarPage() {
+function PublicarContent() {
+  const searchParams = useSearchParams();
+  const modo = searchParams.get("modo"); // "gratis" | "360" | null
+  const isServicioIntegral = modo === "360";
+
   // ── Estado del formulario ──
   const [form, setForm] = useState({
     // Identificación
@@ -329,11 +334,59 @@ export default function PublicarPage() {
     e.preventDefault();
     if (!validate()) return;
     setSubmitting(true);
+
+    // ── Modo Servicio Integral 360°: enviar a WhatsApp en lugar de publicar ──
+    if (isServicioIntegral) {
+      const ultimo = (form.placa || "").replace(/\D/g, "").slice(-1) || "?";
+      const msg = `Hola MOVEL, quiero el *Servicio Integral 360°* para vender mi vehículo.
+
+🚗 *Vehículo*
+• Marca: ${form.marca}
+• Modelo: ${form.modelo}${form.version ? ` (${form.version})` : ""}
+• Año: ${form.año}
+• Color: ${form.color || "—"}
+• Kilometraje: ${form.kilometraje} km
+• Placa (último dígito): ••• • ${ultimo}
+
+⚙️ *Especificaciones*
+• Carrocería: ${form.carroceria || "—"}
+• Motor: ${form.motor || "—"}
+• Combustible: ${form.combustible || "—"}
+• Transmisión: ${form.transmision || "—"}
+• Potencia: ${form.potencia || "—"}
+
+💰 *Precio esperado*: $${form.precio}
+🏙️ *Ciudad*: ${form.ciudad || "—"}
+📷 *Fotos cargadas*: ${photos.length}
+${form.descripcion ? `\n📝 *Descripción*\n${form.descripcion}\n` : ""}
+👤 *Contacto*
+• Nombre: ${form.nombre}
+• Celular: ${form.celular}
+• Email: ${form.email}
+
+Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, traspaso) por la comisión del 3%.`;
+
+      const waLink = `https://wa.me/573175737083?text=${encodeURIComponent(msg)}`;
+      // También notificar a Movel internamente (para que tengan el lead aunque WA falle)
+      try {
+        await fetch("/api/publicar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, totalFotos: photos.length, modo: "360" }),
+        });
+      } catch { /* swallow */ }
+      window.open(waLink, "_blank");
+      setSubmitting(false);
+      setShowModal(true);
+      return;
+    }
+
+    // ── Modo normal (publica gratis): API publicar ──
     try {
       const res = await fetch("/api/publicar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, totalFotos: photos.length }),
+        body: JSON.stringify({ ...form, totalFotos: photos.length, modo: "gratis" }),
       });
       if (res.ok) setShowModal(true);
     } catch {
@@ -361,20 +414,38 @@ export default function PublicarPage() {
     <div className="min-h-screen bg-[#f8f9fa]">
 
       {/* Header banner */}
-      <div
-        className="text-white py-8 px-4"
-        style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #050E26 60%, #0B1E4E 100%)" }}
-      >
+      <div className="text-white py-8 px-4 bg-movel-gradient-dark">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
-              <Car size={24} color="white" weight="fill" />
+              {isServicioIntegral ? <Handshake size={24} color="white" weight="fill" /> : <Car size={24} color="white" weight="fill" />}
             </div>
-            <h1 className="text-[30px] font-black tracking-tight">Publicar vehículo</h1>
+            <div className="flex-1">
+              <h1 className="font-display text-[26px] md:text-[30px] text-white leading-tight">
+                {isServicioIntegral ? "Servicio Integral 360°" : "Publicar vehículo"}
+              </h1>
+              {isServicioIntegral && (
+                <span className="inline-block mt-1 text-[11px] font-bold uppercase tracking-[0.12em] bg-sky/90 text-white px-2.5 py-0.5 rounded-full">
+                  Nosotros lo hacemos · 3% comisión
+                </span>
+              )}
+            </div>
           </div>
-          <p className="text-white/70 text-[15px] ml-14">
-            Completa el formulario. Nuestro equipo revisará tu publicación y te contactará en menos de 24 horas.
-          </p>
+          {isServicioIntegral ? (
+            <div className="ml-14 mt-3 p-4 bg-white/10 border border-movel-400/30 rounded-xl backdrop-blur-sm">
+              <p className="text-white/90 text-[14px] leading-relaxed mb-2">
+                <strong className="text-white">Cuéntanos sobre tu carro.</strong> Cuando completes el formulario y le des "Enviar",
+                te llevamos a WhatsApp con un mensaje listo para que nuestro equipo te contacte y agendemos el peritaje + fotos profesionales.
+              </p>
+              <p className="text-[12px] text-movel-200">
+                ⚡ Esto <strong>no publica</strong> tu carro automáticamente — Movel se encarga de todo el proceso.
+              </p>
+            </div>
+          ) : (
+            <p className="text-white/70 text-[15px] ml-14">
+              Completa el formulario. Nuestro equipo revisará tu publicación y te contactará en menos de 24 horas.
+            </p>
+          )}
         </div>
       </div>
 
@@ -642,7 +713,7 @@ export default function PublicarPage() {
                   <OfertasToggle
                     value={form.accept_offers}
                     onChange={(v) => setF("accept_offers", v)}
-                    disabled={!formValid}
+                    disabled={!form.marca || !form.modelo || !form.precio}
                   />
                 </div>
               </div>
@@ -883,17 +954,26 @@ export default function PublicarPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full h-14 text-white rounded-2xl font-black text-[17px] transition-all disabled:opacity-60 shadow-lg hover:opacity-90 interactive"
-            style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}
+            className={`w-full h-14 text-white rounded-2xl font-black text-[16px] md:text-[17px] transition-all disabled:opacity-60 shadow-lg hover:opacity-90 interactive flex items-center justify-center gap-2.5 ${
+              isServicioIntegral ? "bg-[#25d366] hover:bg-[#20b858]" : "bg-movel-gradient"
+            }`}
           >
-            {submitting ? "Enviando publicación..." : "Publicar mi vehículo →"}
+            {isServicioIntegral && !submitting && <WhatsappLogo size={22} weight="fill" />}
+            {submitting
+              ? (isServicioIntegral ? "Abriendo WhatsApp..." : "Enviando publicación...")
+              : (isServicioIntegral ? "Enviar a Movel por WhatsApp →" : "Publicar mi vehículo →")}
           </button>
 
           <p className="text-center text-[13px] text-[#7A8195]">
-            Al publicar aceptas nuestros{" "}
-            <a href="https://wa.me/573175737083?text=Quiero%20información%20sobre%20los%20términos%20de%20MOVEL" target="_blank" rel="noopener noreferrer" className="text-[#0B1E4E] hover:underline">
-              Términos y Condiciones
-            </a>.
+            {isServicioIntegral ? (
+              <>Al enviar aceptas que el equipo Movel te contacte para coordinar el servicio integral.</>
+            ) : (
+              <>Al publicar aceptas nuestros{" "}
+                <a href="https://wa.me/573175737083?text=Quiero%20información%20sobre%20los%20términos%20de%20MOVEL" target="_blank" rel="noopener noreferrer" className="text-[#0B1E4E] hover:underline">
+                  Términos y Condiciones
+                </a>.
+              </>
+            )}
           </p>
         </form>
       </div>
@@ -926,5 +1006,14 @@ export default function PublicarPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Wrapper para Suspense (useSearchParams lo necesita en Next.js 14)
+export default function PublicarPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-mute">Cargando…</div>}>
+      <PublicarContent />
+    </Suspense>
   );
 }

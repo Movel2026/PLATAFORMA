@@ -736,9 +736,9 @@ export default function HomePage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.18, duration: 0.4 }}
                         onMouseMove={onGlowMove}
-                        className="cursor-glow cursor-glow-dark group relative bg-movel-gradient-dark rounded-2xl p-7 hover:shadow-2xl transition-all border border-movel-400/30 overflow-hidden"
+                        className="cursor-glow cursor-glow-dark group relative bg-movel-gradient-dark rounded-2xl p-7 pt-12 hover:shadow-2xl transition-all border border-movel-400/30 overflow-hidden"
                       >
-                        <span className="absolute top-4 right-4 text-[10px] font-black uppercase tracking-[0.15em] bg-sky text-white px-2.5 py-1 rounded-full">
+                        <span className="absolute top-4 right-4 z-10 text-[10px] font-black uppercase tracking-[0.15em] bg-sky text-white px-2.5 py-1 rounded-full whitespace-nowrap shadow-lg">
                           ⚡ Recomendado
                         </span>
 
