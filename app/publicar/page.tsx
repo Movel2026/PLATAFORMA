@@ -105,11 +105,11 @@ function DraggablePhotoGrid({ photos, onRemove, onReorder }: {
           onDragOver={(e) => handleDragOver(e, i)}
           onDragEnd={handleDragEnd}
           className={`relative group aspect-square rounded-xl overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${
-            i === 0 ? "border-[#1978e5] ring-2 ring-[#1978e5]/20" : "border-[#dce0e5] hover:border-[#1978e5]/50"
+            i === 0 ? "border-[#0B1E4E] ring-2 ring-[#0B1E4E]/20" : "border-[#dce0e5] hover:border-[#0B1E4E]/50"
           }`}
         >
           {i === 0 && (
-            <div className="absolute top-1 left-1 z-10 bg-[#1978e5] text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow">
+            <div className="absolute top-1 left-1 z-10 bg-[#0B1E4E] text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow">
               Principal
             </div>
           )}
@@ -354,8 +354,8 @@ export default function PublicarPage() {
     return n ? parseInt(n).toLocaleString("es-CO") : "";
   };
 
-  const selectClass = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] appearance-none outline-none border border-transparent focus:border-[#1978e5] focus:bg-white transition-colors";
-  const inputClass  = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] placeholder-[#637488] outline-none border border-transparent focus:border-[#1978e5] focus:bg-white transition-colors";
+  const selectClass = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] appearance-none outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors";
+  const inputClass  = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] placeholder-[#7A8195] outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors";
 
   // ── Render ──
   return (
@@ -367,7 +367,7 @@ export default function PublicarPage() {
       {/* Header banner */}
       <div
         className="text-white py-8 px-4"
-        style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1565c0 60%, #1978e5 100%)" }}
+        style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #050E26 60%, #0B1E4E 100%)" }}
       >
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
@@ -390,11 +390,11 @@ export default function PublicarPage() {
           ════════════════════════════════════════ */}
           <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
             <div className="flex items-center gap-2 mb-2">
-              <ImageIcon size={20} color="#1978e5" weight="fill" />
+              <ImageIcon size={20} color="#0B1E4E" weight="fill" />
               <h2 className="text-[18px] font-bold text-[#111418]">Fotos del vehículo</h2>
-              <span className="text-[13px] text-[#637488]">({photos.length}/20) · Mínimo 3</span>
+              <span className="text-[13px] text-[#7A8195]">({photos.length}/20) · Mínimo 3</span>
             </div>
-            <div className="flex items-start gap-2 bg-[#e8f0fd] rounded-xl px-4 py-3 mb-4 text-[13px] text-[#1978e5]">
+            <div className="flex items-start gap-2 bg-[#e8f0fd] rounded-xl px-4 py-3 mb-4 text-[13px] text-[#0B1E4E]">
               <Info size={16} className="flex-shrink-0 mt-0.5" weight="fill" />
               <span>
                 <strong>Tip:</strong> La primera foto será la principal.
@@ -407,13 +407,13 @@ export default function PublicarPage() {
               onDrop={(e) => { e.preventDefault(); setDragOver(false); addPhotos(e.dataTransfer.files); }}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
-                dragOver ? "border-[#1978e5] bg-[#e8f0fd]" : "border-[#dce0e5] hover:border-[#1978e5] hover:bg-[#f8f9fa]"
+                dragOver ? "border-[#0B1E4E] bg-[#e8f0fd]" : "border-[#dce0e5] hover:border-[#0B1E4E] hover:bg-[#f8f9fa]"
               }`}
             >
-              <UploadSimple size={36} color={dragOver ? "#1978e5" : "#637488"} className="mx-auto mb-3" />
+              <UploadSimple size={36} color={dragOver ? "#0B1E4E" : "#7A8195"} className="mx-auto mb-3" />
               <p className="text-[15px] font-semibold text-[#111418]">Arrastra tus fotos aquí</p>
-              <p className="text-[13px] text-[#637488] mt-1">o haz clic · JPG, PNG, WEBP · Hasta 20 fotos</p>
-              <div className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-[14px] font-bold" style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}>
+              <p className="text-[13px] text-[#7A8195] mt-1">o haz clic · JPG, PNG, WEBP · Hasta 20 fotos</p>
+              <div className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-xl text-[14px] font-bold" style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}>
                 <UploadSimple size={16} /> Seleccionar fotos
               </div>
             </div>
@@ -421,7 +421,7 @@ export default function PublicarPage() {
             {errors.fotos && <p className="text-[13px] text-red-500 mt-2">{errors.fotos}</p>}
             {photos.length > 0 && (
               <>
-                <p className="text-[12px] text-[#637488] mt-3">
+                <p className="text-[12px] text-[#7A8195] mt-3">
                   💡 <strong>Arrastra</strong> las miniaturas para reordenar.
                 </p>
                 <DraggablePhotoGrid photos={photos} onRemove={removePhoto} onReorder={setPhotos} />
@@ -437,12 +437,12 @@ export default function PublicarPage() {
             <div className="px-6 py-4 border-b border-[#f0f2f4]">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1978e5 100%)" }}>
+                  style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #0B1E4E 100%)" }}>
                   <Car size={18} color="white" weight="fill" />
                 </div>
                 <div>
                   <h2 className="text-[18px] font-bold text-[#111418] leading-tight">Identificación del vehículo</h2>
-                  <p className="text-[11px] text-[#637488]">Base oficial Ministerio de Transporte 2026 · 11.537 referencias</p>
+                  <p className="text-[11px] text-[#7A8195]">Base oficial Ministerio de Transporte 2026 · 11.537 referencias</p>
                 </div>
               </div>
             </div>
@@ -506,7 +506,7 @@ export default function PublicarPage() {
                   <button
                     type="button"
                     onClick={() => { setModoManual(true); setVehicleSel(null); setForm(f => ({ ...f, marca: "", modelo: "", version: "", motor: "", carroceria: "", pasajeros: "" })); setAutoSpecs(null); }}
-                    className="mt-3 text-[12px] text-[#637488] hover:text-[#1978e5] underline underline-offset-2 transition-colors"
+                    className="mt-3 text-[12px] text-[#7A8195] hover:text-[#0B1E4E] underline underline-offset-2 transition-colors"
                   >
                     Mi vehículo no aparece en la lista →
                   </button>
@@ -556,7 +556,7 @@ export default function PublicarPage() {
                   <button
                     type="button"
                     onClick={() => { setModoManual(false); setForm(f => ({ ...f, marca: "", modelo: "", version: "" })); }}
-                    className="text-[12px] text-[#637488] hover:text-[#1978e5] underline underline-offset-2 transition-colors"
+                    className="text-[12px] text-[#7A8195] hover:text-[#0B1E4E] underline underline-offset-2 transition-colors"
                   >
                     ← Volver al buscador oficial
                   </button>
@@ -603,13 +603,13 @@ export default function PublicarPage() {
                       placeholder="45.000"
                       className={inputClass}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-[#637488] pointer-events-none">km</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-[#7A8195] pointer-events-none">km</span>
                   </div>
                 </div>
                 <div>
                   <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Precio (COP) *</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#637488] font-bold text-[14px]">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7A8195] font-bold text-[14px]">$</span>
                     <input
                       type="text" inputMode="numeric"
                       value={form.precio}
@@ -635,7 +635,7 @@ export default function PublicarPage() {
                   onChange={(e) => setF("descripcion", e.target.value)}
                   placeholder="Describe el estado general, extras, historial de mantenimiento, motivo de venta..."
                   rows={4}
-                  className="w-full bg-[#f0f2f4] rounded-xl px-4 py-3 text-[15px] text-[#111418] placeholder-[#637488] outline-none border border-transparent focus:border-[#1978e5] focus:bg-white transition-colors resize-none"
+                  className="w-full bg-[#f0f2f4] rounded-xl px-4 py-3 text-[15px] text-[#111418] placeholder-[#7A8195] outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors resize-none"
                 />
               </div>
             </div>
@@ -676,28 +676,28 @@ export default function PublicarPage() {
           ════════════════════════════════════════ */}
           <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
             <div className="flex items-center gap-2 mb-2">
-              <ClipboardText size={20} color="#1978e5" weight="fill" />
+              <ClipboardText size={20} color="#0B1E4E" weight="fill" />
               <h2 className="text-[18px] font-bold text-[#111418]">Historial del vehículo</h2>
             </div>
-            <p className="text-[13px] text-[#637488] mb-5">Más información = más confianza = mejor precio de venta.</p>
+            <p className="text-[13px] text-[#7A8195] mb-5">Más información = más confianza = mejor precio de venta.</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Número de propietarios</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Número de propietarios</label>
                 <select value={form.propietarios} onChange={(e) => setF("propietarios", e.target.value)} className={selectClass}>
                   <option value="">Seleccionar</option>
                   {propietarioOpciones.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Uso del vehículo</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Uso del vehículo</label>
                 <select value={form.uso} onChange={(e) => setF("uso", e.target.value)} className={selectClass}>
                   <option value="">Seleccionar</option>
                   {usoOpciones.map((u) => <option key={u} value={u}>{u}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">SOAT</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">SOAT</label>
                 <select value={form.soatVigente} onChange={(e) => setF("soatVigente", e.target.value)} className={selectClass}>
                   <option value="">Estado del SOAT</option>
                   <option value="vigente">Vigente</option>
@@ -707,12 +707,12 @@ export default function PublicarPage() {
               </div>
               {form.soatVigente === "vigente" && (
                 <div>
-                  <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">SOAT vigente hasta</label>
+                  <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">SOAT vigente hasta</label>
                   <input type="date" value={form.soatHasta} onChange={(e) => setF("soatHasta", e.target.value)} className={inputClass} />
                 </div>
               )}
               <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Tecnomecánica</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Tecnomecánica</label>
                 <select value={form.tecnoVigente} onChange={(e) => setF("tecnoVigente", e.target.value)} className={selectClass}>
                   <option value="">Estado tecnomecánica</option>
                   <option value="vigente">Vigente</option>
@@ -723,7 +723,7 @@ export default function PublicarPage() {
               </div>
               {form.tecnoVigente === "vigente" && (
                 <div>
-                  <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Tecnomecánica vigente hasta</label>
+                  <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Tecnomecánica vigente hasta</label>
                   <input type="date" value={form.tecnoHasta} onChange={(e) => setF("tecnoHasta", e.target.value)} className={inputClass} />
                 </div>
               )}
@@ -735,11 +735,11 @@ export default function PublicarPage() {
                 <p className="text-[14px] font-bold text-[#111418]">¿El vehículo ha tenido siniestros o choques?</p>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setF("sinSiniestros", true)}
-                    className={`px-4 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${form.sinSiniestros ? "bg-green-500 text-white border-green-500" : "border-[#dce0e5] text-[#637488]"}`}>
+                    className={`px-4 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${form.sinSiniestros ? "bg-green-500 text-white border-green-500" : "border-[#dce0e5] text-[#7A8195]"}`}>
                     No, ninguno
                   </button>
                   <button type="button" onClick={() => setF("sinSiniestros", false)}
-                    className={`px-4 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${!form.sinSiniestros ? "bg-amber-500 text-white border-amber-500" : "border-[#dce0e5] text-[#637488]"}`}>
+                    className={`px-4 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${!form.sinSiniestros ? "bg-amber-500 text-white border-amber-500" : "border-[#dce0e5] text-[#7A8195]"}`}>
                     Sí, uno o más
                   </button>
                 </div>
@@ -750,14 +750,14 @@ export default function PublicarPage() {
                   onChange={(e) => setF("siniestrosDesc", e.target.value)}
                   placeholder="Describe el tipo de choque, parte afectada y si fue reparado correctamente..."
                   rows={3}
-                  className="w-full bg-white rounded-xl px-4 py-3 text-[14px] placeholder-[#637488] outline-none border border-amber-200 focus:border-amber-400 resize-none"
+                  className="w-full bg-white rounded-xl px-4 py-3 text-[14px] placeholder-[#7A8195] outline-none border border-amber-200 focus:border-amber-400 resize-none"
                 />
               )}
             </div>
 
             {/* Checklist */}
             <div className="mt-5">
-              <p className="text-[13px] font-bold text-[#637488] uppercase tracking-wide mb-3">Extras incluidos</p>
+              <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-3">Extras incluidos</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { key: "revisionAlDia", label: "Revisión al día" },
@@ -766,20 +766,20 @@ export default function PublicarPage() {
                   { key: "kitHerramientas", label: "Kit de herramientas" },
                 ].map(({ key, label }) => (
                   <label key={key}
-                    className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border-2 transition-all hover:border-[#1978e5] border-[#dce0e5]"
-                    style={form[key as keyof typeof form] ? { borderColor: "#1978e5", background: "#e8f0fd" } : {}}>
+                    className="flex items-center gap-2 cursor-pointer p-3 rounded-xl border-2 transition-all hover:border-[#0B1E4E] border-[#dce0e5]"
+                    style={form[key as keyof typeof form] ? { borderColor: "#0B1E4E", background: "#e8f0fd" } : {}}>
                     <input type="checkbox" checked={!!form[key as keyof typeof form]}
-                      onChange={(e) => setF(key, e.target.checked)} className="w-4 h-4 accent-[#1978e5]" />
+                      onChange={(e) => setF(key, e.target.checked)} className="w-4 h-4 accent-[#0B1E4E]" />
                     <span className="text-[13px] font-semibold text-[#111418]">{label}</span>
                   </label>
                 ))}
               </div>
               <div className="mt-3">
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Extras y accesorios adicionales</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Extras y accesorios adicionales</label>
                 <textarea value={form.extras} onChange={(e) => setF("extras", e.target.value)}
                   placeholder="Ej: Techo panorámico, cámara de reversa, rines originales, alarma, pantalla táctil..."
                   rows={2}
-                  className="w-full bg-[#f0f2f4] rounded-xl px-4 py-3 text-[14px] placeholder-[#637488] outline-none border border-transparent focus:border-[#1978e5] focus:bg-white transition-colors resize-none" />
+                  className="w-full bg-[#f0f2f4] rounded-xl px-4 py-3 text-[14px] placeholder-[#7A8195] outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors resize-none" />
               </div>
             </div>
           </div>
@@ -789,11 +789,11 @@ export default function PublicarPage() {
           ════════════════════════════════════════ */}
           <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
             <div className="flex items-center gap-2 mb-2">
-              <FileText size={20} color="#1978e5" weight="fill" />
+              <FileText size={20} color="#0B1E4E" weight="fill" />
               <h2 className="text-[18px] font-bold text-[#111418]">Documentos</h2>
-              <span className="text-[13px] text-[#637488]">Opcional — muy recomendado</span>
+              <span className="text-[13px] text-[#7A8195]">Opcional — muy recomendado</span>
             </div>
-            <p className="text-[13px] text-[#637488] mb-4">Genera más confianza y acelera el proceso de venta.</p>
+            <p className="text-[13px] text-[#7A8195] mb-4">Genera más confianza y acelera el proceso de venta.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { key: "tarjeta", label: "Tarjeta de propiedad", hint: "PDF o foto" },
@@ -805,18 +805,18 @@ export default function PublicarPage() {
                   className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                     docUploads[key as keyof typeof docUploads]
                       ? "border-green-400 bg-green-50"
-                      : "border-[#dce0e5] hover:border-[#1978e5] hover:bg-[#e8f0fd]"
+                      : "border-[#dce0e5] hover:border-[#0B1E4E] hover:bg-[#e8f0fd]"
                   }`}>
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${docUploads[key as keyof typeof docUploads] ? "bg-green-100" : "bg-[#f0f2f4]"}`}>
                     {docUploads[key as keyof typeof docUploads]
                       ? <CheckCircle size={22} color="#16a34a" weight="fill" />
-                      : <UploadSimple size={22} color="#637488" />}
+                      : <UploadSimple size={22} color="#7A8195" />}
                   </div>
                   <div className="flex-1">
                     <p className="text-[14px] font-bold text-[#111418]">{label}</p>
-                    <p className="text-[12px] text-[#637488]">{hint}</p>
+                    <p className="text-[12px] text-[#7A8195]">{hint}</p>
                   </div>
-                  <span className={`text-[13px] font-bold ${docUploads[key as keyof typeof docUploads] ? "text-green-600" : "text-[#1978e5]"}`}>
+                  <span className={`text-[13px] font-bold ${docUploads[key as keyof typeof docUploads] ? "text-green-600" : "text-[#0B1E4E]"}`}>
                     {docUploads[key as keyof typeof docUploads] ? "✓ Cargado" : "Subir"}
                   </span>
                   <input type="file" accept="image/*,.pdf" className="hidden"
@@ -837,22 +837,22 @@ export default function PublicarPage() {
           ════════════════════════════════════════ */}
           <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
             <div className="flex items-center gap-2 mb-5">
-              <CurrencyCircleDollar size={20} color="#1978e5" weight="fill" />
+              <CurrencyCircleDollar size={20} color="#0B1E4E" weight="fill" />
               <h2 className="text-[18px] font-bold text-[#111418]">Tus datos de contacto</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Nombre completo *</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Nombre completo *</label>
                 <input type="text" value={form.nombre} onChange={(e) => setF("nombre", e.target.value)} placeholder="Tu nombre" className={inputClass} />
                 {errors.nombre && <p className="text-[12px] text-red-500 mt-1">{errors.nombre}</p>}
               </div>
               <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Correo electrónico *</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Correo electrónico *</label>
                 <input type="email" value={form.email} onChange={(e) => setF("email", e.target.value)} placeholder="tucorreo@gmail.com" className={inputClass} />
                 {errors.email && <p className="text-[12px] text-red-500 mt-1">{errors.email}</p>}
               </div>
               <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Celular *</label>
+                <label className="text-[13px] font-bold text-[#7A8195] mb-1.5 block uppercase tracking-wide">Celular *</label>
                 <input type="tel" value={form.celular} onChange={(e) => setF("celular", e.target.value)} placeholder="+57 300 000 0000" className={inputClass} />
                 {errors.celular && <p className="text-[12px] text-red-500 mt-1">{errors.celular}</p>}
               </div>
@@ -864,14 +864,14 @@ export default function PublicarPage() {
             type="submit"
             disabled={submitting}
             className="w-full h-14 text-white rounded-2xl font-black text-[17px] transition-all disabled:opacity-60 shadow-lg hover:opacity-90 interactive"
-            style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}
+            style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}
           >
             {submitting ? "Enviando publicación..." : "Publicar mi vehículo →"}
           </button>
 
-          <p className="text-center text-[13px] text-[#637488]">
+          <p className="text-center text-[13px] text-[#7A8195]">
             Al publicar aceptas nuestros{" "}
-            <a href="https://wa.me/573175737083?text=Quiero%20información%20sobre%20los%20términos%20de%20MOVEL" target="_blank" rel="noopener noreferrer" className="text-[#1978e5] hover:underline">
+            <a href="https://wa.me/573175737083?text=Quiero%20información%20sobre%20los%20términos%20de%20MOVEL" target="_blank" rel="noopener noreferrer" className="text-[#0B1E4E] hover:underline">
               Términos y Condiciones
             </a>.
           </p>
@@ -888,17 +888,17 @@ export default function PublicarPage() {
               <CheckCircle size={44} color="#16a34a" weight="fill" />
             </div>
             <h3 className="text-[24px] font-black text-[#111418] mb-2">¡Vehículo publicado!</h3>
-            <p className="text-[15px] text-[#637488] leading-relaxed mb-3">
+            <p className="text-[15px] text-[#7A8195] leading-relaxed mb-3">
               Recibimos tu publicación. Un asesor revisará la información y te contactará en las próximas <strong>24 horas</strong>.
             </p>
-            <p className="text-[13px] text-[#637488] mb-6">
+            <p className="text-[13px] text-[#7A8195] mb-6">
               Te escribiremos a <strong className="text-[#111418]">{form.email}</strong> y al celular <strong className="text-[#111418]">{form.celular}</strong>.
             </p>
             <div className="flex gap-3">
               <Link href="/buscar" className="flex-1 h-12 border-2 border-[#dce0e5] text-[#111418] rounded-xl font-bold text-[14px] flex items-center justify-center hover:bg-[#f0f2f4] transition-colors">
                 Ver vehículos
               </Link>
-              <button onClick={() => setShowModal(false)} className="flex-1 h-12 text-white rounded-xl font-bold text-[14px] transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}>
+              <button onClick={() => setShowModal(false)} className="flex-1 h-12 text-white rounded-xl font-bold text-[14px] transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}>
                 Entendido
               </button>
             </div>

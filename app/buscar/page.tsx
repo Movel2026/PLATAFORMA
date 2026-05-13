@@ -89,7 +89,7 @@ export default function BuscarPage() {
       <div className="flex items-center justify-between">
         <h3 className="text-[16px] font-bold text-[#111418]">Filtros</h3>
         {hasFilters && (
-          <button onClick={clearFilters} className="text-[13px] text-[#1978e5] font-semibold hover:underline">
+          <button onClick={clearFilters} className="text-[13px] text-[#0B1E4E] font-semibold hover:underline">
             Limpiar todo
           </button>
         )}
@@ -97,7 +97,7 @@ export default function BuscarPage() {
 
       {/* Marca */}
       <div>
-        <p className="text-[13px] font-bold text-[#637488] uppercase tracking-wide mb-2">Marca</p>
+        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Marca</p>
         <div className="space-y-1.5">
           {marcas.map((m) => (
             <label key={m} className="flex items-center gap-2.5 cursor-pointer group">
@@ -106,9 +106,9 @@ export default function BuscarPage() {
                 name="marca"
                 checked={selectedMarca === m}
                 onChange={() => setSelectedMarca(selectedMarca === m ? "" : m)}
-                className="w-4 h-4 accent-[#1978e5]"
+                className="w-4 h-4 accent-[#0B1E4E]"
               />
-              <span className="text-[14px] text-[#637488] group-hover:text-[#111418]">{m}</span>
+              <span className="text-[14px] text-[#7A8195] group-hover:text-[#111418]">{m}</span>
             </label>
           ))}
         </div>
@@ -116,7 +116,7 @@ export default function BuscarPage() {
 
       {/* Tipo */}
       <div>
-        <p className="text-[13px] font-bold text-[#637488] uppercase tracking-wide mb-2">Tipo</p>
+        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Tipo</p>
         <div className="flex flex-wrap gap-2">
           {tipos.map((t) => (
             <button
@@ -124,8 +124,8 @@ export default function BuscarPage() {
               onClick={() => setSelectedTipo(selectedTipo === t ? "" : t)}
               className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-colors ${
                 selectedTipo === t
-                  ? "bg-[#1978e5] text-white border-[#1978e5]"
-                  : "border-[#dce0e5] text-[#637488] hover:border-[#1978e5] hover:text-[#1978e5]"
+                  ? "bg-[#0B1E4E] text-white border-[#0B1E4E]"
+                  : "border-[#dce0e5] text-[#7A8195] hover:border-[#0B1E4E] hover:text-[#0B1E4E]"
               }`}
             >
               {t}
@@ -136,7 +136,7 @@ export default function BuscarPage() {
 
       {/* Transmisión */}
       <div>
-        <p className="text-[13px] font-bold text-[#637488] uppercase tracking-wide mb-2">Transmisión</p>
+        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Transmisión</p>
         <div className="flex gap-2">
           {transmisiones.map((t) => (
             <button
@@ -144,8 +144,8 @@ export default function BuscarPage() {
               onClick={() => setSelectedTransmision(selectedTransmision === t ? "" : t)}
               className={`flex-1 py-2 rounded-lg text-[13px] font-semibold border transition-colors ${
                 selectedTransmision === t
-                  ? "bg-[#1978e5] text-white border-[#1978e5]"
-                  : "border-[#dce0e5] text-[#637488] hover:border-[#1978e5]"
+                  ? "bg-[#0B1E4E] text-white border-[#0B1E4E]"
+                  : "border-[#dce0e5] text-[#7A8195] hover:border-[#0B1E4E]"
               }`}
             >
               {t}
@@ -156,7 +156,7 @@ export default function BuscarPage() {
 
       {/* Ciudad */}
       <div>
-        <p className="text-[13px] font-bold text-[#637488] uppercase tracking-wide mb-2">Ciudad</p>
+        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Ciudad</p>
         <div className="space-y-1.5">
           {ciudades.map((c) => (
             <label key={c} className="flex items-center gap-2.5 cursor-pointer group">
@@ -165,9 +165,9 @@ export default function BuscarPage() {
                 name="ciudad"
                 checked={selectedCiudad === c}
                 onChange={() => setSelectedCiudad(selectedCiudad === c ? "" : c)}
-                className="w-4 h-4 accent-[#1978e5]"
+                className="w-4 h-4 accent-[#0B1E4E]"
               />
-              <span className="text-[14px] text-[#637488] group-hover:text-[#111418]">{c}</span>
+              <span className="text-[14px] text-[#7A8195] group-hover:text-[#111418]">{c}</span>
             </label>
           ))}
         </div>
@@ -175,7 +175,7 @@ export default function BuscarPage() {
 
       {/* Precio máximo */}
       <div>
-        <p className="text-[13px] font-bold text-[#637488] uppercase tracking-wide mb-2">
+        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">
           Precio máximo:{" "}
           <span className="text-[#111418]">
             {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(precioMax)}
@@ -188,9 +188,9 @@ export default function BuscarPage() {
           step={5000000}
           value={precioMax}
           onChange={(e) => setPrecioMax(Number(e.target.value))}
-          className="w-full accent-[#1978e5]"
+          className="w-full accent-[#0B1E4E]"
         />
-        <div className="flex justify-between text-[11px] text-[#637488] mt-1">
+        <div className="flex justify-between text-[11px] text-[#7A8195] mt-1">
           <span>$10M</span><span>$200M</span>
         </div>
       </div>
@@ -204,7 +204,7 @@ export default function BuscarPage() {
       {/* ── BÚSQUEDA CON IA ── */}
       <div
         className="py-8 px-4"
-        style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1565c0 70%, #1978e5 100%)" }}
+        style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #050E26 70%, #0B1E4E 100%)" }}
       >
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-2 mb-3">
@@ -242,7 +242,7 @@ export default function BuscarPage() {
               onClick={() => handleIaSearch(iaQuery)}
               disabled={iaLoading || !iaQuery.trim()}
               className="px-6 py-3 text-white font-bold text-[14px] rounded-2xl transition-all disabled:opacity-50 interactive"
-              style={{ background: "linear-gradient(135deg, #42a5f5, #1978e5)" }}
+              style={{ background: "linear-gradient(135deg, #42a5f5, #0B1E4E)" }}
             >
               Buscar
             </button>
@@ -288,17 +288,17 @@ export default function BuscarPage() {
         <div className="bg-white border-b border-[#dce0e5] sticky top-16 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-3 flex gap-3">
             <div className="flex-1 flex items-center gap-3 bg-[#f0f2f4] rounded-xl h-12 px-4">
-              <MagnifyingGlass size={18} color="#637488" />
+              <MagnifyingGlass size={18} color="#7A8195" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por marca, modelo..."
-                className="flex-1 bg-transparent text-[15px] text-[#111418] placeholder-[#637488] outline-none"
+                className="flex-1 bg-transparent text-[15px] text-[#111418] placeholder-[#7A8195] outline-none"
               />
               {search && (
                 <button onClick={() => setSearch("")}>
-                  <X size={16} color="#637488" />
+                  <X size={16} color="#7A8195" />
                 </button>
               )}
             </div>
@@ -307,7 +307,7 @@ export default function BuscarPage() {
               className="lg:hidden flex items-center gap-2 px-4 h-12 bg-[#f0f2f4] rounded-xl text-[14px] font-semibold text-[#111418]"
             >
               <SlidersHorizontal size={18} />
-              Filtros {hasFilters && <span className="w-2 h-2 bg-[#1978e5] rounded-full" />}
+              Filtros {hasFilters && <span className="w-2 h-2 bg-[#0B1E4E] rounded-full" />}
             </button>
           </div>
 
@@ -316,30 +316,30 @@ export default function BuscarPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3 flex flex-wrap gap-2">
               {selectedMarca && (
                 <button onClick={() => setSelectedMarca("")}
-                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  className="flex items-center gap-1.5 bg-[#0B1E4E] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#050E26] transition-colors">
                   {selectedMarca} <X size={11} weight="bold" />
                 </button>
               )}
               {selectedTipo && (
                 <button onClick={() => setSelectedTipo("")}
-                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  className="flex items-center gap-1.5 bg-[#0B1E4E] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#050E26] transition-colors">
                   {selectedTipo} <X size={11} weight="bold" />
                 </button>
               )}
               {selectedTransmision && (
                 <button onClick={() => setSelectedTransmision("")}
-                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  className="flex items-center gap-1.5 bg-[#0B1E4E] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#050E26] transition-colors">
                   {selectedTransmision} <X size={11} weight="bold" />
                 </button>
               )}
               {selectedCiudad && (
                 <button onClick={() => setSelectedCiudad("")}
-                  className="flex items-center gap-1.5 bg-[#1978e5] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#1565c0] transition-colors">
+                  className="flex items-center gap-1.5 bg-[#0B1E4E] text-white text-[12px] font-bold px-3 py-1.5 rounded-full hover:bg-[#050E26] transition-colors">
                   {selectedCiudad} <X size={11} weight="bold" />
                 </button>
               )}
               <button onClick={clearFilters}
-                className="flex items-center gap-1.5 text-[12px] font-semibold text-[#637488] bg-[#f0f2f4] px-3 py-1.5 rounded-full hover:bg-[#e5e7eb] transition-colors">
+                className="flex items-center gap-1.5 text-[12px] font-semibold text-[#7A8195] bg-[#f0f2f4] px-3 py-1.5 rounded-full hover:bg-[#e5e7eb] transition-colors">
                 Limpiar todo
               </button>
             </div>
@@ -361,10 +361,10 @@ export default function BuscarPage() {
           {/* Results */}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[15px] text-[#637488]">
+              <p className="text-[15px] text-[#7A8195]">
                 {iaIds ? (
                   <>
-                    <Sparkle size={14} color="#1978e5" className="inline mr-1" weight="fill" />
+                    <Sparkle size={14} color="#0B1E4E" className="inline mr-1" weight="fill" />
                     <strong className="text-[#111418]">{filtered.length}</strong> resultado(s) de IA
                   </>
                 ) : (
@@ -375,7 +375,7 @@ export default function BuscarPage() {
                 <select
                   value={ordenar}
                   onChange={(e) => setOrdenar(e.target.value)}
-                  className="text-[14px] text-[#637488] bg-white border border-[#dce0e5] rounded-lg px-3 py-2 outline-none cursor-pointer"
+                  className="text-[14px] text-[#7A8195] bg-white border border-[#dce0e5] rounded-lg px-3 py-2 outline-none cursor-pointer"
                 >
                   <option value="recientes">Más recientes</option>
                   <option value="precio-asc">Menor precio</option>
@@ -390,13 +390,13 @@ export default function BuscarPage() {
               <div className="text-center py-20 bg-white rounded-2xl border border-[#dce0e5]">
                 <Sparkle size={40} color="#dce0e5" className="mx-auto mb-3" />
                 <p className="text-[18px] font-bold text-[#111418] mb-2">Sin resultados</p>
-                <p className="text-[14px] text-[#637488] mb-4">
+                <p className="text-[14px] text-[#7A8195] mb-4">
                   {iaIds ? "La IA no encontró vehículos con esas características." : "Intenta ajustar los filtros"}
                 </p>
                 <button
                   onClick={iaIds ? clearIa : clearFilters}
                   className="px-6 py-2.5 text-white rounded-lg font-bold text-[14px]"
-                  style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}
+                  style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}
                 >
                   {iaIds ? "Ver todos los vehículos" : "Limpiar filtros"}
                 </button>
@@ -427,7 +427,7 @@ export default function BuscarPage() {
             <button
               onClick={() => setShowMobileFilters(false)}
               className="w-full mt-6 h-12 text-white rounded-xl font-bold"
-              style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}
+              style={{ background: "linear-gradient(135deg, #050E26, #0B1E4E)" }}
             >
               Ver resultados ({filtered.length})
             </button>

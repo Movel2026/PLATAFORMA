@@ -9,8 +9,8 @@ import {
   ClipboardText, ArrowRight, WhatsappLogo,
   Phone, CheckCircle, CaretDown, SlidersHorizontal,
   Gavel, Clock, Fire, Handshake, CalendarCheck, FileText,
-  Sparkle, Star, Quotes, UploadSimple, UsersThree, Camera, Wrench,
-  CaretRight, CaretLeft,
+  Sparkle, UploadSimple, UsersThree, Camera, Wrench,
+  Lightning, ChatCircleDots, Database,
 } from "@phosphor-icons/react";
 import { vehicles, getAuctionVehicles, formatCOP } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
@@ -20,7 +20,6 @@ import { BrandIcon } from "@/components/BrandIcons";
 import { useCursorGlow } from "@/lib/hooks/useCursorGlow";
 import { useScrollReveal } from "@/lib/hooks/useScrollReveal";
 
-// ── Shared transition helpers ────────────────────────────────────────
 const EASE_OUT = "easeOut" as const;
 
 const staggerGrid = {
@@ -38,14 +37,14 @@ const marcas = [
   "Hyundai", "Nissan", "Ford", "Honda", "Mitsubishi",
 ];
 
-// ── 2D vehicle silhouettes (estilo limpio monocromático) ───────────────
+// ── Carrocería icons (refinados, más grandes y limpios) ──────────────
 
-function SedanIcon()     { return <svg viewBox="0 0 80 44" className="w-10 h-6"><path d="M5,37 L5,25 L18,25 L24,13 L56,13 L62,21 L75,21 L75,37 Z" fill="currentColor" opacity="0.85"/><path d="M21,24 L25,15 L50,15 L50,24 Z" fill="currentColor" opacity="0.35"/><path d="M52,24 L52,15 L60,15 L64,21 L64,24 Z" fill="currentColor" opacity="0.35"/><circle cx="18" cy="37" r="6" fill="white" stroke="currentColor" strokeWidth="2.2"/><circle cx="62" cy="37" r="6" fill="white" stroke="currentColor" strokeWidth="2.2"/></svg>; }
-function HatchbackIcon() { return <svg viewBox="0 0 80 44" className="w-10 h-6"><path d="M5,37 L5,27 L18,27 L24,13 L52,13 L66,31 L75,31 L75,37 Z" fill="currentColor" opacity="0.85"/><path d="M21,26 L25,15 L50,15 L50,26 Z" fill="currentColor" opacity="0.35"/><circle cx="18" cy="37" r="6" fill="white" stroke="currentColor" strokeWidth="2.2"/><circle cx="62" cy="37" r="6" fill="white" stroke="currentColor" strokeWidth="2.2"/></svg>; }
-function SuvIcon()       { return <svg viewBox="0 0 80 44" className="w-10 h-6"><path d="M5,37 L5,18 L16,18 L22,8 L62,8 L66,14 L75,14 L75,37 Z" fill="currentColor" opacity="0.85"/><path d="M19,18 L23,10 L44,10 L44,18 Z" fill="currentColor" opacity="0.35"/><path d="M46,18 L46,10 L62,10 L64,14 L64,18 Z" fill="currentColor" opacity="0.35"/><circle cx="19" cy="37" r="7" fill="white" stroke="currentColor" strokeWidth="2.2"/><circle cx="61" cy="37" r="7" fill="white" stroke="currentColor" strokeWidth="2.2"/></svg>; }
-function CamionetaIcon() { return <svg viewBox="0 0 80 44" className="w-10 h-6"><path d="M5,37 L5,17 L18,17 L22,8 L64,8 L70,17 L75,20 L75,37 Z" fill="currentColor" opacity="0.85"/><path d="M19,17 L22,10 L44,10 L44,17 Z" fill="currentColor" opacity="0.35"/><circle cx="19" cy="37" r="7" fill="white" stroke="currentColor" strokeWidth="2.2"/><circle cx="62" cy="37" r="7" fill="white" stroke="currentColor" strokeWidth="2.2"/></svg>; }
-function CoupeIcon()     { return <svg viewBox="0 0 80 44" className="w-10 h-6"><path d="M5,37 L5,29 L20,29 L30,14 L58,13 L68,27 L75,27 L75,37 Z" fill="currentColor" opacity="0.85"/><path d="M24,28 L32,16 L54,15 L54,28 Z" fill="currentColor" opacity="0.35"/><circle cx="18" cy="37" r="6" fill="white" stroke="currentColor" strokeWidth="2.2"/><circle cx="62" cy="37" r="6" fill="white" stroke="currentColor" strokeWidth="2.2"/></svg>; }
-function PickupIcon()    { return <svg viewBox="0 0 80 44" className="w-10 h-6"><path d="M5,37 L5,18 L15,18 L19,9 L42,9 L42,37 Z" fill="currentColor" opacity="0.85"/><path d="M17,18 L20,11 L40,11 L40,18 Z" fill="currentColor" opacity="0.35"/><path d="M42,26 L42,37 L75,37 L75,26 Z" fill="currentColor" opacity="0.85"/><line x1="42" y1="26" x2="75" y2="26" stroke="white" strokeWidth="1.2"/><circle cx="18" cy="37" r="7" fill="white" stroke="currentColor" strokeWidth="2.2"/><circle cx="62" cy="37" r="7" fill="white" stroke="currentColor" strokeWidth="2.2"/></svg>; }
+function SedanIcon()     { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,25 L18,25 L24,13 L56,13 L62,21 L75,21 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M21,24 L25,15 L50,15 L50,24 Z" fill="currentColor" opacity="0.25"/><path d="M52,24 L52,15 L60,15 L64,21 L64,24 Z" fill="currentColor" opacity="0.25"/><circle cx="18" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
+function HatchbackIcon() { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,27 L18,27 L24,13 L52,13 L66,31 L75,31 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M21,26 L25,15 L50,15 L50,26 Z" fill="currentColor" opacity="0.25"/><circle cx="18" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
+function SuvIcon()       { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,18 L16,18 L22,8 L62,8 L66,14 L75,14 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M19,18 L23,10 L44,10 L44,18 Z" fill="currentColor" opacity="0.25"/><path d="M46,18 L46,10 L62,10 L64,14 L64,18 Z" fill="currentColor" opacity="0.25"/><circle cx="19" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="61" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
+function CamionetaIcon() { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,17 L18,17 L22,8 L64,8 L70,17 L75,20 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M19,17 L22,10 L44,10 L44,17 Z" fill="currentColor" opacity="0.25"/><circle cx="19" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
+function CoupeIcon()     { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,29 L20,29 L30,14 L58,13 L68,27 L75,27 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M24,28 L32,16 L54,15 L54,28 Z" fill="currentColor" opacity="0.25"/><circle cx="18" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
+function PickupIcon()    { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,18 L15,18 L19,9 L42,9 L42,37 Z" fill="currentColor" opacity="0.9"/><path d="M17,18 L20,11 L40,11 L40,18 Z" fill="currentColor" opacity="0.25"/><path d="M42,26 L42,37 L75,37 L75,26 Z" fill="currentColor" opacity="0.9"/><line x1="42" y1="26" x2="75" y2="26" stroke="white" strokeWidth="1.4"/><circle cx="18" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
 
 const tipos = [
   { label: "SUV",       icon: SuvIcon },
@@ -56,7 +55,7 @@ const tipos = [
   { label: "Pick-up",   icon: PickupIcon },
 ];
 
-// ─── Inline cursor-glow handler helper ────────────────────────────────
+// ── Cursor glow helper ───────────────────────────────────────────────
 const onGlowMove = (e: React.MouseEvent<HTMLElement>) => {
   const el = e.currentTarget;
   const rect = el.getBoundingClientRect();
@@ -64,7 +63,7 @@ const onGlowMove = (e: React.MouseEvent<HTMLElement>) => {
   el.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
 };
 
-// ─── 3% commission counter (re-usable, ahora dentro del banner Vender) ─
+// ── 3% commission counter ────────────────────────────────────────────
 function CommissionCounter({ inverted = false }: { inverted?: boolean }) {
   const [shown, setShown] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -110,7 +109,6 @@ export default function HomePage() {
   const [venderMode, setVenderMode] = useState<"closed" | "options">("closed");
   const auctionVehicles           = getAuctionVehicles();
 
-  // Hero video cross-fade
   const [showLogo, setShowLogo] = useState(true);
   const logoVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -119,10 +117,8 @@ export default function HomePage() {
     return () => clearTimeout(t);
   }, []);
 
-  // Scroll reveal
   useScrollReveal();
 
-  // Cursor glow handlers
   const heroCTA      = useCursorGlow();
   const heroVentaCTA = useCursorGlow();
   const ctaVer       = useCursorGlow();
@@ -177,7 +173,7 @@ export default function HomePage() {
           >
             <span className="inline-flex items-center gap-2 bg-movel-900/40 border border-movel-400/50 text-movel-200 text-[12px] font-bold px-4 py-2 rounded-full backdrop-blur-sm">
               <Sparkle size={14} weight="fill" color="#3F8CFF" className="animate-pulse" />
-              +500 vehículos verificados · Inspección 150 puntos
+              Catálogo Fasecolda + MinTransporte · Asesoría 360°
             </span>
           </motion.div>
 
@@ -208,10 +204,9 @@ export default function HomePage() {
             transition={{ delay: 0.78, duration: 0.55 }}
             className="text-[15px] md:text-[17px] text-white/70 text-center mb-9 max-w-xl font-medium"
           >
-            Historial verificado · Peritaje profesional · Financiamiento en 24h
+            Compra y vende vehículos con asesoría 360°. Solo 3% de comisión si vendemos por ti.
           </motion.p>
 
-          {/* Buscador grande (estrella) */}
           <motion.form
             onSubmit={handleSearch}
             initial={{ opacity: 0, y: 16 }}
@@ -238,7 +233,6 @@ export default function HomePage() {
             </button>
           </motion.form>
 
-          {/* Chips de filtro rápido */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -256,7 +250,6 @@ export default function HomePage() {
             ))}
           </motion.div>
 
-          {/* CTA secundario: Vender mi carro + filtros */}
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -330,16 +323,16 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          TRUST STRIP
+          TRUST STRIP — Promesas honestas (sin garantías que no podemos cumplir)
       ═══════════════════════════════════════════════════════════ */}
       <div className="bg-night border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-6">
             {[
-              { icon: ShieldCheck,   title: "Garantía 90 días",        desc: "Motor y transmisión cubiertos" },
-              { icon: CheckCircle,   title: "Devolución 7 días",       desc: "Si no te convence, lo cambias" },
-              { icon: ClipboardText, title: "Inspección 150 puntos",   desc: "Cada vehículo verificado" },
-              { icon: FileText,      title: "Historial transparente",  desc: "Sin sorpresas, sin trampas" },
+              { icon: Lightning,      title: "Vende rápido",       desc: "Te ayudamos a llegar a compradores serios" },
+              { icon: ShieldCheck,    title: "Compra con confianza", desc: "Vehículos con documentación al día" },
+              { icon: Handshake,      title: "Asesoría 360°",       desc: "Te acompañamos en todo el proceso" },
+              { icon: CurrencyCircleDollar, title: "Comisión justa", desc: "Solo 3% si vendemos por ti" },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
@@ -362,7 +355,47 @@ export default function HomePage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          CATEGORÍAS (carrocerías) — estilo monocromático horizontal
+          CÓMO FUNCIONA MOVEL — 3 pasos
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="bg-cloud py-16" id="como-funciona">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 reveal">
+            <p className="text-[11px] font-bold text-movel-600 uppercase tracking-[0.15em] mb-3">Simple y transparente</p>
+            <h2 className="font-display text-[28px] md:text-[40px] gradient-text mb-3">¿Cómo funciona MOVEL?</h2>
+            <p className="text-[15px] md:text-[16px] text-mute max-w-xl mx-auto">
+              En 3 pasos tienes tu carro. Sin intermediarios, sin sorpresas.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-movel-200 via-movel-500 to-movel-200" />
+
+            {[
+              { num: "01", Icon: MagnifyingGlass, title: "Busca y elige", desc: "Explora el catálogo de vehículos con filtros por marca, modelo, año, precio y especificaciones técnicas oficiales." },
+              { num: "02", Icon: ClipboardText,   title: "Verifica el historial", desc: "Consulta las especificaciones de Fasecolda y Ministerio de Transporte. Datos verificados al detalle." },
+              { num: "03", Icon: CheckCircle,     title: "Cierra el trato", desc: "Contacta directamente al vendedor o pídenos que gestionemos la venta integral por ti." },
+            ].map((step, i) => (
+              <div
+                key={step.num}
+                onMouseMove={onGlowMove}
+                className={`reveal reveal-delay-${i + 1} cursor-glow cursor-glow-soft relative bg-white rounded-2xl p-7 border border-[#dce0e5] hover:border-movel-200 hover:shadow-movel-lg transition-all text-center`}
+              >
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-9 h-9 bg-movel-gradient text-white text-[12px] font-black rounded-full flex items-center justify-center shadow-movel">
+                  {step.num}
+                </div>
+                <div className="w-16 h-16 bg-movel-50 rounded-2xl flex items-center justify-center mx-auto mb-4 mt-2">
+                  <step.Icon size={28} color="#0B1E4E" weight="fill" />
+                </div>
+                <h3 className="font-display text-[20px] text-movel-900 mb-2">{step.title}</h3>
+                <p className="text-[14px] text-mute leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          CARROCERÍAS
       ═══════════════════════════════════════════════════════════ */}
       <section className="bg-white pt-14 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -381,7 +414,7 @@ export default function HomePage() {
                   key={tipo.label}
                   href={`/buscar?tipo=${tipo.label}`}
                   onMouseMove={onGlowMove}
-                  className={`reveal reveal-delay-${(i % 5) + 1} cursor-glow cursor-glow-soft group flex items-center gap-3 p-4 rounded-xl bg-white border border-[#e5e7eb] hover:border-movel-300 hover:shadow-movel transition-all cursor-pointer`}
+                  className={`reveal reveal-delay-${(i % 5) + 1} cursor-glow cursor-glow-soft group flex flex-col sm:flex-row items-center gap-3 p-4 rounded-xl bg-white border border-[#e5e7eb] hover:border-movel-300 hover:shadow-movel transition-all cursor-pointer`}
                 >
                   <div className="text-mute group-hover:text-movel-900 transition-colors flex-shrink-0">
                     <Icon />
@@ -397,7 +430,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          MARCAS — logos monocromáticos + nombre
+          MARCAS
       ═══════════════════════════════════════════════════════════ */}
       <section className="bg-cloud py-12 border-y border-[#e5e7eb]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -414,8 +447,8 @@ export default function HomePage() {
                 onMouseMove={onGlowMove}
                 className={`reveal reveal-delay-${(i % 5) + 1} cursor-glow cursor-glow-soft group flex items-center gap-3 p-3.5 rounded-xl bg-white border border-[#e5e7eb] hover:border-movel-300 hover:shadow-movel transition-all`}
               >
-                <div className="text-mute group-hover:text-movel-900 transition-colors flex-shrink-0">
-                  <BrandIcon name={m} size={28} />
+                <div className="text-mute group-hover:text-movel-900 transition-colors flex-shrink-0 w-9 h-9 flex items-center justify-center">
+                  <BrandIcon name={m} size={32} />
                 </div>
                 <span className="text-[14px] font-bold text-ink group-hover:text-movel-900 transition-colors">
                   {m}
@@ -434,8 +467,8 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-8 reveal">
             <div>
               <p className="text-[11px] font-bold text-movel-600 uppercase tracking-[0.15em] mb-2">Disponibles ahora</p>
-              <h2 className="font-display text-[28px] md:text-[36px] gradient-text">Vehículos verificados</h2>
-              <p className="text-[15px] text-mute mt-1">{vehicles.length} carros listos para entregar hoy</p>
+              <h2 className="font-display text-[28px] md:text-[36px] gradient-text">Vehículos publicados</h2>
+              <p className="text-[15px] text-mute mt-1">{vehicles.length} carros en el catálogo</p>
             </div>
             <Link
               href="/buscar"
@@ -464,6 +497,59 @@ export default function HomePage() {
             <Link href="/buscar" className="inline-flex items-center gap-2 px-9 py-3.5 btn-primary text-[15px]">
               Ver todos los vehículos <ArrowRight size={18} />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          POR QUÉ ELEGIR MOVEL — 3 razones honestas
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="bg-cloud py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 reveal">
+            <p className="text-[11px] font-bold text-movel-600 uppercase tracking-[0.15em] mb-3">Nuestra diferencia</p>
+            <h2 className="font-display text-[28px] md:text-[40px] gradient-text">¿Por qué elegir MOVEL?</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                Icon: Database,
+                title: "Catálogo verificado",
+                desc: "Trabajamos con la base de datos oficial de Fasecolda y Ministerio de Transporte. Cada referencia con cilindraje, año y especificaciones técnicas reales.",
+                badge: "Datos oficiales",
+              },
+              {
+                Icon: Handshake,
+                title: "Asesoría personalizada",
+                desc: "Te acompañamos durante todo el proceso de compra o venta. Resolvemos dudas, conectamos partes y orientamos en cada paso.",
+                badge: "Servicio humano",
+              },
+              {
+                Icon: CurrencyCircleDollar,
+                title: "Comisión transparente",
+                desc: "Publicar es gratis. Si quieres que vendamos por ti (atendemos visitas, peritaje, traspaso), solo cobramos 3% del valor final.",
+                badge: "Solo 3%",
+              },
+            ].map((item, i) => (
+              <div
+                key={item.title}
+                onMouseMove={onGlowMove}
+                className={`reveal reveal-delay-${i + 1} cursor-glow cursor-glow-soft p-7 rounded-2xl bg-white border border-[#dce0e5] hover:border-movel-300 hover:shadow-movel-lg transition-all group h-full`}
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <div className="w-14 h-14 bg-movel-50 group-hover:bg-movel-gradient rounded-2xl flex items-center justify-center transition-all">
+                    <item.Icon size={28} color="#0B1E4E" weight="fill" className="group-hover:hidden" />
+                    <item.Icon size={28} color="white" weight="fill" className="hidden group-hover:block" />
+                  </div>
+                  <span className="text-[11px] font-bold text-movel-600 bg-movel-50 px-2.5 py-1 rounded-full">
+                    {item.badge}
+                  </span>
+                </div>
+                <h3 className="font-display text-[22px] text-movel-900 mb-3">{item.title}</h3>
+                <p className="text-[14px] text-mute leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -544,55 +630,6 @@ export default function HomePage() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════
-          SOCIAL PROOF — Testimonio + cifras
-      ═══════════════════════════════════════════════════════════ */}
-      <section className="bg-cloud py-16 md:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div className="reveal bg-white rounded-3xl p-8 md:p-10 shadow-movel relative">
-              <Quotes size={42} color="#3F8CFF" weight="fill" className="absolute -top-4 left-8 bg-cloud rounded-full p-2 w-12 h-12" />
-              <div className="flex gap-1 mb-5 mt-2">
-                {[1,2,3,4,5].map(i => <Star key={i} size={18} color="#FF6B3D" weight="fill" />)}
-              </div>
-              <p className="font-display text-[22px] md:text-[26px] text-ink leading-tight mb-6">
-                "Vendí mi carro en 11 días sin atender una sola llamada. Movel hizo todo:
-                me trajeron 3 ofertas serias y elegí. <span className="text-movel-600">Es como tener un asesor personal</span>."
-              </p>
-              <div className="flex items-center gap-3 pt-5 border-t border-[#dce0e5]">
-                <div className="w-12 h-12 rounded-full bg-movel-gradient flex items-center justify-center text-white font-bold text-[16px]">
-                  MA
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-ink">María Acosta</p>
-                  <p className="text-[13px] text-mute">Mazda CX-5 2021 · Bogotá</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5">
-              {[
-                { num: "847",   label: "Carros vendidos",     sub: "este año" },
-                { num: "11",    label: "Días promedio",        sub: "de venta" },
-                { num: "98%",   label: "Clientes satisfechos", sub: "Trustpilot 4.9★" },
-                { num: "3%",    label: "Comisión única",       sub: "sin sorpresas" },
-              ].map((stat, i) => (
-                <div
-                  key={stat.label}
-                  className={`reveal reveal-delay-${i + 1} bg-white rounded-2xl p-6 border border-[#dce0e5] hover:border-movel-200 hover:shadow-movel transition-all`}
-                >
-                  <p className="font-display text-[40px] md:text-[52px] gradient-text leading-none mb-2">
-                    {stat.num}
-                  </p>
-                  <p className="text-[14px] font-bold text-ink">{stat.label}</p>
-                  <p className="text-[12px] text-mute">{stat.sub}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════
           VENDER — Banner con 2 opciones desplegables
       ═══════════════════════════════════════════════════════════ */}
       <section className="py-16 md:py-20 bg-white" id="vender">
@@ -602,7 +639,6 @@ export default function HomePage() {
             <div className="absolute bottom-0 left-20 w-32 h-32 rounded-full bg-movel-400/30 translate-y-1/2" />
 
             <div className="relative z-10 p-8 md:p-14">
-              {/* ── Header ── */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-8">
                 <div>
                   <span className="inline-block text-movel-200 text-[11px] font-bold uppercase tracking-[0.15em] mb-3 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
@@ -613,11 +649,10 @@ export default function HomePage() {
                     <span className="gradient-text-light">Tú decides cómo.</span>
                   </h2>
                   <p className="text-white/75 text-[15px] md:text-[16px] leading-relaxed">
-                    Publica gratis y manéjalo tú mismo, o deja que <strong className="text-white">Movel se encargue de todo</strong> por una comisión única del 3%. No hay tarifa fija, no hay sorpresas.
+                    Publica gratis y manéjalo tú mismo, o deja que <strong className="text-white">Movel se encargue de todo</strong> por una comisión única del 3%. Sin tarifa fija, sin sorpresas.
                   </p>
                 </div>
 
-                {/* CTA toggle */}
                 <div className="flex flex-col items-end gap-3">
                   <button
                     type="button"
@@ -642,7 +677,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* ── Accordion: 2 opciones de venta ── */}
               <AnimatePresence>
                 {venderMode === "options" && (
                   <motion.div
@@ -654,7 +688,6 @@ export default function HomePage() {
                   >
                     <div className="pt-6 mt-4 border-t border-white/15 grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-                      {/* ─── Opción 1: Publica gratis ─── */}
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -698,7 +731,6 @@ export default function HomePage() {
                         </Link>
                       </motion.div>
 
-                      {/* ─── Opción 2: Servicio integral 3% ─── */}
                       <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -706,7 +738,6 @@ export default function HomePage() {
                         onMouseMove={onGlowMove}
                         className="cursor-glow cursor-glow-dark group relative bg-movel-gradient-dark rounded-2xl p-7 hover:shadow-2xl transition-all border border-movel-400/30 overflow-hidden"
                       >
-                        {/* Badge esquina */}
                         <span className="absolute top-4 right-4 text-[10px] font-black uppercase tracking-[0.15em] bg-sky text-white px-2.5 py-1 rounded-full">
                           ⚡ Recomendado
                         </span>
@@ -740,7 +771,6 @@ export default function HomePage() {
                           ))}
                         </ul>
 
-                        {/* % grande dentro de la card */}
                         <div className="flex items-end justify-between mb-5 pt-4 border-t border-white/15">
                           <div>
                             <p className="text-[11px] text-white/60 uppercase tracking-wide font-bold">Solo cobramos</p>
@@ -807,7 +837,7 @@ export default function HomePage() {
                 <MovelLogo variant="white" size={40} animate={false} />
               </div>
               <p className="text-white/55 text-[14px] leading-relaxed mb-5">
-                Compra y vende vehículos con total confianza. El marketplace 360° más confiable de Colombia.
+                Compra y vende vehículos con asesoría 360°. Solo 3% de comisión si vendemos por ti.
               </p>
               <div className="flex gap-3">
                 <a href="https://wa.me/573175737083" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 hover:bg-[#25d366] rounded-lg flex items-center justify-center transition-colors">
@@ -834,7 +864,7 @@ export default function HomePage() {
               <ul className="space-y-2.5">
                 <li><Link href="/publicar?modo=gratis" className="text-[14px] text-white/55 hover:text-white transition-colors">Publicar gratis</Link></li>
                 <li><Link href="/publicar?modo=360" className="text-[14px] text-white/55 hover:text-white transition-colors">Servicio integral 3%</Link></li>
-                <li><a href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20quiero%20información%20sobre%20el%20peritaje%20gratuito" target="_blank" rel="noopener noreferrer" className="text-[14px] text-white/55 hover:text-white transition-colors">Peritaje gratis</a></li>
+                <li><Link href="/#como-funciona" className="text-[14px] text-white/55 hover:text-white transition-colors">¿Cómo funciona?</Link></li>
                 <li><Link href="/subastas" className="text-[14px] text-white/55 hover:text-white transition-colors">Subastas en vivo</Link></li>
               </ul>
             </div>
