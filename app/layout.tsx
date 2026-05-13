@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Noto_Sans } from "next/font/google";
+import { Inter, Archivo_Black, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import dynamic from "next/dynamic";
@@ -8,22 +8,35 @@ const ChatWidget     = dynamic(() => import("@/components/ChatWidget"), { ssr: f
 const SocialBar      = dynamic(() => import("@/components/SocialBar"),  { ssr: false });
 const ToastContainer = dynamic(() => import("@/components/Toast"),      { ssr: false });
 
-const spaceGrotesk = Space_Grotesk({
+// ── Sistema tipográfico Movel ─────────────────────────────────────────
+// Display: Archivo Black — titulares, 900, italic uppercase
+const archivoBlack = Archivo_Black({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-archivo-black",
+  weight: "400", // Archivo Black solo viene en 400 (que ya es 900-equivalente)
+  display: "swap",
 });
 
-const notoSans = Noto_Sans({
+// Body / UI: Inter — legibilidad larga, 400/500/700
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-noto-sans",
-  weight: ["400", "700"],
+  variable: "--font-inter",
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+// Mono: JetBrains Mono — VINs, IDs, kilometrajes
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  weight: ["400", "500", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "MOVEL — Compra y vende vehículos seguros en Colombia",
+  title: "MOVEL — Nosotros vendemos, tú te relajas",
   description:
-    "Compra y vende vehículos usados en Colombia con historial verificado, financiamiento y garantía. El marketplace de carros más confiable del país.",
+    "El marketplace de vehículos más confiable de Colombia. Servicio 360° de compra y venta con historial verificado, financiamiento y garantía. Solo 3% de comisión.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -33,7 +46,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1978e5",
+  themeColor: "#0B1E4E",
   width: "device-width",
   initialScale: 1,
 };
@@ -47,10 +60,10 @@ export default function RootLayout({
     <html lang="es">
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231978e5'/><text x='16' y='23' text-anchor='middle' font-size='20' font-weight='900' font-family='Arial' fill='white'>M</text></svg>" />
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230B1E4E'/><text x='16' y='23' text-anchor='middle' font-size='20' font-weight='900' font-family='Arial' font-style='italic' fill='white'>M</text></svg>" />
       </head>
       <body
-        className={`${spaceGrotesk.variable} ${notoSans.variable} font-sans antialiased bg-[#f8f9fa] text-[#111418]`}
+        className={`${archivoBlack.variable} ${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-white text-ink`}
       >
         <Navbar />
         <main>{children}</main>
