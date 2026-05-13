@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
-  MagnifyingGlass, List, X, WhatsappLogo, UserCircle,
+  List, X, WhatsappLogo, UserCircle, SignIn,
   CaretDown, Gavel, Calculator, ChatsCircle, Newspaper,
 } from "@phosphor-icons/react";
 import { MovelLogo } from "./MovelLogo";
@@ -29,7 +29,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const glow = useCursorGlow();
+  const glowPublicar = useCursorGlow();
+  const glowLogin    = useCursorGlow();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -108,34 +109,33 @@ export default function Navbar() {
           </div>
 
           {/* Desktop derecha */}
-          <div className="hidden md:flex items-center gap-2">
-            <Link
-              href="/buscar"
-              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-cloud transition-colors"
-              title="Buscar vehículos"
-            >
-              <MagnifyingGlass size={20} color="#7A8195" />
-            </Link>
-            <Link
-              href="/perfil"
-              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-cloud transition-colors"
-              title="Mi cuenta"
-            >
-              <UserCircle size={22} color="#7A8195" weight="regular" />
-            </Link>
+          <div className="hidden md:flex items-center gap-2.5">
+            {/* WhatsApp */}
             <a
               href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20quisiera%20hablar%20con%20un%20asesor"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3.5 py-2 bg-[#25d366] text-white rounded-lg text-[13px] font-semibold hover:bg-[#20b858] transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#25d366] text-white rounded-xl text-[13px] font-bold hover:bg-[#20b858] transition-colors shadow-sm"
+              title="Hablar con un asesor por WhatsApp"
             >
-              <WhatsappLogo size={15} weight="fill" />
-              Asesor
+              <WhatsappLogo size={16} weight="fill" />
+              <span className="hidden lg:inline">Asesor</span>
             </a>
-            {/* CTA principal: degradado Movel */}
+
+            {/* Iniciar sesión — outlined Movel Blue */}
+            <Link
+              href="/auth"
+              {...glowLogin}
+              className="cursor-glow cursor-glow-soft flex items-center gap-2 px-5 py-2.5 border-2 border-movel-900 text-movel-900 rounded-xl text-[14px] font-bold hover:bg-movel-50 transition-all"
+            >
+              <SignIn size={17} weight="bold" />
+              Iniciar sesión
+            </Link>
+
+            {/* CTA principal: Publicar vehículo (gradient Movel) */}
             <Link
               href="/publicar"
-              {...glow}
+              {...glowPublicar}
               className="cursor-glow btn-primary text-[14px] !py-2.5 !px-5"
             >
               Publicar vehículo
@@ -183,14 +183,24 @@ export default function Navbar() {
               {link.hot && <span className="badge-live">Live</span>}
             </Link>
           ))}
-          <div className="pt-3 mt-2 border-t border-[#dce0e5] flex flex-col gap-2">
-            <Link
-              href="/perfil"
+          <div className="pt-3 mt-2 border-t border-[#dce0e5] flex flex-col gap-2.5">
+            <a
+              href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20quisiera%20hablar%20con%20un%20asesor"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg text-[14px] font-semibold text-ink hover:bg-cloud transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-[#25d366] text-white rounded-xl text-[14px] font-bold hover:bg-[#20b858] transition-colors"
             >
-              <UserCircle size={20} color="#7A8195" />
-              Mi cuenta
+              <WhatsappLogo size={18} weight="fill" />
+              Hablar con asesor
+            </a>
+            <Link
+              href="/auth"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center gap-2 py-3 border-2 border-movel-900 text-movel-900 rounded-xl text-[14px] font-bold hover:bg-movel-50 transition-colors"
+            >
+              <SignIn size={18} weight="bold" />
+              Iniciar sesión
             </Link>
             <Link
               href="/publicar"
