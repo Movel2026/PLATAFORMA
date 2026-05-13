@@ -9,7 +9,6 @@ import {
   Warning, Info,
 } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
-import MovelPageHeader from "@/components/MovelPageHeader";
 import { getVersiones, EspecificacionesTecnicas } from "@/lib/specs-data";
 import { OfertasToggle }           from "@/components/publicar/OfertasToggle";
 import { EspecificacionesVehiculo, SpecsOutput } from "@/components/publicar/EspecificacionesVehiculo";
@@ -361,9 +360,6 @@ export default function PublicarPage() {
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
 
-      {/* Navigation */}
-      <MovelPageHeader />
-
       {/* Header banner */}
       <div
         className="text-white py-8 px-4"
@@ -449,19 +445,43 @@ export default function PublicarPage() {
 
             <div className="p-5 space-y-5">
 
-              {/* ── Placa ── */}
+              {/* ── Placa (con privacidad) ── */}
               <div>
                 <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Placa del vehículo *</label>
-                <input
-                  type="text"
-                  value={form.placa}
-                  onChange={(e) => setF("placa", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
-                  placeholder="Ej: ABC123"
-                  maxLength={6}
-                  className={`${inputClass} w-full sm:w-40 font-mono font-bold text-[18px] tracking-widest uppercase`}
-                />
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input
+                    type="text"
+                    value={form.placa}
+                    onChange={(e) => setF("placa", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+                    placeholder="Ej: ABC123"
+                    maxLength={6}
+                    autoComplete="off"
+                    className={`${inputClass} w-full sm:w-44 font-mono font-bold text-[18px] tracking-widest uppercase`}
+                  />
+
+                  {/* Preview de lo que verán los compradores */}
+                  {form.placa && (() => {
+                    const ultimo = form.placa.replace(/\D/g, "").slice(-1) || "?";
+                    return (
+                      <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg bg-[#EEF4FF] border border-movel-200">
+                        <span className="text-[11px] font-bold text-movel-600 uppercase tracking-wide">Verán</span>
+                        <span className="font-mono font-bold text-[18px] tracking-widest text-movel-900">
+                          •••&nbsp;•&nbsp;{ultimo}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 {errors.placa && <p className="text-[12px] text-red-500 mt-1">{errors.placa}</p>}
-                <p className="text-[11px] text-[#9ca3af] mt-1">Solo visible para el equipo MOVEL. No se publica.</p>
+
+                <div className="mt-2 flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+                  <span className="text-[14px] flex-shrink-0">🔒</span>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    <strong className="font-bold">Tu placa completa es privada.</strong> Solo el equipo MOVEL la verá para verificar el vehículo en el RUNT. A los compradores solo se les mostrará el último dígito (para pico y placa).
+                  </p>
+                </div>
               </div>
 
               <hr className="border-[#f0f2f4]" />

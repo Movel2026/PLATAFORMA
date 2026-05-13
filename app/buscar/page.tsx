@@ -5,12 +5,32 @@ import { MagnifyingGlass, SlidersHorizontal, X, Sparkle, CircleNotch } from "@ph
 import { vehicles } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
-import MovelPageHeader from "@/components/MovelPageHeader";
 
 const marcas = ["Toyota", "Mazda", "Chevrolet", "Kia", "Renault", "Hyundai", "Nissan", "Ford"];
 const tipos = ["SUV", "Sedán", "Hatchback", "Camioneta"];
 const transmisiones = ["Automático", "Manual"];
 const ciudades = ["Bogotá", "Medellín", "Cali", "Barranquilla"];
+const combustibles = ["Gasolina", "Híbrido", "Diésel", "Eléctrico", "Mild Hybrid", "Gasolina y gas", "Híbrido/Diésel"];
+
+// Pico y placa: derivar último dígito a partir del id del vehículo (determinístico)
+const ultimoDigitoPlaca = (id: string): number => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  return Math.abs(hash) % 10;
+};
+
+// Helper formato COP
+const fmtCOP = (n: number) => new Intl.NumberFormat("es-CO", {
+  style: "currency", currency: "COP", minimumFractionDigits: 0, maximumFractionDigits: 0,
+}).format(n);
+
+// Helper parse del input (acepta "30000000" o "30.000.000")
+const parseNum = (s: string): number => {
+  const n = Number(s.replace(/\D/g, ""));
+  return isFinite(n) ? n : 0;
+};
+
+const YEAR_NOW = new Date().getFullYear();
 
 export default function BuscarPage() {
   const [search, setSearch] = useState("");
@@ -18,7 +38,14 @@ export default function BuscarPage() {
   const [selectedTipo, setSelectedTipo] = useState("");
   const [selectedTransmision, setSelectedTransmision] = useState("");
   const [selectedCiudad, setSelectedCiudad] = useState("");
-  const [precioMax, setPrecioMax] = useState(200000000);
+  const [selectedCombustible, setSelectedCombustible] = useState<string[]>([]);
+  const [selectedDigitos, setSelectedDigitos] = useState<number[]>([]);
+  const [precioMin, setPrecioMin] = useState<number>(0);
+  const [precioMax, setPrecioMax] = useState<number>(0); // 0 = sin tope
+  const [anoMin, setAnoMin] = useState<number>(0);
+  const [anoMax, setAnoMax] = useState<number>(0);
+  const [kmMin, setKmMin]   = useState<number>(0);
+  const [kmMax, setKmMax]   = useState<number>(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [ordenar, setOrdenar] = useState("recientes");
 
@@ -60,16 +87,31 @@ export default function BuscarPage() {
 
   // Filtrado normal (se aplica cuando no hay búsqueda IA activa)
   const filteredNormal = sortVehicles(vehicles.filter((v) => {
+    const km = parseInt(v.kilometraje.replace(/\D/g, "")) || 0;
+    const dig = ultimoDigitoPlaca(v.id);
     const matchSearch =
       !search ||
       v.titulo.toLowerCase().includes(search.toLowerCase()) ||
       v.marca.toLowerCase().includes(search.toLowerCase());
-    const matchMarca = !selectedMarca || v.marca === selectedMarca;
-    const matchTipo = !selectedTipo || v.tipo === selectedTipo;
+    const matchMarca       = !selectedMarca || v.marca === selectedMarca;
+    const matchTipo        = !selectedTipo  || v.tipo === selectedTipo;
     const matchTransmision = !selectedTransmision || v.transmision === selectedTransmision;
-    const matchCiudad = !selectedCiudad || v.ciudad === selectedCiudad;
-    const matchPrecio = v.precio <= precioMax;
-    return matchSearch && matchMarca && matchTipo && matchTransmision && matchCiudad && matchPrecio;
+    const matchCiudad      = !selectedCiudad || v.ciudad === selectedCiudad;
+    const matchCombustible = selectedCombustible.length === 0 || selectedCombustible.includes(v.combustible);
+    const matchDigitos     = selectedDigitos.length === 0 || selectedDigitos.includes(dig);
+    const matchPrecioMin   = precioMin === 0 || v.precio >= precioMin;
+    const matchPrecioMax   = precioMax === 0 || v.precio <= precioMax;
+    const matchAnoMin      = anoMin === 0    || v.año >= anoMin;
+    const matchAnoMax      = anoMax === 0    || v.año <= anoMax;
+    const matchKmMin       = kmMin === 0     || km >= kmMin;
+    const matchKmMax       = kmMax === 0     || km <= kmMax;
+    return (
+      matchSearch && matchMarca && matchTipo && matchTransmision && matchCiudad &&
+      matchCombustible && matchDigitos &&
+      matchPrecioMin && matchPrecioMax &&
+      matchAnoMin && matchAnoMax &&
+      matchKmMin && matchKmMax
+    );
   }));
 
   // Si hay búsqueda IA, filtrar por los IDs que devolvió la IA
@@ -79,17 +121,61 @@ export default function BuscarPage() {
 
   function clearFilters() {
     setSelectedMarca(""); setSelectedTipo(""); setSelectedTransmision("");
-    setSelectedCiudad(""); setPrecioMax(200000000); setSearch("");
+    setSelectedCiudad(""); setSelectedCombustible([]); setSelectedDigitos([]);
+    setPrecioMin(0); setPrecioMax(0);
+    setAnoMin(0); setAnoMax(0);
+    setKmMin(0); setKmMax(0);
+    setSearch("");
   }
 
-  const hasFilters = selectedMarca || selectedTipo || selectedTransmision || selectedCiudad;
+  const toggleArr = <T extends string | number>(arr: T[], v: T): T[] =>
+    arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
+
+  const hasFilters = !!(
+    selectedMarca || selectedTipo || selectedTransmision || selectedCiudad ||
+    selectedCombustible.length || selectedDigitos.length ||
+    precioMin || precioMax || anoMin || anoMax || kmMin || kmMax
+  );
+
+  // ── Filter Panel ───────────────────────────────────────────────────
+  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+    <p className="text-[12px] font-bold text-ink uppercase tracking-[0.1em] mb-2.5">{children}</p>
+  );
+
+  const RangeInputs = ({
+    minVal, maxVal, onMin, onMax, placeholderMin = "Mínimo", placeholderMax = "Máximo", formatter,
+  }: {
+    minVal: number; maxVal: number;
+    onMin: (n: number) => void; onMax: (n: number) => void;
+    placeholderMin?: string; placeholderMax?: string;
+    formatter?: (n: number) => string;
+  }) => (
+    <div className="grid grid-cols-2 gap-2">
+      <input
+        type="text"
+        inputMode="numeric"
+        value={minVal === 0 ? "" : formatter ? formatter(minVal) : String(minVal)}
+        onChange={(e) => onMin(parseNum(e.target.value))}
+        placeholder={placeholderMin}
+        className="w-full px-3 py-2 rounded-lg border border-[#dce0e5] text-[13px] text-ink bg-white focus:outline-none focus:border-movel-900 focus:ring-2 focus:ring-movel-900/15 transition-all"
+      />
+      <input
+        type="text"
+        inputMode="numeric"
+        value={maxVal === 0 ? "" : formatter ? formatter(maxVal) : String(maxVal)}
+        onChange={(e) => onMax(parseNum(e.target.value))}
+        placeholder={placeholderMax}
+        className="w-full px-3 py-2 rounded-lg border border-[#dce0e5] text-[13px] text-ink bg-white focus:outline-none focus:border-movel-900 focus:ring-2 focus:ring-movel-900/15 transition-all"
+      />
+    </div>
+  );
 
   const FilterPanel = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-[16px] font-bold text-[#111418]">Filtros</h3>
+        <h3 className="font-display text-[18px] text-movel-900">Filtros</h3>
         {hasFilters && (
-          <button onClick={clearFilters} className="text-[13px] text-[#0B1E4E] font-semibold hover:underline">
+          <button onClick={clearFilters} className="text-[12px] text-movel-600 font-bold hover:underline">
             Limpiar todo
           </button>
         )}
@@ -97,7 +183,7 @@ export default function BuscarPage() {
 
       {/* Marca */}
       <div>
-        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Marca</p>
+        <SectionLabel>Marca</SectionLabel>
         <div className="space-y-1.5">
           {marcas.map((m) => (
             <label key={m} className="flex items-center gap-2.5 cursor-pointer group">
@@ -106,9 +192,9 @@ export default function BuscarPage() {
                 name="marca"
                 checked={selectedMarca === m}
                 onChange={() => setSelectedMarca(selectedMarca === m ? "" : m)}
-                className="w-4 h-4 accent-[#0B1E4E]"
+                className="w-4 h-4 accent-movel-900"
               />
-              <span className="text-[14px] text-[#7A8195] group-hover:text-[#111418]">{m}</span>
+              <span className="text-[14px] text-mute group-hover:text-ink">{m}</span>
             </label>
           ))}
         </div>
@@ -116,7 +202,7 @@ export default function BuscarPage() {
 
       {/* Tipo */}
       <div>
-        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Tipo</p>
+        <SectionLabel>Tipo</SectionLabel>
         <div className="flex flex-wrap gap-2">
           {tipos.map((t) => (
             <button
@@ -124,8 +210,8 @@ export default function BuscarPage() {
               onClick={() => setSelectedTipo(selectedTipo === t ? "" : t)}
               className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold border transition-colors ${
                 selectedTipo === t
-                  ? "bg-[#0B1E4E] text-white border-[#0B1E4E]"
-                  : "border-[#dce0e5] text-[#7A8195] hover:border-[#0B1E4E] hover:text-[#0B1E4E]"
+                  ? "bg-movel-900 text-white border-movel-900"
+                  : "border-[#dce0e5] text-mute hover:border-movel-900 hover:text-movel-900"
               }`}
             >
               {t}
@@ -134,9 +220,101 @@ export default function BuscarPage() {
         </div>
       </div>
 
+      {/* Tipo de combustible (multi-select) */}
+      <div>
+        <SectionLabel>Tipo de combustible</SectionLabel>
+        <div className="space-y-1.5">
+          {combustibles.map((c) => (
+            <label key={c} className="flex items-center gap-2.5 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={selectedCombustible.includes(c)}
+                onChange={() => setSelectedCombustible(toggleArr(selectedCombustible, c))}
+                className="w-4 h-4 accent-movel-900 rounded"
+              />
+              <span className="text-[14px] text-mute group-hover:text-ink">{c}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Año (rango) */}
+      <div>
+        <SectionLabel>Año (desde — hasta)</SectionLabel>
+        <RangeInputs
+          minVal={anoMin}
+          maxVal={anoMax}
+          onMin={(n) => setAnoMin(n > YEAR_NOW + 2 ? YEAR_NOW + 2 : n)}
+          onMax={(n) => setAnoMax(n > YEAR_NOW + 2 ? YEAR_NOW + 2 : n)}
+          placeholderMin="Desde"
+          placeholderMax="Hasta"
+        />
+        <p className="text-[11px] text-mute mt-1.5">Ej: 2018 — 2024</p>
+      </div>
+
+      {/* Precio (rango) */}
+      <div>
+        <SectionLabel>Precio (desde — hasta)</SectionLabel>
+        <RangeInputs
+          minVal={precioMin}
+          maxVal={precioMax}
+          onMin={setPrecioMin}
+          onMax={setPrecioMax}
+          placeholderMin="Mínimo COP"
+          placeholderMax="Máximo COP"
+          formatter={(n) => new Intl.NumberFormat("es-CO").format(n)}
+        />
+        {(precioMin || precioMax) ? (
+          <p className="text-[11px] text-mute mt-1.5">
+            {precioMin ? fmtCOP(precioMin) : "$0"} — {precioMax ? fmtCOP(precioMax) : "Sin tope"}
+          </p>
+        ) : (
+          <p className="text-[11px] text-mute mt-1.5">Ej: 30.000.000 — 80.000.000</p>
+        )}
+      </div>
+
+      {/* Kilometraje (rango) */}
+      <div>
+        <SectionLabel>Kilometraje (desde — hasta)</SectionLabel>
+        <RangeInputs
+          minVal={kmMin}
+          maxVal={kmMax}
+          onMin={setKmMin}
+          onMax={setKmMax}
+          placeholderMin="Mín km"
+          placeholderMax="Máx km"
+          formatter={(n) => new Intl.NumberFormat("es-CO").format(n)}
+        />
+        <p className="text-[11px] text-mute mt-1.5">Ej: 0 — 60.000 km</p>
+      </div>
+
+      {/* Último dígito de la placa (pico y placa) */}
+      <div>
+        <SectionLabel>Último dígito de placa</SectionLabel>
+        <div className="grid grid-cols-5 gap-1.5">
+          {[0,1,2,3,4,5,6,7,8,9].map((d) => {
+            const active = selectedDigitos.includes(d);
+            return (
+              <button
+                key={d}
+                onClick={() => setSelectedDigitos(toggleArr(selectedDigitos, d))}
+                className={`h-9 rounded-lg text-[13px] font-mono font-bold border transition-all ${
+                  active
+                    ? "bg-movel-900 text-white border-movel-900 shadow-movel"
+                    : "border-[#dce0e5] text-ink hover:border-movel-900"
+                }`}
+              >
+                {d}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-mute mt-2">Filtra por pico y placa</p>
+      </div>
+
       {/* Transmisión */}
       <div>
-        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Transmisión</p>
+        <SectionLabel>Transmisión</SectionLabel>
         <div className="flex gap-2">
           {transmisiones.map((t) => (
             <button
@@ -144,8 +322,8 @@ export default function BuscarPage() {
               onClick={() => setSelectedTransmision(selectedTransmision === t ? "" : t)}
               className={`flex-1 py-2 rounded-lg text-[13px] font-semibold border transition-colors ${
                 selectedTransmision === t
-                  ? "bg-[#0B1E4E] text-white border-[#0B1E4E]"
-                  : "border-[#dce0e5] text-[#7A8195] hover:border-[#0B1E4E]"
+                  ? "bg-movel-900 text-white border-movel-900"
+                  : "border-[#dce0e5] text-mute hover:border-movel-900"
               }`}
             >
               {t}
@@ -156,7 +334,7 @@ export default function BuscarPage() {
 
       {/* Ciudad */}
       <div>
-        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">Ciudad</p>
+        <SectionLabel>Ciudad</SectionLabel>
         <div className="space-y-1.5">
           {ciudades.map((c) => (
             <label key={c} className="flex items-center gap-2.5 cursor-pointer group">
@@ -165,33 +343,11 @@ export default function BuscarPage() {
                 name="ciudad"
                 checked={selectedCiudad === c}
                 onChange={() => setSelectedCiudad(selectedCiudad === c ? "" : c)}
-                className="w-4 h-4 accent-[#0B1E4E]"
+                className="w-4 h-4 accent-movel-900"
               />
-              <span className="text-[14px] text-[#7A8195] group-hover:text-[#111418]">{c}</span>
+              <span className="text-[14px] text-mute group-hover:text-ink">{c}</span>
             </label>
           ))}
-        </div>
-      </div>
-
-      {/* Precio máximo */}
-      <div>
-        <p className="text-[13px] font-bold text-[#7A8195] uppercase tracking-wide mb-2">
-          Precio máximo:{" "}
-          <span className="text-[#111418]">
-            {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(precioMax)}
-          </span>
-        </p>
-        <input
-          type="range"
-          min={10000000}
-          max={200000000}
-          step={5000000}
-          value={precioMax}
-          onChange={(e) => setPrecioMax(Number(e.target.value))}
-          className="w-full accent-[#0B1E4E]"
-        />
-        <div className="flex justify-between text-[11px] text-[#7A8195] mt-1">
-          <span>$10M</span><span>$200M</span>
         </div>
       </div>
     </div>
@@ -199,7 +355,6 @@ export default function BuscarPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <MovelPageHeader />
 
       {/* ── BÚSQUEDA CON IA ── */}
       <div
