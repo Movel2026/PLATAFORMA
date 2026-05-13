@@ -14,6 +14,7 @@ import { getVersiones, EspecificacionesTecnicas } from "@/lib/specs-data";
 import { OfertasToggle }           from "@/components/publicar/OfertasToggle";
 import { EspecificacionesVehiculo, SpecsOutput } from "@/components/publicar/EspecificacionesVehiculo";
 import { FichaTecnicaCard }        from "@/components/publicar/FichaTecnicaCard";
+import { VehicleSelector, VehicleSelection } from "@/components/publicar/VehicleSelector";
 
 // ── CATÁLOGO DE MARCAS Y MODELOS ─────────────────────────────────────────
 const modelosPorMarca: Record<string, string[]> = {
@@ -159,7 +160,10 @@ export default function PublicarPage() {
     extras: "",
   });
 
-  const [autoSpecs, setAutoSpecs]   = useState<EspecificacionesTecnicas | null>(null);
+  const [autoSpecs,  setAutoSpecs]  = useState<EspecificacionesTecnicas | null>(null);
+  const [vehicleSel, setVehicleSel] = useState<VehicleSelection | null>(null);
+  // Modo manual: el usuario escribe marca/modelo a mano (vehículo no en la base)
+  const [modoManual, setModoManual] = useState(false);
   const [errors, setErrors]         = useState<FormErrors>({});
   const [photos, setPhotos]         = useState<PhotoPreview[]>([]);
   const [dragOver, setDragOver]     = useState(false);
@@ -168,39 +172,56 @@ export default function PublicarPage() {
   const [docUploads, setDocUploads] = useState({ tarjeta: false, cedula: false, soat: false, tecno: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Catálogo dinámico — 164 marcas / 4,289 modelos del Excel oficial
+  // Catálogo dinámico — marcas adicionales del Excel oficial (164 marcas)
   const [allBrands, setAllBrands] = useState<string[]>([]);
-  const [catalogModels, setCatalogModels] = useState<string[]>([]);
-  const [modelSearch, setModelSearch] = useState("");
-  const [loadingModels, setLoadingModels] = useState(false);
 
-  // Cargar todas las marcas del catálogo
+  // Cargar todas las marcas del catálogo una sola vez
   useEffect(() => {
     fetch("/api/catalog/brands")
       .then(r => r.json())
       .then((d: { todas: string[] }) => setAllBrands(d.todas ?? []));
   }, []);
 
-  // Cargar modelos del catálogo según marca + búsqueda
-  useEffect(() => {
-    if (!form.marca) { setCatalogModels([]); return; }
-    setLoadingModels(true);
-    const t = setTimeout(() => {
-      fetch(`/api/catalog/lines?brand=${encodeURIComponent(form.marca.toUpperCase())}&q=${encodeURIComponent(modelSearch)}&limit=80`)
-        .then(r => r.json())
-        .then((d: { lines: string[] }) => setCatalogModels(d.lines ?? []))
-        .finally(() => setLoadingModels(false));
-    }, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.marca, modelSearch]);
-
-  // Lista combinada de marcas: curadas primero + resto del catálogo
+  // Lista combinada de marcas: curadas primero + resto del catálogo oficial
   const marcas = useMemo(() => {
     const curatedSet = new Set(marcasCuradas.map(m => m.toUpperCase()));
     const extras = allBrands.filter(b => !curatedSet.has(b.toUpperCase()));
     return [...marcasCuradas, ...extras];
   }, [allBrands]);
+
+  // Normalizar marca UPPERCASE del vehicle-db → nombre curado (ej: "ACURA" → "Acura")
+  const normalizeMarca = (raw: string): string => {
+    const up = raw.toUpperCase();
+    const match = marcasCuradas.find((m) => m.toUpperCase() === up);
+    return match ?? raw.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+  };
+
+  // Extraer nombre del modelo desde referencia oficial Fasecolda/Mintransporte
+  // "ONIX PLUS 1.0T AT" → "Onix Plus"  |  "COROLLA XEI 2.0 AT" → "Corolla Xei"
+  const TRANS_TOKENS = new Set(["AT","MT","CVT","TP","DSG","DCT","AWD","FWD","RWD","4X4","4X2","HV","EV"]);
+  const extractModelo = (ref: string): string => {
+    const words = ref.toUpperCase().trim().split(/\s+/);
+    const model: string[] = [];
+    for (const w of words) {
+      if (/^\d/.test(w)) break;          // empieza con dígito → spec
+      if (TRANS_TOKENS.has(w)) break;    // token de transmisión/tracción → parar
+      model.push(w);
+      if (model.length >= 3) break;      // máximo 3 palabras de modelo
+    }
+    if (model.length === 0) model.push(words[0]);
+    return model.map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ");
+  };
+
+  // Mapeo tipo vehicle-db → carrocería amigable para el form
+  const tipoToCarroceria: Record<string, string> = {
+    AUTOMOVILES:              "Sedán",
+    "CAMIONETAS Y CAMPEROS":  "SUV",
+    "CAMIONETAS DOBLECABINA": "Pickup / Camioneta",
+    ELECTRICOS:               "Eléctrico",
+    HIBRIDOS:                 "Híbrido",
+    PASAJEROS:                "Minivan",
+    CARGA:                    "Furgoneta",
+  };
 
   // Formulario válido si los campos obligatorios están completos
   const formValid = !!(
@@ -232,26 +253,44 @@ export default function PublicarPage() {
       return prev.filter((_, i) => i !== index);
     });
 
-  // ── Cascada marca → modelo → versión ──
-  const handleMarcaChange = (marca: string) => {
+  // ── Handler VehicleSelector (camino oficial) ──
+  const handleVehicleSelect = (sel: VehicleSelection | null) => {
+    setVehicleSel(sel);
+    if (!sel) {
+      setForm((f) => ({ ...f, marca: "", modelo: "", version: "", motor: "", combustible: "", transmision: "", potencia: "", carroceria: "", pasajeros: "" }));
+      setAutoSpecs(null);
+      return;
+    }
+    const marcaNorm  = normalizeMarca(sel.marca);
+    const modelo     = extractModelo(sel.referencia);
+    const carroceria = tipoToCarroceria[sel.tipo] ?? "";
+    const motorStr   = sel.cilindraje ? `${(sel.cilindraje / 1000).toFixed(1)}L · ${sel.cilindraje} cc` : "";
+    setAutoSpecs(null);
+    setForm((f) => ({
+      ...f,
+      marca:      marcaNorm,
+      modelo:     modelo,
+      version:    sel.referencia,
+      carroceria: carroceria,
+      motor:      motorStr,
+      pasajeros:  sel.pasajeros ? String(sel.pasajeros) : f.pasajeros,
+      // Limpiar specs para que EspecificacionesVehiculo recalcule
+      combustible: "", transmision: "", potencia: "",
+    }));
+  };
+
+  // ── Cascada manual (modo fallback) ──
+  const handleMarcaManual = (marca: string) => {
     setForm((f) => ({ ...f, marca, modelo: "", version: "", motor: "", combustible: "", transmision: "", potencia: "", carroceria: "", pasajeros: "" }));
     setAutoSpecs(null);
   };
-  const handleModeloChange = (modelo: string) => {
-    // Auto-seleccionar la primera versión disponible en nuestra base de datos técnica
-    // para que los campos se completen automáticamente sin acción adicional del usuario.
-    const versionesDisp = getVersiones(form.marca, modelo);
-    const versionAuto   = versionesDisp.length > 0 ? versionesDisp[0] : "";
+  const handleModeloManual = (modelo: string) => {
+    const versionAuto = getVersiones(form.marca, modelo)[0] ?? "";
     setForm((f) => ({
-      ...f,
-      modelo,
+      ...f, modelo,
       version: versionAuto,
       motor: "", combustible: "", transmision: "", potencia: "", carroceria: "", pasajeros: "",
     }));
-    setAutoSpecs(null);
-  };
-  const handleVersionChange = (ver: string) => {
-    setForm((f) => ({ ...f, version: ver }));
     setAutoSpecs(null);
   };
 
@@ -273,7 +312,7 @@ export default function PublicarPage() {
   function validate(): boolean {
     const e: FormErrors = {};
     if (!form.marca)  e.marca  = "Selecciona una marca";
-    if (!form.modelo) e.modelo = "Selecciona un modelo";
+    if (!form.modelo || form.modelo === "__otro__") e.modelo = "Escribe el modelo del vehículo";
     if (!form.año)    e.año    = "Selecciona el año";
     if (!form.placa)  e.placa  = "Ingresa la placa del vehículo";
     if (!form.nombre) e.nombre = "Ingresa tu nombre";
@@ -391,191 +430,184 @@ export default function PublicarPage() {
           </div>
 
           {/* ════════════════════════════════════════
-              SECCIÓN 2 — INFORMACIÓN DEL VEHÍCULO
+              SECCIÓN 2 — IDENTIFICACIÓN DEL VEHÍCULO
+              (Base oficial Min. Transporte 2026 — 11.537 referencias)
           ════════════════════════════════════════ */}
-          <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
-            <div className="flex items-center gap-2 mb-5">
-              <Car size={20} color="#1978e5" weight="fill" />
-              <h2 className="text-[18px] font-bold text-[#111418]">Información del vehículo</h2>
+          <div className="bg-white rounded-2xl border border-[#dce0e5] overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#f0f2f4]">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1978e5 100%)" }}>
+                  <Car size={18} color="white" weight="fill" />
+                </div>
+                <div>
+                  <h2 className="text-[18px] font-bold text-[#111418] leading-tight">Identificación del vehículo</h2>
+                  <p className="text-[11px] text-[#637488]">Base oficial Ministerio de Transporte 2026 · 11.537 referencias</p>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-5 space-y-5">
 
-              {/* Placa */}
-              <div className="sm:col-span-2">
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Placa del vehículo *</label>
+              {/* ── Placa ── */}
+              <div>
+                <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Placa del vehículo *</label>
                 <input
                   type="text"
                   value={form.placa}
                   onChange={(e) => setF("placa", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
                   placeholder="Ej: ABC123"
                   maxLength={6}
-                  className={`${inputClass} w-full sm:w-48 font-mono font-bold text-[18px] tracking-widest uppercase`}
+                  className={`${inputClass} w-full sm:w-40 font-mono font-bold text-[18px] tracking-widest uppercase`}
                 />
                 {errors.placa && <p className="text-[12px] text-red-500 mt-1">{errors.placa}</p>}
-                <p className="text-[12px] text-[#637488] mt-1">Solo visible para el equipo MOVEL. No se publica.</p>
+                <p className="text-[11px] text-[#9ca3af] mt-1">Solo visible para el equipo MOVEL. No se publica.</p>
               </div>
 
-              {/* Marca */}
-              <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Marca *</label>
-                <select value={form.marca} onChange={(e) => handleMarcaChange(e.target.value)} className={selectClass}>
-                  <option value="">Seleccionar marca</option>
-                  {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-                {errors.marca && <p className="text-[12px] text-red-500 mt-1">{errors.marca}</p>}
-              </div>
+              <hr className="border-[#f0f2f4]" />
 
-              {/* Modelo — combinación: curado + catálogo completo (4,289) + custom */}
-              <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Modelo *</label>
+              {/* ── Selector oficial (camino primario) ── */}
+              {!modoManual ? (
+                <div>
+                  <VehicleSelector
+                    onChange={handleVehicleSelect}
+                  />
 
-                {/* Si la marca tiene modelos curados, mostrarlos como botones rápidos */}
-                {form.marca && modelosPorMarca[form.marca] && modelosPorMarca[form.marca].length > 1 && (
-                  <div className="mb-2 flex flex-wrap gap-1.5">
-                    {modelosPorMarca[form.marca].slice(0, 12).map((m) => (
-                      <button
-                        type="button"
-                        key={m}
-                        onClick={() => handleModeloChange(m)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
-                          form.modelo === m
-                            ? "bg-[#1978e5] text-white"
-                            : "bg-[#f0f2f4] text-[#637488] hover:bg-[#e8f0fd]"
-                        }`}
-                      >
-                        {m}
-                      </button>
-                    ))}
+                  {/* Confirmación visual cuando hay selección */}
+                  {vehicleSel && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl flex items-start gap-2.5">
+                      <CheckCircle size={16} color="#16a34a" weight="fill" className="flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[12px] font-bold text-green-800">
+                          {normalizeMarca(vehicleSel.marca)} · {vehicleSel.referencia}
+                        </p>
+                        <p className="text-[11px] text-green-700 mt-0.5">
+                          {vehicleSel.tipoLabel}
+                          {vehicleSel.cilindraje ? ` · ${vehicleSel.cilindraje} cc` : ""}
+                          {vehicleSel.pasajeros ? ` · ${vehicleSel.pasajeros} pasajeros` : ""}
+                          {" · "}Las especificaciones técnicas se completarán automáticamente ✨
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {errors.marca && !vehicleSel && (
+                    <p className="text-[12px] text-red-500 mt-2 flex items-center gap-1">
+                      <Warning size={13} weight="fill" /> {errors.marca}
+                    </p>
+                  )}
+                  {errors.modelo && !vehicleSel && (
+                    <p className="text-[12px] text-red-500 mt-1 flex items-center gap-1">
+                      <Warning size={13} weight="fill" /> {errors.modelo}
+                    </p>
+                  )}
+
+                  {/* Escapatoria a ingreso manual */}
+                  <button
+                    type="button"
+                    onClick={() => { setModoManual(true); setVehicleSel(null); setForm(f => ({ ...f, marca: "", modelo: "", version: "", motor: "", carroceria: "", pasajeros: "" })); setAutoSpecs(null); }}
+                    className="mt-3 text-[12px] text-[#637488] hover:text-[#1978e5] underline underline-offset-2 transition-colors"
+                  >
+                    Mi vehículo no aparece en la lista →
+                  </button>
+                </div>
+              ) : (
+                /* ── Entrada manual (fallback) ── */
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                    <Warning size={14} color="#d97706" weight="fill" className="flex-shrink-0" />
+                    <p className="text-[12px] text-amber-800">
+                      Modo manual — las especificaciones se completarán con IA según los datos que ingreses.
+                    </p>
                   </div>
-                )}
 
-                {/* Input combo — escribe o busca en catálogo completo */}
-                <input
-                  type="text"
-                  list={form.marca ? "catalog-models" : undefined}
-                  value={form.modelo}
-                  onChange={(e) => {
-                    handleModeloChange(e.target.value);
-                    setModelSearch(e.target.value);
-                  }}
-                  disabled={!form.marca}
-                  placeholder={form.marca
-                    ? `Escribe o selecciona — ${catalogModels.length} modelos en catálogo`
-                    : "Selecciona marca primero"}
-                  className={`${selectClass} disabled:opacity-50`}
-                />
-                {form.marca && (
-                  <datalist id="catalog-models">
-                    {catalogModels.map((m) => <option key={m} value={m} />)}
-                  </datalist>
-                )}
-                {errors.modelo && <p className="text-[12px] text-red-500 mt-1">{errors.modelo}</p>}
-                {form.marca && form.modelo && (
-                  <p className="text-[11px] text-[#637488] mt-1 flex items-center gap-1">
-                    <span className="text-[#1978e5]">✨</span>
-                    Las especificaciones se autocompletarán con IA si no las tenemos en nuestra base
-                  </p>
-                )}
-              </div>
-
-              {/* Año */}
-              <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Año *</label>
-                <select value={form.año} onChange={(e) => setF("año", e.target.value)} className={selectClass}>
-                  <option value="">Seleccionar año</option>
-                  {years.map((y) => <option key={y} value={y}>{y}</option>)}
-                </select>
-                {errors.año && <p className="text-[12px] text-red-500 mt-1">{errors.año}</p>}
-              </div>
-
-              {/* Versión — dropdown inteligente con auto-selección */}
-              <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 flex items-center gap-2 uppercase tracking-wide">
-                  Versión / Referencia
-                  {versionesDB.length > 0 && autoSpecs && (
-                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full normal-case tracking-normal">
-                      ✓ Auto-seleccionada
-                    </span>
-                  )}
-                  {versionesDB.length > 0 && !autoSpecs && (
-                    <span className="bg-[#e8f0fd] text-[#1978e5] text-[10px] font-bold px-2 py-0.5 rounded-full normal-case tracking-normal">
-                      Datos disponibles
-                    </span>
-                  )}
-                </label>
-                {versionesDB.length > 0 ? (
-                  <>
-                    <select
-                      value={form.version}
-                      onChange={(e) => handleVersionChange(e.target.value)}
-                      className={`${selectClass} ${autoSpecs ? "border-green-300 bg-green-50 focus:border-green-500" : ""}`}
-                    >
-                      <option value="">Seleccionar versión</option>
-                      {versionesDB.map((v) => <option key={v} value={v}>{v}</option>)}
-                      <option value="__otra__">Otra versión (escribir)</option>
-                    </select>
-                    {form.version === "__otra__" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Marca *</label>
+                      <select value={form.marca} onChange={(e) => handleMarcaManual(e.target.value)} className={selectClass}>
+                        <option value="">Seleccionar marca</option>
+                        {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      {errors.marca && <p className="text-[12px] text-red-500 mt-1">{errors.marca}</p>}
+                    </div>
+                    <div>
+                      <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Modelo *</label>
                       <input
                         type="text"
-                        placeholder="Escribe la versión exacta..."
-                        className={`${inputClass} mt-2`}
-                        onChange={(e) => setF("version", e.target.value)}
-                        autoFocus
+                        value={form.modelo}
+                        onChange={(e) => handleModeloManual(e.target.value)}
+                        disabled={!form.marca}
+                        placeholder={form.marca ? "Ej: Corolla, Onix, Tucson…" : "Selecciona marca primero"}
+                        className={`${inputClass} disabled:opacity-50`}
                       />
-                    )}
-                    <p className="text-[11px] text-[#637488] mt-1">
-                      Cambia la versión si tu carro es diferente a la seleccionada.
-                    </p>
-                  </>
-                ) : (
-                  <input
-                    type="text"
-                    value={form.version}
-                    onChange={(e) => setF("version", e.target.value)}
-                    placeholder="Ej: LT, GT, Sport, Active, Prime..."
-                    className={inputClass}
-                  />
-                )}
-              </div>
+                      {errors.modelo && <p className="text-[12px] text-red-500 mt-1">{errors.modelo}</p>}
+                    </div>
+                    <div>
+                      <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Versión / Trim</label>
+                      <input
+                        type="text"
+                        value={form.version}
+                        onChange={(e) => setF("version", e.target.value)}
+                        placeholder="Ej: LT, GT, Sport, Active…"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setModoManual(false); setForm(f => ({ ...f, marca: "", modelo: "", version: "" })); }}
+                    className="text-[12px] text-[#637488] hover:text-[#1978e5] underline underline-offset-2 transition-colors"
+                  >
+                    ← Volver al buscador oficial
+                  </button>
+                </div>
+              )}
 
-              {/* Color */}
-              <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Color</label>
-                <select value={form.color} onChange={(e) => setF("color", e.target.value)} className={selectClass}>
-                  <option value="">Seleccionar color</option>
-                  {colores.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+              <hr className="border-[#f0f2f4]" />
 
-              {/* Ciudad */}
-              <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Ciudad</label>
-                <select value={form.ciudad} onChange={(e) => setF("ciudad", e.target.value)} className={selectClass}>
-                  <option value="">Seleccionar ciudad</option>
-                  {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-
-              {/* Kilometraje con separador */}
-              <div>
-                <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Kilometraje</label>
-                <div className="relative">
-                  <input
-                    type="text" inputMode="numeric"
-                    value={formatKm(form.kilometraje)}
-                    onChange={(e) => setF("kilometraje", e.target.value.replace(/\D/g, ""))}
-                    placeholder="45.000"
-                    className={inputClass}
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-[#637488] pointer-events-none">km</span>
+              {/* ── Año + Color + Ciudad ── */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Año modelo *</label>
+                  <select value={form.año} onChange={(e) => setF("año", e.target.value)} className={selectClass}>
+                    <option value="">Seleccionar año</option>
+                    {years.map((y) => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                  {errors.año && <p className="text-[12px] text-red-500 mt-1">{errors.año}</p>}
+                </div>
+                <div>
+                  <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Color</label>
+                  <select value={form.color} onChange={(e) => setF("color", e.target.value)} className={selectClass}>
+                    <option value="">Seleccionar</option>
+                    {colores.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Ciudad</label>
+                  <select value={form.ciudad} onChange={(e) => setF("ciudad", e.target.value)} className={selectClass}>
+                    <option value="">Seleccionar</option>
+                    {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
                 </div>
               </div>
 
-              {/* Precio + toggle "Recibir ofertas" */}
-              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* ── Kilometraje + Precio ── */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Precio (COP) *</label>
+                  <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Kilometraje</label>
+                  <div className="relative">
+                    <input
+                      type="text" inputMode="numeric"
+                      value={formatKm(form.kilometraje)}
+                      onChange={(e) => setF("kilometraje", e.target.value.replace(/\D/g, ""))}
+                      placeholder="45.000"
+                      className={inputClass}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] text-[#637488] pointer-events-none">km</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Precio (COP) *</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#637488] font-bold text-[14px]">$</span>
                     <input
@@ -587,8 +619,6 @@ export default function PublicarPage() {
                     />
                   </div>
                   {errors.precio && <p className="text-[12px] text-red-500 mt-1">{errors.precio}</p>}
-
-                  {/* ── FUNCIONALIDAD 1: Toggle Recibir Ofertas ── */}
                   <OfertasToggle
                     value={form.accept_offers}
                     onChange={(v) => setF("accept_offers", v)}
@@ -596,24 +626,24 @@ export default function PublicarPage() {
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Descripción */}
-            <div className="mt-4">
-              <label className="text-[13px] font-bold text-[#637488] mb-1.5 block uppercase tracking-wide">Descripción del vehículo</label>
-              <textarea
-                value={form.descripcion}
-                onChange={(e) => setF("descripcion", e.target.value)}
-                placeholder="Describe el estado general, extras, historial de mantenimiento, motivo de venta..."
-                rows={4}
-                className="w-full bg-[#f0f2f4] rounded-xl px-4 py-3 text-[15px] text-[#111418] placeholder-[#637488] outline-none border border-transparent focus:border-[#1978e5] focus:bg-white transition-colors resize-none"
-              />
+              {/* ── Descripción ── */}
+              <div>
+                <label className="text-[12px] font-bold text-[#374151] mb-1.5 block uppercase tracking-wide">Descripción del vehículo</label>
+                <textarea
+                  value={form.descripcion}
+                  onChange={(e) => setF("descripcion", e.target.value)}
+                  placeholder="Describe el estado general, extras, historial de mantenimiento, motivo de venta..."
+                  rows={4}
+                  className="w-full bg-[#f0f2f4] rounded-xl px-4 py-3 text-[15px] text-[#111418] placeholder-[#637488] outline-none border border-transparent focus:border-[#1978e5] focus:bg-white transition-colors resize-none"
+                />
+              </div>
             </div>
           </div>
 
           {/* ════════════════════════════════════════
-              FUNCIONALIDAD 2 — ESPECIFICACIONES TÉCNICAS
-              (skeleton loader + auto-completado + campos editables)
+              ESPECIFICACIONES TÉCNICAS
+              Auto-completado con DB + IA para todos los vehículos
           ════════════════════════════════════════ */}
           {form.marca && form.modelo && (
             <EspecificacionesVehiculo
@@ -621,6 +651,7 @@ export default function PublicarPage() {
               modelo={form.modelo}
               version={form.version}
               ano={form.año}
+              cilindraje={vehicleSel?.cilindraje ?? null}
               onOutputChange={handleSpecsOutput}
               onCleared={() => setAutoSpecs(null)}
             />
@@ -630,7 +661,7 @@ export default function PublicarPage() {
               FUNCIONALIDAD 3 — MINI FICHA TÉCNICA
               (aparece cuando hay especificaciones cargadas)
           ════════════════════════════════════════ */}
-          {autoSpecs && form.año && (
+          {autoSpecs && form.año && form.modelo !== "__otro__" && (
             <FichaTecnicaCard
               specs={autoSpecs}
               marca={form.marca}

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Lightning, Gauge, Gear, Flame, Car, Users,
-  CheckCircle, PencilSimple, Sparkle, X,
+  CheckCircle, PencilSimple, Sparkle, X, Warning,
 } from "@phosphor-icons/react";
-import { getEspecificaciones, EspecificacionesTecnicas } from "@/lib/specs-data";
+import { getEspecificaciones, getVersiones, getModelosConSpecs, EspecificacionesTecnicas } from "@/lib/specs-data";
 
 // ── Tipos públicos ────────────────────────────────────────────────────────
 
@@ -22,10 +22,15 @@ export interface SpecsOutput {
 export interface EspecificacionesVehiculoProps {
   marca: string;
   modelo: string;
-  /** Versión exacta tal como aparece en specs-data (ej: "LT 1.0 Turbo") */
+  /** Versión / referencia oficial (ej: "ONIX PLUS 1.0T AT") */
   version: string;
   /** Año del vehículo — útil para AI fallback */
   ano?: number | string;
+  /**
+   * Cilindraje oficial del Ministerio de Transporte (cc).
+   * Si se pasa, se usa para enriquecer el campo motor y la búsqueda AI.
+   */
+  cilindraje?: number | null;
   /**
    * Llamado cuando se auto-completan o editan los datos.
    * Recibe el objeto EspecificacionesTecnicas completo (null si no hay datos) y
@@ -122,47 +127,89 @@ function SpecField({ icon, label, value, loading, locked, type = "text", options
  * - Campos editables cuando no hay datos o el usuario presiona "Editar".
  */
 export function EspecificacionesVehiculo({
-  marca, modelo, version, ano, onOutputChange, onCleared,
+  marca, modelo, version, ano, cilindraje, onOutputChange, onCleared,
 }: EspecificacionesVehiculoProps) {
-  const [autoSpecs, setAutoSpecs] = useState<EspecificacionesTecnicas | null>(null);
-  const [loading, setLoading]     = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiSource, setAiSource]   = useState<"db" | "ai" | null>(null);
-  const [editMode, setEditMode]   = useState(false);
-  const [output, setOutput]       = useState<SpecsOutput>(EMPTY_OUTPUT);
+  const [autoSpecs,  setAutoSpecs]  = useState<EspecificacionesTecnicas | null>(null);
+  const [loading,    setLoading]    = useState(false);
+  const [aiLoading,  setAiLoading]  = useState(false);
+  const [aiSource,   setAiSource]   = useState<"db" | "db-fuzzy" | "ai" | null>(null);
+  const [editMode,   setEditMode]   = useState(false);
+  const [aiError,    setAiError]    = useState(false);
+  const [output,     setOutput]     = useState<SpecsOutput>(EMPTY_OUTPUT);
 
-  // usamos ref para no incluir callbacks en deps de useEffect
   const cbRef = useRef({ onOutputChange, onCleared });
   cbRef.current = { onOutputChange, onCleared };
 
+  // ── Búsqueda fuzzy en la base curada ────────────────────────────────────
+  // Orden de intentos para modelos compuestos ("Spark GT" → "Spark", etc.):
+  // 1. Versión exacta + modelo exacto
+  // 2. Primera versión disponible + modelo exacto
+  // 3. Primera versión + modelo base (primera palabra)
+  // 4. Primera versión + modelo que contenga el nombre como substring
+  function findInDB(
+    m: string, mod: string, ver: string,
+  ): { specs: EspecificacionesTecnicas; modeloUsado: string } | null {
+    // Intento 1: versión explícita
+    if (ver && ver !== "__otra__") {
+      const s = getEspecificaciones(m, mod, ver);
+      if (s) return { specs: s, modeloUsado: mod };
+    }
+    // Intento 2: primera versión del modelo exacto
+    const vers = getVersiones(m, mod);
+    if (vers.length > 0) {
+      const s = getEspecificaciones(m, mod, vers[0]);
+      if (s) return { specs: s, modeloUsado: mod };
+    }
+    // Intento 3: modelo base (primera palabra) — "Spark GT" → "Spark"
+    const base = mod.split(" ")[0];
+    if (base && base !== mod) {
+      const bVers = getVersiones(m, base);
+      if (bVers.length > 0) {
+        const s = getEspecificaciones(m, base, bVers[0]);
+        if (s) return { specs: s, modeloUsado: base };
+      }
+    }
+    // Intento 4: búsqueda por substring entre modelos disponibles en la marca
+    const available = getModelosConSpecs(m);
+    for (const av of available) {
+      if (mod.toUpperCase().includes(av.toUpperCase()) ||
+          av.toUpperCase().includes(mod.toUpperCase())) {
+        const avVers = getVersiones(m, av);
+        if (avVers.length > 0) {
+          const s = getEspecificaciones(m, av, avVers[0]);
+          if (s) return { specs: s, modeloUsado: av };
+        }
+      }
+    }
+    return null;
+  }
+
   useEffect(() => {
     const valid = marca && modelo;
-
     if (!valid) {
-      setAutoSpecs(null);
-      setLoading(false);
-      setAiSource(null);
-      setEditMode(false);
-      setOutput(EMPTY_OUTPUT);
+      setAutoSpecs(null); setLoading(false); setAiSource(null);
+      setEditMode(false); setAiError(false); setOutput(EMPTY_OUTPUT);
       cbRef.current.onCleared?.();
       return;
     }
 
     setLoading(true);
-    setAutoSpecs(null);
-    setAiSource(null);
-    setEditMode(false);
+    setAutoSpecs(null); setAiSource(null);
+    setEditMode(false); setAiError(false);
 
     let cancelled = false;
 
-    // 1) Buscar primero en la base de datos curada
     const timer = setTimeout(async () => {
       if (cancelled) return;
-      const found = version && version !== "__otra__"
-        ? getEspecificaciones(marca, modelo, version)
-        : null;
 
-      if (found) {
+      // ── 0) Si hay cilindraje oficial pero no version, enriquecer motor base ──
+      // (Se sobreescribirá si la DB o IA dan datos más completos)
+      const motorBase = cilindraje ? `${(cilindraje / 1000).toFixed(1)}L · ${cilindraje} cc` : "";
+
+      // ── 1) Búsqueda en DB curada (con fuzzy) ──
+      const dbResult = findInDB(marca, modelo, version);
+      if (dbResult) {
+        const { specs: found, modeloUsado } = dbResult;
         const out: SpecsOutput = {
           motor:       found.motor,
           combustible: found.combustible,
@@ -172,20 +219,20 @@ export function EspecificacionesVehiculo({
           pasajeros:   String(found.pasajeros),
         };
         setAutoSpecs(found);
-        setAiSource("db");
+        setAiSource(modeloUsado !== modelo ? "db-fuzzy" : "db");
         setOutput(out);
         setLoading(false);
         cbRef.current.onOutputChange?.(found, out);
         return;
       }
 
-      // 2) Si no hay en DB curada → consultar Claude AI
+      // ── 2) Fallback: Claude AI (pasa cilindraje oficial si está disponible) ──
       setAiLoading(true);
       try {
         const res = await fetch("/api/specs/auto-fill", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ marca, modelo, version, ano }),
+          body: JSON.stringify({ marca, modelo, version, ano, cilindraje }),
         });
 
         if (cancelled) return;
@@ -222,15 +269,25 @@ export function EspecificacionesVehiculo({
           setOutput(out);
           cbRef.current.onOutputChange?.(aiSpecs, out);
         } else {
-          // AI falló → modo manual
+          // AI no disponible → modo manual con campos editables
+          // Si la IA falla pero tenemos cilindraje oficial, lo mostramos
+          const fallbackOutput: SpecsOutput = {
+            ...EMPTY_OUTPUT,
+            motor: motorBase,
+          };
+          setAiError(true);
           setEditMode(true);
-          setOutput(EMPTY_OUTPUT);
-          cbRef.current.onCleared?.();
+          setOutput(fallbackOutput);
+          if (motorBase) cbRef.current.onOutputChange?.(null, fallbackOutput);
+          else cbRef.current.onCleared?.();
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) {
+          const fallbackOutput: SpecsOutput = { ...EMPTY_OUTPUT, motor: motorBase };
+          setAiError(true);
           setEditMode(true);
-          setOutput(EMPTY_OUTPUT);
+          setOutput(fallbackOutput);
+          if (motorBase) cbRef.current.onOutputChange?.(null, fallbackOutput);
         }
       } finally {
         if (!cancelled) {
@@ -244,7 +301,7 @@ export function EspecificacionesVehiculo({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [marca, modelo, version, ano]);
+  }, [marca, modelo, version, ano, cilindraje]);
 
   // Propagate manual edits
   const updateField = (key: keyof SpecsOutput, val: string) => {
@@ -262,8 +319,12 @@ export function EspecificacionesVehiculo({
     ? "🤖 Consultando con IA para autocompletar..."
     : loading
     ? "Consultando base de datos técnica..."
+    : aiError
+    ? "No pudimos cargar las especificaciones — completa manualmente"
     : autoSpecs && aiSource === "db"
-    ? `Datos verificados para ${version} · Cambia la versión si tu carro difiere`
+    ? `Datos verificados · Cambia la versión si tu carro difiere`
+    : autoSpecs && aiSource === "db-fuzzy"
+    ? `Datos aproximados basados en modelo similar · Verifica y corrige si es necesario`
     : autoSpecs && aiSource === "ai"
     ? `✨ Especificaciones generadas por IA · Verifica y corrige si es necesario`
     : "Selecciona marca y modelo para ver las especificaciones";
@@ -301,11 +362,27 @@ export function EspecificacionesVehiculo({
             </span>
           )}
 
+          {/* Fuzzy-match badge — modelo similar */}
+          {autoSpecs && !loading && aiSource === "db-fuzzy" && (
+            <span className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1.5">
+              <Warning size={11} color="#d97706" weight="fill" />
+              <span className="text-[11px] text-amber-700 font-bold">Similar</span>
+            </span>
+          )}
+
           {/* AI-generated badge */}
           {autoSpecs && !loading && aiSource === "ai" && (
             <span className="flex items-center gap-1 bg-purple-50 border border-purple-200 rounded-full px-2.5 py-1.5">
               <Sparkle size={11} color="#9333ea" weight="fill" />
               <span className="text-[11px] text-purple-700 font-bold">IA</span>
+            </span>
+          )}
+
+          {/* Error badge */}
+          {aiError && !loading && (
+            <span className="flex items-center gap-1 bg-red-50 border border-red-200 rounded-full px-2.5 py-1.5">
+              <Warning size={11} color="#dc2626" weight="fill" />
+              <span className="text-[11px] text-red-700 font-bold">Manual</span>
             </span>
           )}
 
@@ -322,6 +399,17 @@ export function EspecificacionesVehiculo({
           )}
         </div>
       </div>
+
+      {/* ── Banner de error ── */}
+      {aiError && (
+        <div className="mx-5 mt-4 flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <Warning size={15} color="#dc2626" weight="fill" className="flex-shrink-0 mt-0.5" />
+          <p className="text-[12px] text-red-700 leading-snug">
+            No pudimos encontrar especificaciones automáticas para este vehículo.
+            <span className="font-bold"> Completa los campos manualmente.</span>
+          </p>
+        </div>
+      )}
 
       {/* ── Grid de 6 campos ── */}
       <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
