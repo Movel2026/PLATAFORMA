@@ -18,6 +18,12 @@ export async function POST(req: NextRequest) {
     // ── 1. Guardar en Supabase ──────────────────────────────
     if (supabaseConfigured()) {
       const precioNum = parseInt(String(data.precio).replace(/\D/g, "")) || 0;
+      const kmNum = parseInt(String(data.kilometraje).replace(/\D/g, "")) || 0;
+
+      // Privacidad de placa: solo guardamos el último dígito como público
+      const placaCompleta = String(data.placa || "").toUpperCase();
+      const ultimoDigitoPlaca = (placaCompleta.match(/\d(?=\D*$|$)/) || [""])[0];
+
       const { error } = await supabaseAdmin.from("publicaciones").insert({
         nombre:       data.nombre      ?? "",
         email:        data.email       ?? "",
@@ -26,14 +32,22 @@ export async function POST(req: NextRequest) {
         modelo:       data.modelo      ?? "",
         ano:          Number(data.año) || null,
         version:      data.version     ?? "",
+        placa:        placaCompleta,                  // privada, solo admin
+        ultimo_digito_placa: ultimoDigitoPlaca,        // pública (pico y placa)
         precio:       precioNum,
-        kilometraje:  Number(data.kilometraje) || null,
+        kilometraje:  kmNum,
         ciudad:       data.ciudad      ?? "",
         color:        data.color       ?? "",
         transmision:  data.transmision ?? "",
         combustible:  data.combustible ?? "",
+        motor:        data.motor       ?? "",
+        potencia:     data.potencia    ?? "",
+        carroceria:   data.carroceria  ?? "",
+        pasajeros:    data.pasajeros   ?? "",
         descripcion:  data.descripcion ?? "",
         total_fotos:  Number(data.totalFotos) || 0,
+        accept_offers: !!data.accept_offers,
+        modo:         data.modo ?? "gratis",          // gratis | 360
         estado:       "pendiente",
       });
       if (error) console.error("[Supabase publicar]:", error.message);

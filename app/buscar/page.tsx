@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { MagnifyingGlass, SlidersHorizontal, X } from "@phosphor-icons/react";
-import { vehicles } from "@/lib/mock-data";
+import { vehicles as mockVehicles, Vehicle } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
 
@@ -73,6 +73,16 @@ function BuscarContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
+
+  // ── Vehículos: mock + publicaciones activas de Supabase ──
+  const [publicados, setPublicados] = useState<Vehicle[]>([]);
+  useEffect(() => {
+    fetch("/api/vehiculos")
+      .then((r) => r.ok ? r.json() : { vehicles: [] })
+      .then((d) => setPublicados(d.vehicles || []))
+      .catch(() => setPublicados([]));
+  }, []);
+  const vehicles = [...publicados, ...mockVehicles];
 
   // ── Ordenamiento ──
   function sortVehicles(list: typeof vehicles) {

@@ -12,7 +12,7 @@ import {
   Sparkle, UploadSimple, UsersThree, Camera, Wrench,
   Lightning, ChatCircleDots, Database,
 } from "@phosphor-icons/react";
-import { vehicles, getAuctionVehicles, formatCOP } from "@/lib/mock-data";
+import { vehicles as mockVehicles, getAuctionVehicles, formatCOP, Vehicle } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
 import { MovelLogo } from "@/components/MovelLogo";
@@ -107,7 +107,17 @@ export default function HomePage() {
   const [fTransmision, setFTrans] = useState("");
   const [fPrecioMax, setFPrecio]  = useState("200000000");
   const [venderMode, setVenderMode] = useState<"closed" | "options">("closed");
-  const auctionVehicles           = getAuctionVehicles();
+
+  // ── Vehículos: mock + publicaciones activas de Supabase ──
+  const [publicados, setPublicados] = useState<Vehicle[]>([]);
+  useEffect(() => {
+    fetch("/api/vehiculos")
+      .then((r) => r.ok ? r.json() : { vehicles: [] })
+      .then((d) => setPublicados(d.vehicles || []))
+      .catch(() => setPublicados([]));
+  }, []);
+  const vehicles = [...publicados, ...mockVehicles];
+  const auctionVehicles = getAuctionVehicles();
 
   const [showLogo, setShowLogo] = useState(true);
   const logoVideoRef = useRef<HTMLVideoElement>(null);
@@ -736,17 +746,20 @@ export default function HomePage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.18, duration: 0.4 }}
                         onMouseMove={onGlowMove}
-                        className="cursor-glow cursor-glow-dark group relative bg-movel-gradient-dark rounded-2xl p-7 pt-12 hover:shadow-2xl transition-all border border-movel-400/30 overflow-hidden"
+                        className="cursor-glow cursor-glow-dark group relative bg-movel-gradient-dark rounded-2xl p-7 hover:shadow-2xl transition-all border border-movel-400/30 overflow-hidden"
                       >
-                        <span className="absolute top-4 right-4 z-10 text-[10px] font-black uppercase tracking-[0.15em] bg-sky text-white px-2.5 py-1 rounded-full whitespace-nowrap shadow-lg">
-                          ⚡ Recomendado
-                        </span>
+                        {/* Badge en flujo, separado del título */}
+                        <div className="mb-5">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.15em] bg-sky text-white px-3 py-1.5 rounded-full whitespace-nowrap shadow-lg">
+                            ⚡ Recomendado
+                          </span>
+                        </div>
 
-                        <div className="flex items-center gap-3 mb-5">
+                        <div className="flex items-start gap-3 mb-5">
                           <div className="w-12 h-12 rounded-xl bg-movel-400/20 border border-movel-400/40 flex items-center justify-center flex-shrink-0">
                             <Handshake size={24} color="#3F8CFF" weight="fill" />
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <h3 className="font-display text-[20px] text-white leading-tight">Servicio integral 360°</h3>
                             <p className="text-[12px] text-movel-300 font-semibold uppercase tracking-wide">Nosotros lo hacemos</p>
                           </div>

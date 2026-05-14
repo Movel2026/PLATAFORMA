@@ -83,10 +83,25 @@ interface StatsData {
 }
 
 interface Publicacion {
-  id: string; nombre: string; email: string; celular: string;
-  marca: string; modelo: string; ano: number; precio: number;
-  ciudad: string; total_fotos: number; estado: string;
-  notas_admin: string; created_at: string;
+  id: string;
+  // Contacto
+  nombre: string; email: string; celular: string;
+  // Identificación
+  marca: string; modelo: string; ano: number; version?: string;
+  placa?: string; ultimo_digito_placa?: string;
+  // Características
+  precio: number; kilometraje?: number; ciudad: string;
+  color?: string; transmision?: string; combustible?: string;
+  motor?: string; potencia?: string; carroceria?: string;
+  pasajeros?: string;
+  // Adicional
+  descripcion?: string; total_fotos: number;
+  accept_offers?: boolean; modo?: string; // "gratis" | "360"
+  // Meta
+  estado: string;
+  notas_admin: string;
+  created_at: string;
+  updated_at?: string;
 }
 interface Oferta {
   id: string; vehiculo: string; precio_pub: number; monto_oferta: number;
@@ -121,6 +136,18 @@ function formatFecha(iso: string) {
     timeZone: "America/Bogota", day: "2-digit", month: "short",
     year: "numeric", hour: "2-digit", minute: "2-digit",
   });
+}
+function diasDesde(iso: string): number {
+  if (!iso) return 0;
+  const ms = Date.now() - new Date(iso).getTime();
+  return Math.max(0, Math.floor(ms / (24 * 60 * 60 * 1000)));
+}
+function diasLabel(d: number): string {
+  if (d === 0) return "Hoy";
+  if (d === 1) return "Hace 1 día";
+  if (d < 30)  return `Hace ${d} días`;
+  const meses = Math.floor(d / 30);
+  return meses === 1 ? "Hace 1 mes" : `Hace ${meses} meses`;
 }
 function estadoBadge(estado: string) {
   const map: Record<string, { bg: string; color: string; label: string }> = {
@@ -484,29 +511,86 @@ export default function AdminPage() {
                   !search ||
                   `${p.marca} ${p.modelo} ${p.nombre} ${p.ciudad}`.toLowerCase().includes(search.toLowerCase())
                 )
-                .map((pub) => (
+                .map((pub) => {
+                  const dias = diasDesde(pub.created_at);
+                  const placaMasked = pub.placa
+                    ? `••• • ${pub.placa.slice(-1)}`
+                    : pub.ultimo_digito_placa ? `••• • ${pub.ultimo_digito_placa}` : "—";
+                  const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#9aa5b4] mb-0.5">{label}</p>
+                      <p className="text-[13px] text-[#111418] font-medium">{value || "—"}</p>
+                    </div>
+                  );
+                  return (
                   <div key={pub.id} className="bg-white rounded-2xl p-5" style={{ border: "1px solid #dce0e5" }}>
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                    {/* ── Header ── */}
+                    <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-[#111418] text-[16px]">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-bold text-[#111418] text-[17px]">
                             {pub.marca} {pub.modelo} {pub.ano}
                           </h3>
+                          {pub.version && <span className="text-[12px] text-[#637488]">· {pub.version}</span>}
                           {estadoBadge(pub.estado)}
+                          {pub.modo === "360" && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0B1E4E] text-white">
+                              ⚡ Servicio 360°
+                            </span>
+                          )}
+                          {pub.accept_offers && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#fef3c7] text-[#d97706]">
+                              Acepta ofertas
+                            </span>
+                          )}
                         </div>
-                        <p className="text-[22px] font-black text-[#1978e5]">{formatCOP(pub.precio)}</p>
-                        <p className="text-[13px] text-[#637488]">{pub.ciudad} · {pub.total_fotos} foto(s)</p>
+                        <p className="text-[22px] font-black text-[#0B1E4E]">{formatCOP(pub.precio)}</p>
+                        <p className="text-[12px] text-[#637488] mt-0.5">
+                          <span className="font-bold text-[#111418]">{diasLabel(dias)}</span>
+                          {" · "}{formatFecha(pub.created_at)}
+                        </p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-semibold text-[#111418] text-[14px]">{pub.nombre}</p>
-                        <a href={`mailto:${pub.email}`} className="text-[#1978e5] text-[13px]">{pub.email}</a>
+                        <a href={`mailto:${pub.email}`} className="text-[#0B1E4E] text-[13px] hover:underline">{pub.email}</a>
                         <p className="text-[13px] text-[#637488]">{pub.celular}</p>
-                        <p className="text-[11px] text-[#9aa5b4] mt-1">{formatFecha(pub.created_at)}</p>
                       </div>
                     </div>
 
-                    {/* Acciones */}
-                    <div className="flex gap-2 mt-4 flex-wrap">
+                    {/* ── Datos del vehículo (todos los campos) ── */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 p-4 rounded-xl bg-[#f8f9fa]">
+                      <Field label="Marca"       value={pub.marca} />
+                      <Field label="Modelo"      value={pub.modelo} />
+                      <Field label="Año"         value={pub.ano} />
+                      <Field label="Versión"     value={pub.version} />
+                      <Field label="Color"       value={pub.color} />
+                      <Field label="Ciudad"      value={pub.ciudad} />
+                      <Field label="Kilometraje" value={pub.kilometraje ? `${pub.kilometraje.toLocaleString("es-CO")} km` : "—"} />
+                      <Field label="Carrocería"  value={pub.carroceria} />
+                      <Field label="Combustible" value={pub.combustible} />
+                      <Field label="Transmisión" value={pub.transmision} />
+                      <Field label="Motor"       value={pub.motor} />
+                      <Field label="Potencia"    value={pub.potencia} />
+                      <Field label="Pasajeros"   value={pub.pasajeros} />
+                      <Field label="Fotos"       value={`${pub.total_fotos} cargada(s)`} />
+                      <Field label="Público verá (placa)" value={
+                        <span className="font-mono">{pub.ultimo_digito_placa ? `••• • ${pub.ultimo_digito_placa}` : placaMasked}</span>
+                      } />
+                      <Field label="Placa completa (priv.)" value={
+                        <span className="font-mono font-bold">{pub.placa || "—"}</span>
+                      } />
+                    </div>
+
+                    {/* ── Descripción ── */}
+                    {pub.descripcion && (
+                      <div className="mb-4 p-4 rounded-xl bg-[#f8f9fa] border-l-4 border-[#0B1E4E]">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[#9aa5b4] mb-1">Descripción del vendedor</p>
+                        <p className="text-[13px] text-[#111418] leading-relaxed whitespace-pre-wrap">{pub.descripcion}</p>
+                      </div>
+                    )}
+
+                    {/* ── Acciones ── */}
+                    <div className="flex gap-2 flex-wrap">
                       {["pendiente", "activo", "rechazado", "vendido"].map((e) => (
                         <button
                           key={e}
@@ -515,7 +599,7 @@ export default function AdminPage() {
                           className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all disabled:opacity-40"
                           style={
                             pub.estado === e
-                              ? { background: "#1978e5", color: "white" }
+                              ? { background: "#0B1E4E", color: "white" }
                               : { background: "#f0f2f4", color: "#637488" }
                           }
                         >
@@ -535,7 +619,8 @@ export default function AdminPage() {
                       )}
                     </div>
                   </div>
-                ))
+                  );
+                })
             )}
           </div>
         )}

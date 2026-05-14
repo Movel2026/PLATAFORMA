@@ -34,14 +34,73 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MOVEL — Nosotros vendemos, tú te relajas",
+  metadataBase: new URL("https://movelcar.com"),
+  title: {
+    default: "MOVEL — Compra y vende carros con asesoría 360° en Colombia",
+    template: "%s · MOVEL",
+  },
   description:
-    "El marketplace de vehículos más confiable de Colombia. Servicio 360° de compra y venta con historial verificado, financiamiento y garantía. Solo 3% de comisión.",
+    "Marketplace de vehículos en Colombia con asesoría 360°. Compra carros usados con confianza o vende el tuyo con servicio integral por solo 3% de comisión. Bogotá, Medellín, Cali.",
+  keywords: [
+    "comprar carro Colombia",
+    "vender carro Colombia",
+    "carros usados Bogotá",
+    "carros usados Medellín",
+    "marketplace vehículos Colombia",
+    "MOVEL",
+    "movelcar",
+    "venta de carros 3% comisión",
+    "Fasecolda Colombia",
+  ],
+  authors: [{ name: "MOVEL S.A.S." }],
+  creator: "MOVEL",
+  publisher: "MOVEL S.A.S.",
   manifest: "/manifest.json",
+  alternates: {
+    canonical: "https://movelcar.com",
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_CO",
+    url: "https://movelcar.com",
+    siteName: "MOVEL",
+    title: "MOVEL — Compra y vende carros con asesoría 360°",
+    description:
+      "Marketplace de vehículos en Colombia. Compra usados verificados o vende el tuyo con servicio integral por solo 3% de comisión.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "MOVEL — Marketplace de carros en Colombia",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MOVEL — Compra y vende carros con asesoría 360°",
+    description:
+      "Marketplace de vehículos en Colombia con solo 3% de comisión. Servicio integral de venta.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "MOVEL",
+  },
+  verification: {
+    // Pega aquí el código que te dará Google Search Console
+    // google: "XXXXXXXXXXXXXXXXXXXX",
   },
 };
 
