@@ -5,46 +5,53 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Star, MapPin, Gauge, Gear, Heart, Images, ShieldCheck, SignIn, X } from "@phosphor-icons/react";
 import { formatCOP, Vehicle } from "@/lib/mock-data";
+import { useUser } from "@/lib/hooks/useUser";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
 }
 
-// Helper simple para detectar si hay sesión (lee de localStorage, MVP)
-function isLoggedIn(): boolean {
-  if (typeof window === "undefined") return false;
-  return !!localStorage.getItem("movel_user");
-}
-
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
+  const { user } = useUser();
   const [liked, setLiked] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
-  const [authed, setAuthed] = useState(false);
 
-  // Cargar estado de favoritos del localStorage
+  // Cargar favoritos: si hay sesión, desde Supabase; si no, desde localStorage
   useEffect(() => {
-    setAuthed(isLoggedIn());
-    if (typeof window !== "undefined") {
+    if (user) {
+      const sb = getSupabaseBrowser();
+      if (sb) {
+        sb.from("favoritos")
+          .select("vehicle_id")
+          .eq("user_id", user.id)
+          .eq("vehicle_id", vehicle.id)
+          .maybeSingle()
+          .then(({ data }) => setLiked(!!data));
+      }
+    } else if (typeof window !== "undefined") {
       const favs = JSON.parse(localStorage.getItem("movel_favs") || "[]");
       setLiked(favs.includes(vehicle.id));
     }
-  }, [vehicle.id]);
+  }, [vehicle.id, user]);
 
-  const handleLikeClick = (e: React.MouseEvent) => {
+  const handleLikeClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!authed) {
+    if (!user) {
       setShowAuthPrompt(true);
       return;
     }
     const next = !liked;
     setLiked(next);
-    if (typeof window !== "undefined") {
-      const favs = JSON.parse(localStorage.getItem("movel_favs") || "[]");
-      const updated = next
-        ? [...new Set([...favs, vehicle.id])]
-        : favs.filter((id: string) => id !== vehicle.id);
-      localStorage.setItem("movel_favs", JSON.stringify(updated));
+    // Persistir en Supabase
+    const sb = getSupabaseBrowser();
+    if (sb) {
+      if (next) {
+        await sb.from("favoritos").upsert({ user_id: user.id, vehicle_id: vehicle.id });
+      } else {
+        await sb.from("favoritos").delete().eq("user_id", user.id).eq("vehicle_id", vehicle.id);
+      }
     }
   };
 

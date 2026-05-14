@@ -1,330 +1,391 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  EnvelopeSimple,
-  Lock,
-  User,
-  Eye,
-  EyeSlash,
-  CheckCircle,
-  ArrowLeft,
-  Check,
-  Phone,
-  Car,
-  Heart,
-  Gavel,
-  ChatCircle,
-  ShieldCheck,
+  EnvelopeSimple, Lock, User as UserIcon, Eye, EyeSlash,
+  CheckCircle, ArrowLeft, Phone, Car, Heart, Gavel,
+  ChatCircle, ShieldCheck, Warning,
 } from "@phosphor-icons/react";
-
-function MovelLogoWhite() {
-  return (
-    <svg width="100" height="30" viewBox="0 0 120 36" fill="none" aria-label="MOVEL">
-      <text x="0" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">M</text>
-      <g>
-        <text x="23" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">O</text>
-        <circle cx="36" cy="16" r="7" fill="#1565c0" />
-        <circle cx="36" cy="16" r="7" fill="none" stroke="white" strokeWidth="1.2" />
-        <line x1="36" y1="16" x2="40.5" y2="10.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="36" cy="16" r="1.2" fill="white" />
-        <line x1="29.5" y1="16" x2="31" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
-        <line x1="36" y1="9.5" x2="36" y2="11" stroke="white" strokeWidth="1" strokeLinecap="round" />
-        <line x1="42.5" y1="16" x2="41" y2="16" stroke="white" strokeWidth="1" strokeLinecap="round" />
-      </g>
-      <text x="51" y="28" fontFamily="Arial Black, Arial, sans-serif" fontSize="30" fontWeight="900" fontStyle="italic" fill="white">VEL</text>
-    </svg>
-  );
-}
+import { MovelLogo } from "@/components/MovelLogo";
+import { getSupabaseBrowser, supabaseBrowserConfigured } from "@/lib/supabase-browser";
+import { useUser } from "@/lib/hooks/useUser";
 
 type Tab = "login" | "register";
 
 const BENEFITS = [
-  { icon: Car,         color: "#60a5fa", text: "Compra y vende tu carro fácilmente" },
-  { icon: Heart,       color: "#f87171", text: "Guarda tus vehículos favoritos" },
-  { icon: Gavel,       color: "#a78bfa", text: "Participa en subastas en vivo" },
-  { icon: ChatCircle,  color: "#34d399", text: "Conecta con compradores y vendedores" },
-  { icon: ShieldCheck, color: "#fbbf24", text: "Compra con garantía MOVEL" },
+  { Icon: Car,         text: "Publica y vende tu carro" },
+  { Icon: Heart,       text: "Guarda vehículos favoritos" },
+  { Icon: Gavel,       text: "Participa en subastas" },
+  { Icon: ChatCircle,  text: "Recibe ofertas de compradores" },
+  { Icon: ShieldCheck, text: "Cuenta verificada con MOVEL" },
 ];
 
-export default function AuthPage() {
-  const [tab, setTab] = useState<Tab>("login");
-  const [showPassword, setShowPassword] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [successName, setSuccessName] = useState("");
+function AuthContent() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const returnUrl = params.get("return") || "/";
+  const initialMode = (params.get("modo") || "").toLowerCase();
+  const { user, loading: userLoading } = useUser();
 
-  /* login */
+  const [tab, setTab]                 = useState<Tab>(initialMode === "registro" ? "register" : "login");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting]   = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+  const [success, setSuccess]         = useState<string | null>(null);
+
+  // Login
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPass,  setLoginPass]  = useState("");
 
-  /* register */
-  const [regName,  setRegName]  = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regPhone, setRegPhone] = useState("");
-  const [regPass,  setRegPass]  = useState("");
+  // Registro
+  const [regNombre,  setRegNombre]  = useState("");
+  const [regEmail,   setRegEmail]   = useState("");
+  const [regTelefono, setRegTelefono] = useState("");
+  const [regPass,    setRegPass]    = useState("");
+  const [regCiudad,  setRegCiudad]  = useState("");
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
-  function handleLogin(e: React.FormEvent) {
+  // Redirigir si ya hay sesión
+  useEffect(() => {
+    if (!userLoading && user) {
+      router.replace(returnUrl);
+    }
+  }, [user, userLoading, returnUrl, router]);
+
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    const stored = localStorage.getItem("movel_user");
-    const nombre = stored ? JSON.parse(stored).name : loginEmail.split("@")[0];
-    localStorage.setItem("movel_session", JSON.stringify({ email: loginEmail, loggedIn: true }));
-    setSuccessName(nombre);
-    setSuccess(true);
-    setTimeout(() => { window.location.href = "/perfil"; }, 1400);
+    setError(null);
+    if (!supabaseBrowserConfigured()) {
+      setError("La autenticación no está configurada. Contacta al equipo MOVEL.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const sb = getSupabaseBrowser();
+      if (!sb) throw new Error("No se pudo inicializar el cliente");
+      const { error: err } = await sb.auth.signInWithPassword({
+        email: loginEmail.trim().toLowerCase(),
+        password: loginPass,
+      });
+      if (err) {
+        if (err.message.includes("Invalid login credentials")) {
+          setError("Correo o contraseña incorrectos.");
+        } else if (err.message.includes("Email not confirmed")) {
+          setError("Confirma tu correo electrónico antes de iniciar sesión.");
+        } else {
+          setError(err.message);
+        }
+        return;
+      }
+      router.replace(returnUrl);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    const userData = {
-      name:      regName,
-      email:     regEmail,
-      phone:     regPhone,
-      city:      "",
-      joinDate:  new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" }),
-    };
-    localStorage.setItem("movel_user",    JSON.stringify(userData));
-    localStorage.setItem("movel_session", JSON.stringify({ email: regEmail, loggedIn: true }));
+    setError(null); setSuccess(null);
+    if (!aceptaTerminos) {
+      setError("Debes aceptar los Términos y la Política de Privacidad.");
+      return;
+    }
+    if (regPass.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    if (!supabaseBrowserConfigured()) {
+      setError("La autenticación no está configurada. Contacta al equipo MOVEL.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const sb = getSupabaseBrowser();
+      if (!sb) throw new Error("No se pudo inicializar el cliente");
+      const { error: err, data } = await sb.auth.signUp({
+        email: regEmail.trim().toLowerCase(),
+        password: regPass,
+        options: {
+          data: {
+            nombre: regNombre,
+            telefono: regTelefono,
+            ciudad: regCiudad,
+          },
+          emailRedirectTo: typeof window !== "undefined"
+            ? `${window.location.origin}${returnUrl}`
+            : undefined,
+        },
+      });
+      if (err) {
+        if (err.message.includes("already registered")) {
+          setError("Ya existe una cuenta con este correo. Inicia sesión.");
+        } else {
+          setError(err.message);
+        }
+        return;
+      }
+      // Guardar metadata en tabla users (opcional, si la has creado)
+      try {
+        if (data.user) {
+          await fetch("/api/registro", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: data.user.id,
+              nombre: regNombre,
+              email: regEmail,
+              telefono: regTelefono,
+              ciudad: regCiudad,
+              origen: "web_signup",
+            }),
+          });
+        }
+      } catch { /* opcional */ }
 
-    // Backup a Telegram (no bloquea si falla)
-    fetch("/api/registro", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: regName, email: regEmail, phone: regPhone, source: "web",
-      }),
-    }).catch(() => {});
-
-    setSuccessName(regName.split(" ")[0]);
-    setSuccess(true);
-    setTimeout(() => { window.location.href = "/perfil"; }, 1400);
+      setSuccess("¡Cuenta creada! Revisa tu correo para confirmar la dirección. Una vez confirmada podrás iniciar sesión.");
+      setTab("login");
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  /* ── Success screen ── */
-  if (success) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center"
-        style={{ background: "linear-gradient(135deg, #08101e 0%, #0d1b2e 60%, #0f2040 100%)" }}>
-        <motion.div
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 18 }}
-          className="flex flex-col items-center gap-4 text-center"
-        >
-          <CheckCircle size={72} color="#4ade80" weight="fill" />
-          <p className="text-white text-[22px] font-black">
-            ¡Bienvenido{successName ? `, ${successName}` : ""}!
-          </p>
-          <p className="text-white/50 text-[14px]">Redirigiendo a tu perfil…</p>
-        </motion.div>
-      </div>
-    );
-  }
+  const inputCls = "w-full pl-11 pr-4 py-3 bg-white border-2 border-[#dce0e5] rounded-xl text-[14px] text-ink placeholder:text-mute outline-none focus:border-movel-900 transition-colors";
 
   return (
-    <div className="min-h-screen flex flex-col"
-      style={{ background: "linear-gradient(160deg, #08101e 0%, #0d1b2e 55%, #0f2040 100%)" }}>
-
-      {/* top bar */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-3">
-        <Link href="/" className="flex items-center gap-2 text-white/50 hover:text-white text-[13px] font-semibold transition-colors">
-          <ArrowLeft size={16} />
-          Inicio
-        </Link>
-        <MovelLogoWhite />
-        <div className="w-16" />
+    <div className="min-h-screen bg-cloud flex flex-col">
+      {/* Header */}
+      <div className="bg-movel-gradient-dark px-4 py-5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white text-[13px] font-semibold">
+            <ArrowLeft size={16} />
+            Volver al inicio
+          </Link>
+          <MovelLogo variant="white" size={32} animate={false} />
+        </div>
       </div>
 
-      <div className="flex-1 flex items-start justify-center px-4 pt-6 pb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-md"
-        >
-          {/* Tab switcher */}
-          <div className="flex rounded-2xl p-1 mb-7"
-            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
-            {(["login", "register"] as Tab[]).map((t) => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`flex-1 py-2.5 rounded-xl text-[14px] font-black transition-all duration-300 ${
-                  tab === t ? "bg-[#1978e5] text-white shadow-lg" : "text-white/40 hover:text-white/70"
-                }`}>
-                {t === "login" ? "Iniciar sesión" : "Registrarse"}
-              </button>
-            ))}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-8 items-start">
+
+          {/* Beneficios (desktop) */}
+          <div className="hidden lg:block pt-8">
+            <h1 className="font-display text-[40px] leading-tight text-movel-900 mb-3">
+              Únete a MOVEL
+            </h1>
+            <p className="text-[16px] text-mute mb-8 leading-relaxed max-w-md">
+              Crea tu cuenta para publicar vehículos, recibir ofertas y guardar tus favoritos.
+              Es gratis y solo cobramos 3% si vendemos por ti.
+            </p>
+            <div className="space-y-3">
+              {BENEFITS.map(({ Icon, text }) => (
+                <div key={text} className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-movel-50 flex items-center justify-center flex-shrink-0">
+                    <Icon size={18} color="#0B1E4E" weight="fill" />
+                  </div>
+                  <p className="text-[14px] text-ink font-medium">{text}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <AnimatePresence mode="wait">
+          {/* Tarjeta auth */}
+          <div className="bg-white rounded-3xl p-7 md:p-8 shadow-movel-lg border border-[#dce0e5]">
+            {/* Tabs */}
+            <div className="flex gap-1 bg-cloud rounded-xl p-1 mb-6">
+              <button
+                onClick={() => { setTab("login"); setError(null); setSuccess(null); }}
+                className={`flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all ${
+                  tab === "login" ? "bg-white text-movel-900 shadow-sm" : "text-mute"
+                }`}
+              >
+                Iniciar sesión
+              </button>
+              <button
+                onClick={() => { setTab("register"); setError(null); setSuccess(null); }}
+                className={`flex-1 py-2.5 rounded-lg text-[14px] font-bold transition-all ${
+                  tab === "register" ? "bg-white text-movel-900 shadow-sm" : "text-mute"
+                }`}
+              >
+                Crear cuenta
+              </button>
+            </div>
 
-            {/* ══ LOGIN ══ */}
-            {tab === "login" ? (
-              <motion.form key="login"
-                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-                onSubmit={handleLogin} className="space-y-4">
+            {/* Mensajes */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2"
+                >
+                  <Warning size={16} color="#dc2626" weight="fill" className="flex-shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-red-700">{error}</p>
+                </motion.div>
+              )}
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl flex items-start gap-2"
+                >
+                  <CheckCircle size={16} color="#16a34a" weight="fill" className="flex-shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-green-700">{success}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                <Field label="Correo electrónico" icon={<EnvelopeSimple size={18} color="rgba(255,255,255,0.35)" />}>
-                  <input type="email" required placeholder="tu@correo.com"
-                    value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
-                    className="input-dark w-full h-12 pl-11 pr-4 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#1978e5]/60"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }} />
-                </Field>
-
-                <Field label="Contraseña" icon={<Lock size={18} color="rgba(255,255,255,0.35)" />}>
-                  <input type={showPassword ? "text" : "password"} required placeholder="••••••••"
-                    value={loginPass} onChange={e => setLoginPass(e.target.value)}
-                    className="input-dark w-full h-12 pl-11 pr-12 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#1978e5]/60"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
+            {/* ── Login ── */}
+            {tab === "login" && (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="relative">
+                  <EnvelopeSimple size={18} color="#7A8195" className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="tu@correo.com"
+                    required
+                    className={inputCls}
+                  />
+                </div>
+                <div className="relative">
+                  <Lock size={18} color="#7A8195" className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={loginPass}
+                    onChange={(e) => setLoginPass(e.target.value)}
+                    placeholder="Tu contraseña"
+                    required
+                    className={inputCls + " pr-11"}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-mute hover:text-ink">
                     {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                   </button>
-                </Field>
-
-                <div className="flex justify-end">
-                  <a
-                    href="https://wa.me/573175737083?text=Hola%20MOVEL%2C%20olvid%C3%A9%20mi%20contrase%C3%B1a%20y%20necesito%20recuperarla"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[13px] text-[#60a5fa] hover:text-white font-semibold transition-colors"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </a>
                 </div>
-
-                <button type="submit"
-                  className="w-full h-12 rounded-xl font-black text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                  style={{ background: "linear-gradient(135deg, #1565c0 0%, #1978e5 55%, #42a5f5 100%)" }}>
-                  Entrar a mi cuenta
+                <button type="submit" disabled={submitting} className="w-full btn-primary !rounded-xl disabled:opacity-60">
+                  {submitting ? "Iniciando…" : "Iniciar sesión"}
                 </button>
-
-                <Divider />
-
-                <p className="text-center text-white/50 text-[13px]">
+                <p className="text-center text-[12px] text-mute">
                   ¿No tienes cuenta?{" "}
-                  <button type="button" onClick={() => setTab("register")}
-                    className="text-[#60a5fa] font-bold hover:text-white transition-colors">
+                  <button type="button" onClick={() => setTab("register")} className="text-movel-600 font-bold hover:underline">
                     Regístrate gratis
                   </button>
                 </p>
-              </motion.form>
+              </form>
+            )}
 
-            ) : (
-
-            /* ══ REGISTER ══ */
-              <motion.form key="register"
-                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                onSubmit={handleRegister} className="space-y-4">
-
-                {/* Benefits banner */}
-                <div className="rounded-2xl p-4"
-                  style={{ background: "rgba(25,120,229,0.12)", border: "1px solid rgba(25,120,229,0.25)" }}>
-                  <p className="text-[12px] font-black text-[#60a5fa] uppercase tracking-wider mb-3">
-                    Con tu cuenta MOVEL puedes:
-                  </p>
-                  <div className="space-y-2">
-                    {BENEFITS.map(({ icon: Icon, color, text }) => (
-                      <div key={text} className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${color}20` }}>
-                          <Icon size={13} color={color} weight="fill" />
-                        </div>
-                        <span className="text-[13px] text-white/75">{text}</span>
-                        <Check size={12} color="#4ade80" weight="bold" className="ml-auto flex-shrink-0" />
-                      </div>
-                    ))}
-                  </div>
+            {/* ── Registro ── */}
+            {tab === "register" && (
+              <form onSubmit={handleRegister} className="space-y-3.5">
+                <div className="relative">
+                  <UserIcon size={18} color="#7A8195" className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={regNombre}
+                    onChange={(e) => setRegNombre(e.target.value)}
+                    placeholder="Nombre completo"
+                    required
+                    className={inputCls}
+                  />
                 </div>
-
-                {/* Nombre */}
-                <Field label="Nombre completo" icon={<User size={18} color="rgba(255,255,255,0.35)" />}>
-                  <input type="text" required placeholder="Juan Esteban García"
-                    value={regName} onChange={e => setRegName(e.target.value)}
-                    className="w-full h-12 pl-11 pr-4 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#1978e5]/60"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }} />
-                </Field>
-
-                {/* Celular */}
-                <Field label="Número de celular" icon={<Phone size={18} color="rgba(255,255,255,0.35)" />}>
-                  <input type="tel" required placeholder="3XX XXX XXXX"
-                    value={regPhone} onChange={e => setRegPhone(e.target.value)}
-                    className="w-full h-12 pl-11 pr-4 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#1978e5]/60"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }} />
-                </Field>
-
-                {/* Email */}
-                <Field label="Correo electrónico" icon={<EnvelopeSimple size={18} color="rgba(255,255,255,0.35)" />}>
-                  <input type="email" required placeholder="tu@correo.com"
-                    value={regEmail} onChange={e => setRegEmail(e.target.value)}
-                    className="w-full h-12 pl-11 pr-4 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#1978e5]/60"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }} />
-                </Field>
-
-                {/* Contraseña */}
-                <Field label="Contraseña" icon={<Lock size={18} color="rgba(255,255,255,0.35)" />}>
-                  <input type={showPassword ? "text" : "password"} required minLength={6}
-                    placeholder="Mínimo 6 caracteres"
-                    value={regPass} onChange={e => setRegPass(e.target.value)}
-                    className="w-full h-12 pl-11 pr-12 rounded-xl text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-[#1978e5]/60"
-                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
+                <div className="relative">
+                  <EnvelopeSimple size={18} color="#7A8195" className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    placeholder="Correo electrónico"
+                    required
+                    className={inputCls}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Phone size={18} color="#7A8195" className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="tel"
+                      value={regTelefono}
+                      onChange={(e) => setRegTelefono(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      placeholder="Celular"
+                      required
+                      className={inputCls}
+                    />
+                  </div>
+                  <select
+                    value={regCiudad}
+                    onChange={(e) => setRegCiudad(e.target.value)}
+                    required
+                    className="w-full pl-4 pr-4 py-3 bg-white border-2 border-[#dce0e5] rounded-xl text-[14px] text-ink outline-none focus:border-movel-900 transition-colors"
+                  >
+                    <option value="">Ciudad</option>
+                    <option value="Bogotá">Bogotá</option>
+                    <option value="Medellín">Medellín</option>
+                    <option value="Cali">Cali</option>
+                    <option value="Barranquilla">Barranquilla</option>
+                    <option value="Cartagena">Cartagena</option>
+                    <option value="Bucaramanga">Bucaramanga</option>
+                    <option value="Pereira">Pereira</option>
+                    <option value="Otra">Otra</option>
+                  </select>
+                </div>
+                <div className="relative">
+                  <Lock size={18} color="#7A8195" className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={regPass}
+                    onChange={(e) => setRegPass(e.target.value)}
+                    placeholder="Contraseña (mín. 8 caracteres)"
+                    required
+                    minLength={8}
+                    className={inputCls + " pr-11"}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-mute hover:text-ink">
                     {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                   </button>
-                </Field>
+                </div>
 
-                <p className="text-[12px] text-white/35 text-center leading-5">
-                  Al registrarte, aceptas los{" "}
-                  <span className="text-[#60a5fa] cursor-pointer hover:text-white">Términos de uso</span>
-                  {" "}y la{" "}
-                  <span className="text-[#60a5fa] cursor-pointer hover:text-white">Política de privacidad</span>
-                  {" "}de MOVEL.
-                </p>
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={aceptaTerminos}
+                    onChange={(e) => setAceptaTerminos(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-movel-900 rounded"
+                  />
+                  <span className="text-[12px] text-mute leading-relaxed">
+                    Acepto los{" "}
+                    <Link href="/terminos" target="_blank" className="text-movel-600 font-semibold hover:underline">Términos y Condiciones</Link>
+                    {" "}y la{" "}
+                    <Link href="/privacidad" target="_blank" className="text-movel-600 font-semibold hover:underline">Política de Privacidad</Link>.
+                  </span>
+                </label>
 
-                <button type="submit"
-                  className="w-full h-12 rounded-xl font-black text-[15px] text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                  style={{ background: "linear-gradient(135deg, #1565c0 0%, #1978e5 55%, #42a5f5 100%)" }}>
-                  Crear mi cuenta gratis →
+                <button type="submit" disabled={submitting || !aceptaTerminos} className="w-full btn-primary !rounded-xl disabled:opacity-60">
+                  {submitting ? "Creando cuenta…" : "Crear cuenta gratis"}
                 </button>
-
-                <p className="text-center text-white/50 text-[13px]">
+                <p className="text-center text-[12px] text-mute">
                   ¿Ya tienes cuenta?{" "}
-                  <button type="button" onClick={() => setTab("login")}
-                    className="text-[#60a5fa] font-bold hover:text-white transition-colors">
+                  <button type="button" onClick={() => setTab("login")} className="text-movel-600 font-bold hover:underline">
                     Inicia sesión
                   </button>
                 </p>
-              </motion.form>
+              </form>
             )}
-          </AnimatePresence>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ── Helpers de UI ── */
-function Field({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+export default function AuthPage() {
   return (
-    <div>
-      <label className="block text-white/60 text-[12px] font-bold mb-1.5 uppercase tracking-wider">{label}</label>
-      <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">{icon}</span>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Divider() {
-  return (
-    <div className="relative flex items-center gap-3 py-1">
-      <div className="flex-1 h-px bg-white/10" />
-      <span className="text-white/30 text-[12px] font-semibold">o</span>
-      <div className="flex-1 h-px bg-white/10" />
-    </div>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-mute">Cargando…</div>}>
+      <AuthContent />
+    </Suspense>
   );
 }

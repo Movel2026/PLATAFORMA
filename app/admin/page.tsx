@@ -202,6 +202,34 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  // ── Estado de edición y notas del admin ──
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [expandedPhotos, setExpandedPhotos] = useState<string | null>(null);
+
+  // Iniciar edición prellenando el form con los datos actuales
+  const startEdit = (pub: Publicacion) => {
+    setEditingId(pub.id);
+    setEditForm({
+      marca:       pub.marca ?? "",
+      modelo:      pub.modelo ?? "",
+      ano:         String(pub.ano ?? ""),
+      version:     pub.version ?? "",
+      color:       pub.color ?? "",
+      ciudad:      pub.ciudad ?? "",
+      kilometraje: String(pub.kilometraje ?? ""),
+      precio:      String(pub.precio ?? ""),
+      carroceria:  pub.carroceria ?? "",
+      combustible: pub.combustible ?? "",
+      transmision: pub.transmision ?? "",
+      motor:       pub.motor ?? "",
+      potencia:    pub.potencia ?? "",
+      pasajeros:   pub.pasajeros ?? "",
+      descripcion: pub.descripcion ?? "",
+      notas_admin: pub.notas_admin ?? "",
+    });
+  };
 
   const fetchStats = useCallback(async (pin: string) => {
     setLoading(true);
@@ -261,6 +289,28 @@ export default function AdminPage() {
       await fetchStats(adminPin);
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  // Guardar cambios de edición admin
+  async function saveEdit(id: string) {
+    setSavingEdit(true);
+    try {
+      const res = await fetch("/api/admin/update-publicacion", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-pin": adminPin },
+        body: JSON.stringify({ id, fields: editForm }),
+      });
+      if (res.ok) {
+        setEditingId(null);
+        setEditForm({});
+        await fetchStats(adminPin);
+      } else {
+        const data = await res.json();
+        alert("Error: " + (data.error || "No se pudo guardar"));
+      }
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -589,8 +639,117 @@ export default function AdminPage() {
                       </div>
                     )}
 
+                    {/* ── EDICIÓN INLINE (cuando editingId === pub.id) ── */}
+                    {editingId === pub.id && (
+                      <div className="mb-4 p-5 rounded-xl bg-[#fef3c7] border-2 border-[#f59e0b]">
+                        <p className="text-[12px] font-bold text-[#92400e] mb-3 uppercase tracking-wide">✏️ Modo edición — corrige o agrega información</p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {[
+                            { k: "marca", l: "Marca" }, { k: "modelo", l: "Modelo" },
+                            { k: "ano", l: "Año" }, { k: "version", l: "Versión" },
+                            { k: "color", l: "Color" }, { k: "ciudad", l: "Ciudad" },
+                            { k: "kilometraje", l: "Kilometraje (km)" }, { k: "precio", l: "Precio (COP)" },
+                            { k: "carroceria", l: "Carrocería" }, { k: "combustible", l: "Combustible" },
+                            { k: "transmision", l: "Transmisión" }, { k: "motor", l: "Motor" },
+                            { k: "potencia", l: "Potencia" }, { k: "pasajeros", l: "Pasajeros" },
+                          ].map(({ k, l }) => (
+                            <div key={k}>
+                              <label className="block text-[10px] font-bold uppercase tracking-wide text-[#9aa5b4] mb-1">{l}</label>
+                              <input
+                                type="text"
+                                value={editForm[k] ?? ""}
+                                onChange={(e) => setEditForm({ ...editForm, [k]: e.target.value })}
+                                className="w-full px-3 py-2 rounded-lg border border-[#dce0e5] text-[13px] outline-none focus:border-[#0B1E4E] bg-white"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3">
+                          <label className="block text-[10px] font-bold uppercase tracking-wide text-[#9aa5b4] mb-1">Descripción</label>
+                          <textarea
+                            value={editForm.descripcion ?? ""}
+                            onChange={(e) => setEditForm({ ...editForm, descripcion: e.target.value })}
+                            rows={3}
+                            className="w-full px-3 py-2 rounded-lg border border-[#dce0e5] text-[13px] outline-none focus:border-[#0B1E4E] bg-white"
+                          />
+                        </div>
+                        <div className="mt-3">
+                          <label className="block text-[10px] font-bold uppercase tracking-wide text-[#9aa5b4] mb-1">📝 Notas del admin (privadas)</label>
+                          <textarea
+                            value={editForm.notas_admin ?? ""}
+                            onChange={(e) => setEditForm({ ...editForm, notas_admin: e.target.value })}
+                            placeholder="Notas internas: verificación pendiente, observaciones, contactos hechos, etc."
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg border border-[#dce0e5] text-[13px] outline-none focus:border-[#0B1E4E] bg-white"
+                          />
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            onClick={() => saveEdit(pub.id)}
+                            disabled={savingEdit}
+                            className="px-4 py-2 rounded-lg text-[12px] font-bold text-white bg-[#0B1E4E] hover:bg-[#050E26] transition-colors disabled:opacity-60"
+                          >
+                            {savingEdit ? "Guardando…" : "💾 Guardar cambios"}
+                          </button>
+                          <button
+                            onClick={() => { setEditingId(null); setEditForm({}); }}
+                            className="px-4 py-2 rounded-lg text-[12px] font-bold text-[#637488] bg-white border border-[#dce0e5] hover:bg-[#f0f2f4] transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── Notas admin (visible cuando NO está en modo edit) ── */}
+                    {editingId !== pub.id && pub.notas_admin && (
+                      <div className="mb-4 p-3 rounded-xl bg-[#fef3c7] border-l-4 border-[#f59e0b]">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[#92400e] mb-1">📝 Notas del admin</p>
+                        <p className="text-[13px] text-[#92400e] leading-relaxed whitespace-pre-wrap">{pub.notas_admin}</p>
+                      </div>
+                    )}
+
+                    {/* ── Galería de fotos (verificación humana) ── */}
+                    <div className="mb-4">
+                      <button
+                        onClick={() => setExpandedPhotos(expandedPhotos === pub.id ? null : pub.id)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-bold text-[#0B1E4E] bg-[#EEF4FF] hover:bg-[#D7E5FF] transition-colors"
+                      >
+                        📷 {expandedPhotos === pub.id ? "Ocultar" : `Ver ${pub.total_fotos} foto(s) del vehículo`}
+                      </button>
+                      {expandedPhotos === pub.id && (
+                        <div className="mt-3 p-4 rounded-xl bg-[#f8f9fa] border border-[#dce0e5]">
+                          {pub.total_fotos > 0 ? (
+                            <>
+                              <p className="text-[12px] text-[#637488] mb-3">
+                                ℹ️ Las fotos se almacenan cuando se integra Supabase Storage. Por ahora se reportan {pub.total_fotos} foto(s) cargada(s).
+                                Para verificar el vehículo, contacta directamente al vendedor por WhatsApp y pídele que envíe las fotos.
+                              </p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {Array.from({ length: pub.total_fotos }).map((_, i) => (
+                                  <div key={i} className="aspect-square rounded-lg border-2 border-dashed border-[#dce0e5] bg-white flex items-center justify-center text-[11px] text-[#9aa5b4]">
+                                    Foto {i + 1}
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-[12px] text-[#637488]">⚠️ Sin fotos cargadas. Esta publicación no incluye imágenes del vehículo.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     {/* ── Acciones ── */}
                     <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => editingId === pub.id ? setEditingId(null) : startEdit(pub)}
+                        className="px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all"
+                        style={{ background: editingId === pub.id ? "#f59e0b" : "#EEF4FF", color: editingId === pub.id ? "white" : "#0B1E4E" }}
+                      >
+                        ✏️ {editingId === pub.id ? "Cerrar edición" : "Editar / Agregar info"}
+                      </button>
+                      <span className="w-px h-6 bg-[#dce0e5]" aria-hidden />
                       {["pendiente", "activo", "rechazado", "vendido"].map((e) => (
                         <button
                           key={e}

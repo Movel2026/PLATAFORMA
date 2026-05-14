@@ -898,8 +898,8 @@ export default function HomePage() {
               © 2025 MOVEL S.A.S. · Todos los derechos reservados · NIT: 901.234.567-8
             </p>
             <div className="flex gap-4">
-              <a href="https://wa.me/573175737083?text=Términos%20y%20condiciones" target="_blank" rel="noopener noreferrer" className="text-[12px] text-white/40 hover:text-white transition-colors">Términos</a>
-              <a href="https://wa.me/573175737083?text=Política%20de%20privacidad" target="_blank" rel="noopener noreferrer" className="text-[12px] text-white/40 hover:text-white transition-colors">Privacidad</a>
+              <Link href="/terminos" className="text-[12px] text-white/40 hover:text-white transition-colors">Términos y Condiciones</Link>
+              <Link href="/privacidad" className="text-[12px] text-white/40 hover:text-white transition-colors">Política de Privacidad</Link>
             </div>
           </div>
         </div>

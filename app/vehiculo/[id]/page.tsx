@@ -318,6 +318,14 @@ export default function VehicleDetailPage({ params }: Props) {
                   </div>
                 </div>
               </div>
+
+              {/* Disclaimer: información reportada por el vendedor */}
+              <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2">
+                <span className="text-[14px] flex-shrink-0">ℹ️</span>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  <strong>Información reportada por el vendedor.</strong> Te recomendamos verificar SOAT, tecnomecánica, comparendos y traspasos en RUNT (runt.gov.co) y SIMIT antes de cerrar la compra. MOVEL no garantiza que los datos sean actualizados.
+                </p>
+              </div>
             </div>
 
             {/* Hacer una oferta */}

@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
   UploadSimple, X, CheckCircle, Image as ImageIcon,
   Car, FileText, CurrencyCircleDollar, ClipboardText,
-  Warning, Info, Handshake, WhatsappLogo,
+  Warning, Info, Handshake, WhatsappLogo, SignIn,
 } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
+import { useUser } from "@/lib/hooks/useUser";
 import { getVersiones, EspecificacionesTecnicas } from "@/lib/specs-data";
 import { OfertasToggle }           from "@/components/publicar/OfertasToggle";
 import { EspecificacionesVehiculo, SpecsOutput } from "@/components/publicar/EspecificacionesVehiculo";
@@ -139,8 +140,12 @@ function DraggablePhotoGrid({ photos, onRemove, onReorder }: {
 // ── Página principal ──────────────────────────────────────────────────────
 function PublicarContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const modo = searchParams.get("modo"); // "gratis" | "360" | null
   const isServicioIntegral = modo === "360";
+
+  // ── Auth guard: solo usuarios logueados pueden publicar ──
+  const { user, loading: userLoading, configured: authConfigured } = useUser();
 
   // ── Estado del formulario ──
   const [form, setForm] = useState({
@@ -408,6 +413,42 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
 
   const selectClass = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] appearance-none outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors";
   const inputClass  = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] placeholder-[#7A8195] outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors";
+
+  // ── Auth guard: si la auth está configurada y no hay sesión, redirigir ──
+  if (authConfigured && !userLoading && !user) {
+    return (
+      <div className="min-h-screen bg-cloud flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-[#dce0e5] shadow-movel text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-movel-50 flex items-center justify-center mb-4">
+            <SignIn size={28} color="#0B1E4E" weight="bold" />
+          </div>
+          <h2 className="font-display text-[24px] text-movel-900 mb-2">Inicia sesión para publicar</h2>
+          <p className="text-[14px] text-mute leading-relaxed mb-6">
+            Para garantizar la calidad y seguridad del catálogo, necesitas tener una cuenta verificada
+            antes de publicar un vehículo. Es gratis y solo te toma 1 minuto.
+          </p>
+          <div className="flex flex-col gap-2.5">
+            <Link
+              href={`/auth?return=${encodeURIComponent(`/publicar${modo ? `?modo=${modo}` : ""}`)}`}
+              className="w-full btn-primary !rounded-xl flex items-center justify-center gap-2"
+            >
+              <SignIn size={17} weight="bold" />
+              Iniciar sesión
+            </Link>
+            <Link
+              href={`/auth?modo=registro&return=${encodeURIComponent(`/publicar${modo ? `?modo=${modo}` : ""}`)}`}
+              className="w-full text-center py-3 border-2 border-movel-900 text-movel-900 font-bold rounded-xl text-[14px] hover:bg-movel-50 transition-colors"
+            >
+              Crear cuenta gratis
+            </Link>
+            <Link href="/" className="text-[12px] text-mute hover:text-ink mt-2">
+              ← Volver al inicio
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── Render ──
   return (
