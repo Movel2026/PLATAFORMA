@@ -317,21 +317,74 @@ function PublicarContent() {
     }));
   };
 
+  // ── Validaciones específicas Colombia ──
+  // Celular CO: 10 dígitos empezando por 3 (móviles)
+  const isCelularCOValido = (c: string) => /^3\d{9}$/.test(c.replace(/\D/g, ""));
+  // Email con reglas anti-spam básicas (descarta a@a.a, test@test.com, etc.)
+  const isEmailValido = (e: string) => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)) return false;
+    // Heurísticas anti-fake
+    const low = e.toLowerCase();
+    const banned = ["test@test", "aaa@aaa", "asdf@asdf", "fake@", "noreply@", "@example.com", "@test.com", "@fake.", "1234@1234"];
+    if (banned.some((b) => low.includes(b))) return false;
+    const [local, domain] = low.split("@");
+    if (local.length < 2) return false;
+    // Dominio debe tener al menos 2 partes y la TLD mínimo 2 chars
+    const parts = domain.split(".");
+    if (parts.length < 2 || parts[parts.length - 1].length < 2) return false;
+    return true;
+  };
+  // Placa CO: 3 letras + 3 dígitos (autos) o 3 letras + 2 dígitos + 1 letra (motos)
+  const isPlacaCOValida = (p: string) => /^[A-Z]{3}\d{3}$/.test(p) || /^[A-Z]{3}\d{2}[A-Z]$/.test(p);
+
   // ── Validación ──
   function validate(): boolean {
     const e: FormErrors = {};
     if (!form.marca)  e.marca  = "Selecciona una marca";
     if (!form.modelo || form.modelo === "__otro__") e.modelo = "Escribe el modelo del vehículo";
     if (!form.año)    e.año    = "Selecciona el año";
-    if (!form.placa)  e.placa  = "Ingresa la placa del vehículo";
-    if (!form.nombre) e.nombre = "Ingresa tu nombre";
-    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) e.email = "Email válido requerido";
+
+    // Placa: formato colombiano
+    if (!form.placa) e.placa = "Ingresa la placa del vehículo";
+    else if (!isPlacaCOValida(form.placa)) {
+      e.placa = "Formato inválido. Usa ABC123 (autos) o ABC12D (motos)";
+    }
+
+    if (!form.nombre) e.nombre = "Ingresa tu nombre completo";
+    else if (form.nombre.trim().length < 3) e.nombre = "Nombre muy corto";
+
+    // Email: válido + anti-fake
+    if (!form.email) e.email = "Email requerido";
+    else if (!isEmailValido(form.email)) e.email = "Email inválido (revisa que sea real)";
+
+    // Celular Colombia
     if (!form.celular) e.celular = "Ingresa tu celular";
+    else if (!isCelularCOValido(form.celular)) e.celular = "Celular Colombia: 10 dígitos empezando con 3";
+
     if (photos.length < 3) e.fotos = "Sube al menos 3 fotos del vehículo";
     const precio = parseInt(form.precio.replace(/\D/g, ""));
     if (form.precio && precio < 5_000_000) e.precio = "El precio mínimo es $5.000.000";
     setErrors(e);
     return Object.keys(e).length === 0;
+  }
+
+  // ── Helper: subir todas las fotos a Supabase Storage ──
+  async function uploadAllPhotos(folder: string): Promise<string[]> {
+    const urls: string[] = [];
+    for (let i = 0; i < photos.length; i++) {
+      try {
+        const fd = new FormData();
+        fd.append("file", photos[i].file);
+        fd.append("folder", folder);
+        const res = await fetch("/api/upload-foto", { method: "POST", body: fd });
+        const data = await res.json();
+        if (data.ok && data.url) urls.push(data.url);
+        else console.warn(`[upload foto ${i + 1}]`, data.error);
+      } catch (err) {
+        console.error(`[upload foto ${i + 1}]`, err);
+      }
+    }
+    return urls;
   }
 
   // ── Submit ──
@@ -340,7 +393,14 @@ function PublicarContent() {
     if (!validate()) return;
     setSubmitting(true);
 
-    // ── Modo Servicio Integral 360°: enviar a WhatsApp en lugar de publicar ──
+    // ── 1. Subir fotos a Supabase Storage primero ──
+    const folder = `${form.marca}-${form.modelo}-${Date.now()}`.toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+    const fotosUrls = photos.length > 0 ? await uploadAllPhotos(folder) : [];
+    if (photos.length > 0 && fotosUrls.length === 0) {
+      console.warn("⚠️ No se pudieron subir las fotos. La publicación se enviará sin URLs (verifica el bucket 'vehiculos' en Supabase Storage).");
+    }
+
+    // ── 2. Modo Servicio Integral 360°: enviar a WhatsApp ──
     if (isServicioIntegral) {
       const ultimo = (form.placa || "").replace(/\D/g, "").slice(-1) || "?";
       const msg = `Hola MOVEL, quiero el *Servicio Integral 360°* para vender mi vehículo.
@@ -362,7 +422,7 @@ function PublicarContent() {
 
 💰 *Precio esperado*: $${form.precio}
 🏙️ *Ciudad*: ${form.ciudad || "—"}
-📷 *Fotos cargadas*: ${photos.length}
+📷 *Fotos*: ${fotosUrls.length} subidas
 ${form.descripcion ? `\n📝 *Descripción*\n${form.descripcion}\n` : ""}
 👤 *Contacto*
 • Nombre: ${form.nombre}
@@ -372,12 +432,11 @@ ${form.descripcion ? `\n📝 *Descripción*\n${form.descripcion}\n` : ""}
 Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, traspaso) por la comisión del 3%.`;
 
       const waLink = `https://wa.me/573175737083?text=${encodeURIComponent(msg)}`;
-      // También notificar a Movel internamente (para que tengan el lead aunque WA falle)
       try {
         await fetch("/api/publicar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, totalFotos: photos.length, modo: "360" }),
+          body: JSON.stringify({ ...form, totalFotos: photos.length, fotosUrls, modo: "360" }),
         });
       } catch { /* swallow */ }
       window.open(waLink, "_blank");
@@ -386,15 +445,18 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
       return;
     }
 
-    // ── Modo normal (publica gratis): API publicar ──
+    // ── 3. Modo gratis: API publicar ──
     try {
       const res = await fetch("/api/publicar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, totalFotos: photos.length, modo: "gratis" }),
+        body: JSON.stringify({ ...form, totalFotos: photos.length, fotosUrls, modo: "gratis" }),
       });
-      if (res.ok) setShowModal(true);
-    } catch {
+      const data = await res.json();
+      if (!data.ok) console.warn("Publicación con advertencia:", data);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Submit error:", err);
       setShowModal(true);
     } finally {
       setSubmitting(false);
@@ -413,6 +475,130 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
 
   const selectClass = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] appearance-none outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors";
   const inputClass  = "w-full h-12 bg-[#f0f2f4] rounded-xl px-4 text-[15px] text-[#111418] placeholder-[#7A8195] outline-none border border-transparent focus:border-[#0B1E4E] focus:bg-white transition-colors";
+
+  // ── Selector de modalidad: cuando no viene ?modo= en la URL ──
+  if (!modo && user) {
+    return (
+      <div className="min-h-screen bg-cloud py-10 px-4">
+        <div className="max-w-4xl mx-auto">
+          <Link href="/" className="inline-flex items-center gap-2 text-mute hover:text-ink text-[13px] font-semibold mb-6">
+            ← Volver al inicio
+          </Link>
+          <div className="text-center mb-8">
+            <span className="inline-block text-[11px] font-bold uppercase tracking-[0.15em] text-movel-600 bg-movel-50 px-3 py-1.5 rounded-full mb-3">
+              Vender tu vehículo
+            </span>
+            <h1 className="font-display text-[32px] md:text-[42px] text-movel-900 leading-tight mb-3">
+              ¿Cómo prefieres vender tu carro?
+            </h1>
+            <p className="text-[15px] text-mute max-w-xl mx-auto">
+              Tú decides cómo: lo manejas todo gratis o nosotros nos encargamos del proceso completo por una comisión única del 3%.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Opción 1: Publica gratis */}
+            <Link
+              href="/publicar?modo=gratis"
+              className="group bg-white rounded-3xl p-7 border border-[#dce0e5] hover:border-movel-300 hover:shadow-movel-lg transition-all relative"
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-12 h-12 rounded-xl bg-movel-50 flex items-center justify-center">
+                  <UploadSimple size={24} color="#0B1E4E" weight="fill" />
+                </div>
+                <div>
+                  <h3 className="font-display text-[20px] text-movel-900 leading-tight">Publica gratis</h3>
+                  <p className="text-[12px] text-mute font-semibold uppercase tracking-wide">Tú lo manejas</p>
+                </div>
+              </div>
+              <p className="text-[14px] text-mute leading-relaxed mb-5">
+                Crea tu publicación gratis, sube tus fotos y atiende a los compradores directamente. <strong className="text-ink">$0 de comisión</strong>.
+              </p>
+              <ul className="space-y-2 mb-6">
+                {[
+                  "Publicación 100% gratuita",
+                  "Tu precio, tu manejo, tu negociación",
+                  "Contacto directo con compradores",
+                  "Publicación destacada opcional (pago)",
+                ].map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-[13px] text-ink">
+                    <CheckCircle size={16} color="#3CCF91" weight="fill" className="flex-shrink-0 mt-0.5" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <div className="w-full text-center px-5 py-3 border-2 border-movel-900 text-movel-900 font-bold rounded-xl text-[14px] group-hover:bg-movel-900 group-hover:text-white transition-all">
+                Publicar gratis →
+              </div>
+            </Link>
+
+            {/* Opción 2: Servicio integral 360° */}
+            <Link
+              href="/publicar?modo=360"
+              className="group bg-movel-gradient-dark rounded-3xl p-7 hover:shadow-2xl transition-all border border-movel-400/30 relative overflow-hidden"
+            >
+              <div className="mb-5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.15em] bg-sky text-white px-3 py-1.5 rounded-full shadow-lg">
+                  ⚡ Recomendado
+                </span>
+              </div>
+              <div className="flex items-start gap-3 mb-5">
+                <div className="w-12 h-12 rounded-xl bg-movel-400/20 border border-movel-400/40 flex items-center justify-center flex-shrink-0">
+                  <Handshake size={24} color="#3F8CFF" weight="fill" />
+                </div>
+                <div>
+                  <h3 className="font-display text-[20px] text-white leading-tight">Servicio integral 360°</h3>
+                  <p className="text-[12px] text-movel-300 font-semibold uppercase tracking-wide">Nosotros lo hacemos</p>
+                </div>
+              </div>
+              <p className="text-[14px] text-white/75 leading-relaxed mb-5">
+                Nosotros nos encargamos de <strong className="text-white">todo el proceso</strong>: fotos, peritaje, atención, visitas, traspaso. Tú solo firmas al final.
+              </p>
+              <ul className="space-y-3 mb-5">
+                {[
+                  { Icon: Camera,        t: "Fotos profesionales",      sub: "Sesión con fotógrafo" },
+                  { Icon: Wrench,        t: "Peritaje técnico",          sub: "Mecánica, latonería, docs" },
+                  { Icon: UsersThree,    t: "Atendemos los compradores", sub: "Filtramos curiosos" },
+                  { Icon: CalendarCheck, t: "Coordinamos visitas",       sub: "En tus horarios" },
+                  { Icon: FileText,      t: "Traspaso legal completo",   sub: "RUNT, impuestos, papeles" },
+                ].map((b) => (
+                  <li key={b.t} className="flex items-start gap-2.5 text-[13px]">
+                    <b.Icon size={16} color="#3F8CFF" weight="fill" className="flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="text-white/95 font-semibold">{b.t}</p>
+                      <p className="text-white/55 text-[11px]">{b.sub}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="grid grid-cols-2 gap-2 mb-5 p-3 rounded-xl bg-white/5 border border-white/10">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-white/50 font-bold">Comisión</p>
+                  <p className="text-[20px] font-display text-white">3%</p>
+                  <p className="text-[10px] text-white/40">solo al vender</p>
+                </div>
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-white/50 font-bold">Tu tiempo</p>
+                  <p className="text-[20px] font-display text-white">~0h</p>
+                  <p className="text-[10px] text-white/40">solo firmas</p>
+                </div>
+              </div>
+              <div className="w-full text-center px-5 py-3 bg-white text-movel-900 font-black rounded-xl text-[14px] group-hover:bg-cloud transition-all">
+                Quiero el servicio integral →
+              </div>
+            </Link>
+          </div>
+
+          <p className="text-center text-[12px] text-mute mt-8">
+            ¿Tienes dudas?{" "}
+            <a href="https://wa.me/573175737083?text=Tengo%20una%20duda%20sobre%20vender%20mi%20carro%20en%20MOVEL" target="_blank" rel="noopener noreferrer" className="text-movel-600 font-bold hover:underline">
+              Hablar con un asesor por WhatsApp
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // ── Auth guard: si la auth está configurada y no hay sesión, redirigir ──
   if (authConfigured && !userLoading && !user) {

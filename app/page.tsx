@@ -766,23 +766,41 @@ export default function HomePage() {
                         </div>
 
                         <p className="text-[14px] text-white/75 leading-relaxed mb-5">
-                          Nosotros nos encargamos de todo el proceso. Tú solo recibes ofertas serias y firmas. Comisión única del <strong className="text-white">3% del valor de venta</strong>, sin sorpresas.
+                          Nosotros nos encargamos de <strong className="text-white">todo el proceso de venta</strong>: desde las fotos profesionales hasta el traspaso final. Tú no atiendes llamadas, no recibes visitas, no estás disponible. Solo recibes ofertas serias filtradas por nosotros, eliges la mejor y firmas.
                         </p>
 
-                        <ul className="space-y-2.5 mb-6">
+                        <ul className="space-y-3 mb-6">
                           {[
-                            { Icon: Camera,        t: "Fotos profesionales del vehículo" },
-                            { Icon: Wrench,        t: "Peritaje técnico profesional" },
-                            { Icon: UsersThree,    t: "Atendemos llamadas y visitas" },
-                            { Icon: CalendarCheck, t: "Coordinamos pruebas de manejo" },
-                            { Icon: FileText,      t: "Traspaso legal y documentación" },
+                            { Icon: Camera,        t: "Fotos profesionales del vehículo",       sub: "Sesión con fotógrafo en estudio o tu casa" },
+                            { Icon: Wrench,        t: "Peritaje técnico profesional",            sub: "Mecánica, latonería, eléctrica, documentos" },
+                            { Icon: UsersThree,    t: "Atendemos llamadas y mensajes",           sub: "Filtramos a los curiosos. Solo te pasamos los serios" },
+                            { Icon: CalendarCheck, t: "Coordinamos visitas y pruebas de manejo", sub: "Agendamos en horarios que te convengan" },
+                            { Icon: FileText,      t: "Gestión legal del traspaso",              sub: "Documentos, RUNT, impuestos, todo nosotros" },
+                            { Icon: ShieldCheck,   t: "Publicación en redes y marketplaces",     sub: "Visibilidad multicanal · 4× más alcance" },
                           ].map((b) => (
-                            <li key={b.t} className="flex items-start gap-2.5 text-[13px] text-white/85">
-                              <b.Icon size={16} color="#3F8CFF" weight="fill" className="flex-shrink-0 mt-0.5" />
-                              {b.t}
+                            <li key={b.t} className="flex items-start gap-2.5 text-[13px]">
+                              <b.Icon size={16} color="#3F8CFF" weight="fill" className="flex-shrink-0 mt-1" />
+                              <div>
+                                <p className="text-white/95 font-semibold">{b.t}</p>
+                                <p className="text-white/55 text-[12px] mt-0.5">{b.sub}</p>
+                              </div>
                             </li>
                           ))}
                         </ul>
+
+                        {/* Comparativa rápida */}
+                        <div className="grid grid-cols-2 gap-2 mb-5 p-3 rounded-xl bg-white/5 border border-white/10">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-0.5">⏱ Tiempo promedio</p>
+                            <p className="text-[16px] font-display text-white">21 días</p>
+                            <p className="text-[10px] text-white/40">vs. 60+ por tu cuenta</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-0.5">💼 Tu tiempo invertido</p>
+                            <p className="text-[16px] font-display text-white">~0 horas</p>
+                            <p className="text-[10px] text-white/40">solo firmas al final</p>
+                          </div>
+                        </div>
 
                         <div className="flex items-end justify-between mb-5 pt-4 border-t border-white/15">
                           <div>

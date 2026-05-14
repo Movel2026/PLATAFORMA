@@ -1,28 +1,57 @@
-# Setup Supabase + Telegram para MOVEL
+# Setup Supabase + Telegram + Storage para MOVEL
 
 Pasos para activar las funciones críticas en producción.
 
+## ⚠️ FIX RÁPIDO si las publicaciones no aparecen en /admin
+
+Si publicaste un carro y llegó a Telegram pero NO al panel admin, ejecuta este SQL en
+Supabase (SQL Editor → New query → Run):
+
+```sql
+-- Agregar columnas faltantes a la tabla publicaciones existente
+ALTER TABLE publicaciones
+  ADD COLUMN IF NOT EXISTS placa                text,
+  ADD COLUMN IF NOT EXISTS ultimo_digito_placa  text,
+  ADD COLUMN IF NOT EXISTS motor                text,
+  ADD COLUMN IF NOT EXISTS potencia             text,
+  ADD COLUMN IF NOT EXISTS carroceria           text,
+  ADD COLUMN IF NOT EXISTS pasajeros            text,
+  ADD COLUMN IF NOT EXISTS accept_offers        boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS modo                 text    DEFAULT 'gratis',
+  ADD COLUMN IF NOT EXISTS fotos_urls           jsonb   DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS notas_admin          text,
+  ADD COLUMN IF NOT EXISTS updated_at           timestamptz DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS user_id              uuid REFERENCES auth.users(id) ON DELETE SET NULL;
+```
+
+Mientras eso esté pendiente, el código ya hace un **fallback al insert mínimo**, así que
+la publicación al menos llegará con los campos básicos. Pero para tener todos los datos
+(placa, motor, fotos URL, etc.) necesitas correr el ALTER de arriba.
+
+---
+
 ## 1. Variables de entorno en Vercel
 
-En el dashboard de Vercel → Project Settings → Environment Variables, añade:
+Settings → Environment Variables:
 
 | Variable | Valor | Notas |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxx.supabase.co` | Settings → API del dashboard Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGc...` (anon key) | Pública, segura para el cliente |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGc...` (service_role) | **PRIVADA**, solo server-side |
-| `ADMIN_PIN` | `1234` (o el PIN que quieras) | Acceso al dashboard `/admin` |
-| `TELEGRAM_BOT_TOKEN` | `123456:ABC-DEF...` | Crea el bot con [@BotFather](https://t.me/botfather) |
-| `TELEGRAM_CHAT_ID` | `123456789` | Tu chat ID (escribe a [@userinfobot](https://t.me/userinfobot)) |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxx.supabase.co` | Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGc...` (anon key) | Pública |
+| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGc...` (service_role) | **PRIVADA** |
+| `ADMIN_PIN` | `1234` o tu PIN | Para `/admin` |
+| `TELEGRAM_BOT_TOKEN` | `123:ABC...` | @BotFather |
+| `TELEGRAM_CHAT_ID` | `123456789` | @userinfobot |
+| `NEXT_PUBLIC_BASE_URL` | `https://movelcar.com` | Tu dominio |
 
-Después de añadirlas, **redeploy** el proyecto desde Vercel para que tomen efecto.
+Después de agregar las vars → **Redeploy** en Vercel.
 
-## 2. Crear tablas en Supabase
+## 2. Crear todas las tablas (instalación nueva)
 
-Ve a tu proyecto Supabase → SQL Editor → New query, pega y ejecuta:
+Si es Supabase recién creado, ejecuta TODO este SQL:
 
 ```sql
--- Tabla usuarios
+-- ─── Tabla usuarios ───
 CREATE TABLE IF NOT EXISTS usuarios (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   auth_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -31,25 +60,23 @@ CREATE TABLE IF NOT EXISTS usuarios (
   telefono    text,
   ciudad      text,
   origen      text DEFAULT 'web',
+  rol         text DEFAULT 'particular', -- 'particular' | 'concesionario' | 'movel'
   created_at  timestamptz DEFAULT now()
 );
 
--- Tabla publicaciones
+-- ─── Tabla publicaciones (con TODAS las columnas) ───
 CREATE TABLE IF NOT EXISTS publicaciones (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  -- contacto
   nombre       text,
   email        text,
   celular      text,
-  -- identificación
   marca        text NOT NULL,
   modelo       text NOT NULL,
   ano          integer,
   version      text,
-  placa        text,                 -- privada, solo admin
-  ultimo_digito_placa text,          -- pública (pico y placa)
-  -- características
+  placa        text,                       -- privada
+  ultimo_digito_placa text,                 -- pública
   precio       bigint,
   kilometraje  integer,
   ciudad       text,
@@ -60,13 +87,12 @@ CREATE TABLE IF NOT EXISTS publicaciones (
   potencia     text,
   carroceria   text,
   pasajeros    text,
-  -- adicional
   descripcion  text,
   total_fotos  integer DEFAULT 0,
+  fotos_urls   jsonb   DEFAULT '[]'::jsonb,
   accept_offers boolean DEFAULT false,
-  modo         text DEFAULT 'gratis',  -- 'gratis' | '360'
-  -- estado
-  estado       text DEFAULT 'pendiente', -- pendiente | activo | rechazado | vendido
+  modo         text DEFAULT 'gratis',       -- 'gratis' | '360'
+  estado       text DEFAULT 'pendiente',    -- pendiente | activo | rechazado | vendido
   notas_admin  text,
   created_at   timestamptz DEFAULT now(),
   updated_at   timestamptz DEFAULT now()
@@ -74,7 +100,7 @@ CREATE TABLE IF NOT EXISTS publicaciones (
 CREATE INDEX IF NOT EXISTS idx_pub_estado ON publicaciones(estado);
 CREATE INDEX IF NOT EXISTS idx_pub_created ON publicaciones(created_at DESC);
 
--- Tabla ofertas
+-- ─── Tabla ofertas ───
 CREATE TABLE IF NOT EXISTS ofertas (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -85,11 +111,11 @@ CREATE TABLE IF NOT EXISTS ofertas (
   nombre       text,
   celular      text,
   email        text,
-  estado       text DEFAULT 'nueva', -- nueva | contactado | cerrada
+  estado       text DEFAULT 'nueva',
   created_at   timestamptz DEFAULT now()
 );
 
--- Tabla contactos
+-- ─── Tabla contactos ───
 CREATE TABLE IF NOT EXISTS contactos (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre      text,
@@ -101,7 +127,7 @@ CREATE TABLE IF NOT EXISTS contactos (
   created_at  timestamptz DEFAULT now()
 );
 
--- Tabla favoritos (un registro por (user, vehicle))
+-- ─── Tabla favoritos ───
 CREATE TABLE IF NOT EXISTS favoritos (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -111,86 +137,101 @@ CREATE TABLE IF NOT EXISTS favoritos (
 );
 CREATE INDEX IF NOT EXISTS idx_fav_user ON favoritos(user_id);
 
--- ─── Row Level Security ───────────────────────────────────────
+-- ─── RLS ───
 ALTER TABLE usuarios       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE publicaciones  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ofertas        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contactos      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE favoritos      ENABLE ROW LEVEL SECURITY;
 
--- Public: cualquiera puede leer publicaciones activas
+-- Lectura pública: cualquiera puede ver publicaciones activas
 DROP POLICY IF EXISTS "publicaciones_select_activas" ON publicaciones;
 CREATE POLICY "publicaciones_select_activas" ON publicaciones
   FOR SELECT TO anon, authenticated
   USING (estado = 'activo');
 
--- Usuarios autenticados pueden ver sus propias publicaciones
-DROP POLICY IF EXISTS "publicaciones_select_owner" ON publicaciones;
-CREATE POLICY "publicaciones_select_owner" ON publicaciones
-  FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
-
--- Usuarios autenticados pueden crear publicaciones
+-- Inserción: cualquier autenticado puede publicar
 DROP POLICY IF EXISTS "publicaciones_insert" ON publicaciones;
 CREATE POLICY "publicaciones_insert" ON publicaciones
-  FOR INSERT TO authenticated
-  WITH CHECK (true);
+  FOR INSERT TO authenticated WITH CHECK (true);
 
--- Favoritos: solo el dueño
+-- Favoritos: solo del dueño
 DROP POLICY IF EXISTS "favoritos_owner" ON favoritos;
 CREATE POLICY "favoritos_owner" ON favoritos
   FOR ALL TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
-
--- Service role bypassea todo (admin lo usa)
+  USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 ```
 
-## 3. Configurar Supabase Auth
+## 3. Configurar Supabase Storage para FOTOS
 
-1. En Supabase → **Authentication → Providers**, activa **Email** (ya viene activado por defecto).
+**Esto es lo que hace que las fotos se vean realmente en el admin.**
+
+### 3.1. Crear el bucket
+1. Ve a Supabase → **Storage** → **New bucket**
+2. Nombre: `vehiculos`
+3. **Public bucket**: ✅ Sí (las fotos deben ser visibles)
+4. File size limit: 5 MB
+5. Allowed MIME types: `image/jpeg, image/png, image/webp, image/heic, image/heif`
+
+### 3.2. Policies del bucket
+En **Storage → Policies → vehiculos**, agrega:
+
+```sql
+-- Lectura pública
+CREATE POLICY "fotos_public_read" ON storage.objects
+  FOR SELECT TO anon, authenticated
+  USING (bucket_id = 'vehiculos');
+
+-- Inserción: cualquier autenticado puede subir (también service_role bypassea)
+CREATE POLICY "fotos_authenticated_upload" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'vehiculos');
+```
+
+## 4. Configurar Supabase Auth
+
+1. **Authentication → Providers → Email**: activado
 2. **Authentication → URL Configuration**:
    - Site URL: `https://movelcar.com`
-   - Redirect URLs: agregar `https://movelcar.com/**`
-3. **Authentication → Email Templates** (opcional): personalizar el correo de confirmación con la marca MOVEL.
+   - Redirect URLs: `https://movelcar.com/**`
 
-## 4. Configurar el webhook de Telegram (gratuito)
+## 5. Webhook de Telegram (gratuito)
 
-Una vez deployado el proyecto en `movelcar.com`, abre en el navegador:
-
+Una vez deployado, abre:
 ```
 https://movelcar.com/api/telegram/webhook?setup=1
 ```
+Esto registra el bot. Luego en Telegram escribe `/help`.
 
-Esto registra tu bot para recibir comandos. Luego desde Telegram:
+Comandos disponibles:
+- `/publicaciones [hoy|pendientes|activos]`
+- `/ofertas`
+- `/contactos`
+- `/usuarios`
+- `/total`
+- `/buscar <texto>`
 
-- Escribe a tu bot `/help` para ver los comandos disponibles
-- `/publicaciones hoy` — publicaciones del día
-- `/publicaciones pendientes` — esperando aprobación
-- `/ofertas` — ofertas recientes
-- `/contactos` — consultas de compradores
-- `/usuarios` — usuarios registrados
-- `/total` — resumen general
-- `/buscar Toyota` — busca por texto
+## 6. Verificación post-deploy
 
-El bot solo responde a tu chat ID (configurado en `TELEGRAM_CHAT_ID`).
+| Test | Cómo | Esperado |
+|---|---|---|
+| Auth | `/auth` → registrarme | Email de confirmación llega |
+| Login persistente | Logueo → cierro pestaña | Sigo logueado |
+| Publicar | Logueado → `/publicar?modo=gratis` → llenar y enviar | Aparece en admin |
+| Fotos | Subo 3+ fotos al publicar | Bucket `vehiculos` tiene los archivos |
+| Activar | Admin → click "Activo" → recargar `/buscar` | Aparece en catálogo |
+| Favoritos | ♥ logueado → cierro → vuelvo | Sigue marcado |
+| Telegram | `/total` al bot | Devuelve resumen |
+| Validaciones | Email "test@test.com" o placa "ABC1" | Errores inline |
 
-## 5. Verificación post-deploy
+## 7. Próximos pasos (siguiente iteración)
 
-1. **Auth**: `https://movelcar.com/auth` → registra una cuenta de prueba con tu correo personal. Confirma desde el email recibido.
-2. **Publicar**: ya logueado, `/publicar` debería dejarte llenar el formulario.
-3. **Admin**: `https://movelcar.com/admin` → ingresa el PIN (`ADMIN_PIN`). La publicación debería aparecer en "Pendientes".
-4. **Activar**: click en "Activo" en el admin → recarga `/buscar` y debería aparecer.
-5. **Favoritos**: click ♥ en una card mientras estás logueado → debe persistir tras refresh.
-6. **Telegram**: escribe `/total` al bot → te devuelve el resumen.
-
-## 6. Próximos pasos (no críticos)
-
-- **Supabase Storage**: para fotos reales. Crear bucket `vehiculos` y modificar `/api/publicar` para subir las imágenes.
-- **Confirmación de email**: si te molesta el flujo del confirm, en Supabase Auth → Providers → Email puedes desactivar "Confirm email" (más rápido para pruebas, menos seguro).
-- **Roles**: agregar columna `rol` en `usuarios` para distinguir vendedores particulares vs concesionarios.
-- **Búsqueda full-text**: índice GIN sobre publicaciones para `/buscar` más potente.
+- Registro de **Concesionario** (cuenta especial con badge para 10+ vehículos)
+- Badge **"Vendido por Movel"** en cards de venta directa
+- Progress indicator en specs técnicas (red → blue mientras se completan)
+- Compresión client-side de fotos antes de subir
+- Confirmación de placa real contra RUNT (API externa)
 
 ---
 
-¿Dudas? Escribe a `movelcol@outlook.com` o `https://wa.me/573175737083`.
+📧 `movelcol@outlook.com` · 📱 `https://wa.me/573175737083`

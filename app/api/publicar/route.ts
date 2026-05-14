@@ -11,46 +11,97 @@ async function notificarWhatsApp(mensaje: string) {
   } catch (e) { console.error("WhatsApp notification error:", e); }
 }
 
+/**
+ * INSERT resiliente: intenta con todos los campos, si falla por columna inexistente
+ * recae a un subset mínimo. Esto evita perder publicaciones si la tabla Supabase
+ * no tiene aún las columnas nuevas (placa, motor, etc.).
+ */
+async function insertPublicacion(data: Record<string, unknown>) {
+  // ── 1. Intento completo (todos los campos) ──
+  const fullPayload = {
+    nombre:       String(data.nombre      ?? ""),
+    email:        String(data.email       ?? ""),
+    celular:      String(data.celular     ?? ""),
+    marca:        String(data.marca       ?? ""),
+    modelo:       String(data.modelo      ?? ""),
+    ano:          Number(data.año) || null,
+    version:      String(data.version     ?? ""),
+    placa:        String(data.placa       ?? "").toUpperCase(),
+    ultimo_digito_placa: (String(data.placa ?? "").match(/\d(?=\D*$|$)/) || [""])[0],
+    precio:       parseInt(String(data.precio ?? "").replace(/\D/g, "")) || 0,
+    kilometraje:  parseInt(String(data.kilometraje ?? "").replace(/\D/g, "")) || 0,
+    ciudad:       String(data.ciudad      ?? ""),
+    color:        String(data.color       ?? ""),
+    transmision:  String(data.transmision ?? ""),
+    combustible:  String(data.combustible ?? ""),
+    motor:        String(data.motor       ?? ""),
+    potencia:     String(data.potencia    ?? ""),
+    carroceria:   String(data.carroceria  ?? ""),
+    pasajeros:    String(data.pasajeros   ?? ""),
+    descripcion:  String(data.descripcion ?? ""),
+    total_fotos:  Number(data.totalFotos) || 0,
+    fotos_urls:   Array.isArray(data.fotosUrls) ? data.fotosUrls : [],
+    accept_offers: !!data.accept_offers,
+    modo:         String(data.modo ?? "gratis"),
+    estado:       "pendiente",
+  };
+
+  const fullRes = await supabaseAdmin.from("publicaciones").insert(fullPayload).select().single();
+  if (!fullRes.error) {
+    console.log("✅ [Supabase] Publicación insertada (full):", fullRes.data?.id);
+    return { ok: true, id: fullRes.data?.id, full: true };
+  }
+
+  console.warn("[Supabase] Insert full fallido:", fullRes.error.message);
+
+  // ── 2. Fallback con subset mínimo (campos garantizados de la tabla original) ──
+  const minimalPayload = {
+    nombre:       fullPayload.nombre,
+    email:        fullPayload.email,
+    celular:      fullPayload.celular,
+    marca:        fullPayload.marca,
+    modelo:       fullPayload.modelo,
+    ano:          fullPayload.ano,
+    version:      fullPayload.version,
+    precio:       fullPayload.precio,
+    kilometraje:  fullPayload.kilometraje,
+    ciudad:       fullPayload.ciudad,
+    color:        fullPayload.color,
+    transmision:  fullPayload.transmision,
+    combustible:  fullPayload.combustible,
+    descripcion:  fullPayload.descripcion,
+    total_fotos:  fullPayload.total_fotos,
+    estado:       "pendiente",
+  };
+
+  const minRes = await supabaseAdmin.from("publicaciones").insert(minimalPayload).select().single();
+  if (!minRes.error) {
+    console.log("✅ [Supabase] Publicación insertada (minimal fallback):", minRes.data?.id);
+    return {
+      ok: true,
+      id: minRes.data?.id,
+      full: false,
+      warning: "Insertada con campos básicos. Ejecuta el ALTER TABLE para guardar también placa, motor, potencia, fotos_urls, etc.",
+    };
+  }
+
+  console.error("[Supabase] Insert minimal también falló:", minRes.error.message);
+  return { ok: false, error: minRes.error.message };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
     // ── 1. Guardar en Supabase ──────────────────────────────
+    let supabaseResult: { ok: boolean; id?: string; warning?: string; error?: string } = { ok: false };
     if (supabaseConfigured()) {
-      const precioNum = parseInt(String(data.precio).replace(/\D/g, "")) || 0;
-      const kmNum = parseInt(String(data.kilometraje).replace(/\D/g, "")) || 0;
-
-      // Privacidad de placa: solo guardamos el último dígito como público
-      const placaCompleta = String(data.placa || "").toUpperCase();
-      const ultimoDigitoPlaca = (placaCompleta.match(/\d(?=\D*$|$)/) || [""])[0];
-
-      const { error } = await supabaseAdmin.from("publicaciones").insert({
-        nombre:       data.nombre      ?? "",
-        email:        data.email       ?? "",
-        celular:      data.celular     ?? "",
-        marca:        data.marca       ?? "",
-        modelo:       data.modelo      ?? "",
-        ano:          Number(data.año) || null,
-        version:      data.version     ?? "",
-        placa:        placaCompleta,                  // privada, solo admin
-        ultimo_digito_placa: ultimoDigitoPlaca,        // pública (pico y placa)
-        precio:       precioNum,
-        kilometraje:  kmNum,
-        ciudad:       data.ciudad      ?? "",
-        color:        data.color       ?? "",
-        transmision:  data.transmision ?? "",
-        combustible:  data.combustible ?? "",
-        motor:        data.motor       ?? "",
-        potencia:     data.potencia    ?? "",
-        carroceria:   data.carroceria  ?? "",
-        pasajeros:    data.pasajeros   ?? "",
-        descripcion:  data.descripcion ?? "",
-        total_fotos:  Number(data.totalFotos) || 0,
-        accept_offers: !!data.accept_offers,
-        modo:         data.modo ?? "gratis",          // gratis | 360
-        estado:       "pendiente",
-      });
-      if (error) console.error("[Supabase publicar]:", error.message);
+      supabaseResult = await insertPublicacion(data);
+      if (!supabaseResult.ok) {
+        console.error("❌ [Supabase] Insert falló por completo. Verifica las env vars y el SQL schema.");
+      }
+    } else {
+      console.warn("⚠️ Supabase NO configurado — la publicación solo va a WhatsApp/Telegram, NO al admin.");
     }
 
     // ── 2. WhatsApp inmediato ──────────────────────────────
@@ -74,51 +125,56 @@ export async function POST(req: NextRequest) {
     } catch { /* Telegram es opcional */ }
 
     // ── 4. Email SMTP (si configurado) ─────────────────────
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.log("📧 [MOVEL] Publicación recibida (sin SMTP configurado):", data);
-      return NextResponse.json({ ok: true, message: "Guardado" });
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST || "smtp.gmail.com",
+          port: Number(process.env.SMTP_PORT) || 587,
+          secure: false,
+          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        });
+
+        const precioFormateado = data.precio
+          ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(
+              parseInt(String(data.precio).replace(/\D/g, ""))
+            )
+          : "No especificado";
+
+        await transporter.sendMail({
+          from: `"MOVEL Platform" <${process.env.SMTP_USER}>`,
+          to: process.env.CONTACT_EMAIL || process.env.SMTP_USER,
+          replyTo: data.email,
+          subject: `🚗 Nuevo vehículo: ${data.marca} ${data.modelo} ${data.año}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: #0B1E4E; padding: 24px; border-radius: 12px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 22px;">MOVEL — Nueva publicación</h1>
+              </div>
+              <div style="background: white; border: 1px solid #dce0e5; border-radius: 12px; padding: 24px; margin-top: 16px;">
+                <h2 style="color: #111418; font-size: 20px;">${data.marca} ${data.modelo} ${data.año}</h2>
+                <p><strong>Precio:</strong> ${precioFormateado}</p>
+                <p><strong>Ciudad:</strong> ${data.ciudad || "N/A"}</p>
+                <p><strong>Vendedor:</strong> ${data.nombre} · ${data.celular}</p>
+                <p><strong>Fotos:</strong> ${data.totalFotos || 0}</p>
+                <p><strong>Modo:</strong> ${data.modo === "360" ? "Servicio Integral 360°" : "Publicación gratuita"}</p>
+              </div>
+            </div>
+          `,
+        });
+      } catch (e) {
+        console.error("Email error:", e);
+      }
     }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    return NextResponse.json({
+      ok: true,
+      supabase: supabaseResult,
+      message: supabaseResult.ok
+        ? "Publicación recibida y guardada"
+        : "Publicación recibida (notificada por WhatsApp/Telegram, pero no guardada en BD — verifica config)",
     });
-
-    const precioFormateado = data.precio
-      ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(
-          parseInt(data.precio.replace(/\D/g, ""))
-        )
-      : "No especificado";
-
-    await transporter.sendMail({
-      from: `"MOVEL Platform" <${process.env.SMTP_USER}>`,
-      to: process.env.CONTACT_EMAIL || process.env.SMTP_USER,
-      replyTo: data.email,
-      subject: `🚗 Nuevo vehículo publicado: ${data.marca} ${data.modelo} ${data.año}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 24px; border-radius: 16px;">
-          <div style="background: #1978e5; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 900;">🚗 MOVEL</h1>
-            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px;">Nueva publicación de vehículo</p>
-          </div>
-          <div style="background: white; border-radius: 12px; padding: 24px; border: 1px solid #dce0e5;">
-            <h2 style="color: #111418; font-size: 20px; margin: 0 0 16px;">${data.marca} ${data.modelo} ${data.año}</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; color: #637488; font-size: 14px;">Precio</td><td style="padding: 8px 0; font-weight: 700;">${precioFormateado}</td></tr>
-              <tr><td style="padding: 8px 0; color: #637488; font-size: 14px;">Ciudad</td><td style="padding: 8px 0; font-weight: 600;">${data.ciudad || "N/A"}</td></tr>
-              <tr><td style="padding: 8px 0; color: #637488; font-size: 14px;">Vendedor</td><td style="padding: 8px 0; font-weight: 600;">${data.nombre} · ${data.celular}</td></tr>
-              <tr><td style="padding: 8px 0; color: #637488; font-size: 14px;">Fotos</td><td style="padding: 8px 0; font-weight: 600;">${data.totalFotos || 0}</td></tr>
-            </table>
-          </div>
-        </div>
-      `,
-    });
-
-    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Error publicar:", error);
-    return NextResponse.json({ ok: true, warning: "Email no enviado" });
+    return NextResponse.json({ ok: false, error: String(error) }, { status: 500 });
   }
 }
