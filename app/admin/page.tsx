@@ -94,8 +94,11 @@ interface Publicacion {
   color?: string; transmision?: string; combustible?: string;
   motor?: string; potencia?: string; carroceria?: string;
   pasajeros?: string;
+  // Fotos
+  total_fotos: number;
+  fotos_urls?: string[];   // URLs públicas en Supabase Storage
   // Adicional
-  descripcion?: string; total_fotos: number;
+  descripcion?: string;
   accept_offers?: boolean; modo?: string; // "gratis" | "360"
   // Meta
   estado: string;
@@ -710,35 +713,86 @@ export default function AdminPage() {
                     )}
 
                     {/* ── Galería de fotos (verificación humana) ── */}
-                    <div className="mb-4">
-                      <button
-                        onClick={() => setExpandedPhotos(expandedPhotos === pub.id ? null : pub.id)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-bold text-[#0B1E4E] bg-[#EEF4FF] hover:bg-[#D7E5FF] transition-colors"
-                      >
-                        📷 {expandedPhotos === pub.id ? "Ocultar" : `Ver ${pub.total_fotos} foto(s) del vehículo`}
-                      </button>
-                      {expandedPhotos === pub.id && (
-                        <div className="mt-3 p-4 rounded-xl bg-[#f8f9fa] border border-[#dce0e5]">
-                          {pub.total_fotos > 0 ? (
-                            <>
-                              <p className="text-[12px] text-[#637488] mb-3">
-                                ℹ️ Las fotos se almacenan cuando se integra Supabase Storage. Por ahora se reportan {pub.total_fotos} foto(s) cargada(s).
-                                Para verificar el vehículo, contacta directamente al vendedor por WhatsApp y pídele que envíe las fotos.
-                              </p>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                {Array.from({ length: pub.total_fotos }).map((_, i) => (
-                                  <div key={i} className="aspect-square rounded-lg border-2 border-dashed border-[#dce0e5] bg-white flex items-center justify-center text-[11px] text-[#9aa5b4]">
-                                    Foto {i + 1}
+                    {(() => {
+                      const urls = Array.isArray(pub.fotos_urls) ? pub.fotos_urls : [];
+                      const hasUrls = urls.length > 0;
+                      const totalReportado = pub.total_fotos ?? 0;
+                      const expanded = expandedPhotos === pub.id;
+                      return (
+                        <div className="mb-4">
+                          <button
+                            onClick={() => setExpandedPhotos(expanded ? null : pub.id)}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-bold text-[#0B1E4E] bg-[#EEF4FF] hover:bg-[#D7E5FF] transition-colors"
+                          >
+                            📷 {expanded ? "Ocultar" : `Ver ${hasUrls ? urls.length : totalReportado} foto(s) del vehículo`}
+                            {hasUrls && !expanded && <span className="ml-1 text-[10px] text-green-700">✓ disponibles</span>}
+                            {!hasUrls && totalReportado > 0 && !expanded && <span className="ml-1 text-[10px] text-amber-600">⚠ no almacenadas</span>}
+                          </button>
+
+                          {expanded && (
+                            <div className="mt-3 p-4 rounded-xl bg-[#f8f9fa] border border-[#dce0e5]">
+                              {hasUrls ? (
+                                <>
+                                  <p className="text-[11px] text-green-700 mb-3">
+                                    ✓ {urls.length} foto(s) almacenada(s) en Supabase Storage. Click para abrir tamaño completo.
+                                  </p>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    {urls.map((u, i) => (
+                                      <a
+                                        key={u + i}
+                                        href={u}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block aspect-square rounded-lg overflow-hidden border border-[#dce0e5] bg-white hover:border-[#0B1E4E] hover:shadow-md transition-all group relative"
+                                      >
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={u}
+                                          alt={`Foto ${i + 1}`}
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                          onError={(e) => {
+                                            const t = e.currentTarget;
+                                            t.style.display = "none";
+                                            t.parentElement?.classList.add("bg-red-50", "border-red-200");
+                                            const errLabel = document.createElement("div");
+                                            errLabel.className = "absolute inset-0 flex items-center justify-center text-[10px] text-red-600 p-2 text-center";
+                                            errLabel.textContent = `Error foto ${i + 1}`;
+                                            t.parentElement?.appendChild(errLabel);
+                                          }}
+                                        />
+                                        <div className="absolute bottom-1 right-1 text-[9px] bg-black/60 text-white px-1.5 py-0.5 rounded">
+                                          {i + 1}
+                                        </div>
+                                      </a>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            </>
-                          ) : (
-                            <p className="text-[12px] text-[#637488]">⚠️ Sin fotos cargadas. Esta publicación no incluye imágenes del vehículo.</p>
+                                </>
+                              ) : totalReportado > 0 ? (
+                                <>
+                                  <p className="text-[12px] text-amber-700 mb-2 font-semibold">
+                                    ⚠️ Hay {totalReportado} foto(s) reportada(s) pero NO se almacenaron en Supabase Storage.
+                                  </p>
+                                  <p className="text-[11px] text-[#637488] mb-3">
+                                    Esto suele pasar cuando: (1) el bucket <code className="bg-white px-1 rounded">vehiculos</code> no existe en Supabase Storage,
+                                    (2) las policies no permiten upload, o (3) la columna <code className="bg-white px-1 rounded">fotos_urls</code> no existe aún en la tabla.
+                                    Consulta <code className="bg-white px-1 rounded">SETUP-SUPABASE.md</code> sección 3 para crear el bucket.
+                                  </p>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    {Array.from({ length: totalReportado }).map((_, i) => (
+                                      <div key={i} className="aspect-square rounded-lg border-2 border-dashed border-[#dce0e5] bg-white flex items-center justify-center text-[11px] text-[#9aa5b4]">
+                                        Foto {i + 1}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </>
+                              ) : (
+                                <p className="text-[12px] text-[#637488]">⚠️ Sin fotos cargadas en esta publicación.</p>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
 
                     {/* ── Acciones ── */}
                     <div className="flex gap-2 flex-wrap">
