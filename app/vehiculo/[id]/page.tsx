@@ -3,17 +3,20 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getVehicleById, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
 import { showToast } from "@/components/Toast";
 import CalculadoraGastos from "@/components/CalculadoraGastos";
 import CalculadoraFinanciacion from "@/components/CalculadoraFinanciacion";
+import { useUser } from "@/lib/hooks/useUser";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import {
   ArrowLeft, ShareNetwork, Heart, WhatsappLogo,
   Gauge, Gear, Car, Drop, Palette, Star,
   MapPin, ShieldCheck, ClipboardText, CurrencyCircleDollar,
-  CaretLeft, CaretRight, Tag, CheckCircle
+  CaretLeft, CaretRight, Tag, CheckCircle, X as XIcon,
+  MagnifyingGlassPlus, User as UserIcon, SignIn,
 } from "@phosphor-icons/react";
 
 interface Props {
@@ -44,7 +47,58 @@ export default function VehicleDetailPage({ params }: Props) {
 
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [liked, setLiked] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50, show: false });
+  const photoZoomRef = useRef<HTMLDivElement>(null);
+  const { user } = useUser();
   const [showOffer, setShowOffer] = useState(false);
+
+  // Cargar estado de favorito desde Supabase si hay sesión
+  useEffect(() => {
+    if (!user || !vehicle) return;
+    const sb = getSupabaseBrowser();
+    if (sb) {
+      sb.from("favoritos")
+        .select("vehicle_id")
+        .eq("user_id", user.id)
+        .eq("vehicle_id", vehicle.id)
+        .maybeSingle()
+        .then(({ data }) => setLiked(!!data));
+    }
+  }, [user, vehicle]);
+
+  async function handleLike() {
+    if (!user) { setShowAuthPrompt(true); return; }
+    if (!vehicle) return;
+    const next = !liked;
+    setLiked(next);
+    const sb = getSupabaseBrowser();
+    if (sb) {
+      if (next) await sb.from("favoritos").upsert({ user_id: user.id, vehicle_id: vehicle.id });
+      else      await sb.from("favoritos").delete().eq("user_id", user.id).eq("vehicle_id", vehicle.id);
+    }
+  }
+
+  // Zoom lupa al mover el mouse sobre la foto principal
+  function handlePhotoMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - el.left) / el.width) * 100;
+    const y = ((e.clientY - el.top) / el.height) * 100;
+    setZoomPos({ x, y, show: true });
+  }
+
+  // Tecla ESC cierra lightbox
+  useEffect(() => {
+    if (!showLightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowLightbox(false);
+      if (e.key === "ArrowLeft")  setCurrentPhoto((p) => Math.max(0, p - 1));
+      if (e.key === "ArrowRight" && vehicle) setCurrentPhoto((p) => Math.min(vehicle.fotos.length - 1, p + 1));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showLightbox, vehicle]);
   const [offerAmount, setOfferAmount] = useState("");
   const [offerName, setOfferName] = useState("");
   const [offerPhone, setOfferPhone] = useState("");
@@ -76,15 +130,21 @@ export default function VehicleDetailPage({ params }: Props) {
     return null;
   }
 
+  // Si el motor ya contiene el cilindraje (ej: "3.0L · 2998 cc") no lo duplico
+  const motorTieneCilindraje = /\d{3,4}\s*cc/i.test(String(vehicle.motor ?? ""));
+  const cilindrajeVal = motorTieneCilindraje
+    ? (String(vehicle.motor).match(/(\d{3,4})\s*cc/i)?.[1] ?? "—") + " cc"
+    : (vehicle.cilindros && vehicle.cilindros !== "—" ? vehicle.cilindros : "—");
+
   const specs = [
-    { icon: <Car size={18} />, label: "Modelo", value: vehicle.modelo },
-    { icon: <Gauge size={18} />, label: "Kilometraje", value: vehicle.kilometraje },
-    { icon: <Gear size={18} />, label: "Transmisión", value: vehicle.transmision },
-    { icon: <Drop size={18} />, label: "Combustible", value: vehicle.combustible },
-    { icon: <Palette size={18} />, label: "Color", value: vehicle.color },
-    { icon: <Car size={18} />, label: "Motor", value: vehicle.motor },
-    { icon: <Star size={18} />, label: "Potencia", value: vehicle.caballos },
-    { icon: <Car size={18} />, label: "Cilindros", value: vehicle.cilindros },
+    { icon: <Car size={18} />,     label: "Modelo",       value: vehicle.modelo },
+    { icon: <Gauge size={18} />,   label: "Kilometraje",  value: vehicle.kilometraje },
+    { icon: <Gear size={18} />,    label: "Transmisión",  value: vehicle.transmision },
+    { icon: <Drop size={18} />,    label: "Combustible",  value: vehicle.combustible },
+    { icon: <Palette size={18} />, label: "Color",        value: vehicle.color },
+    { icon: <Car size={18} />,     label: "Motor",        value: vehicle.motor },
+    { icon: <Car size={18} />,     label: "Cilindraje",   value: cilindrajeVal },
+    { icon: <Star size={18} />,    label: "Potencia",     value: vehicle.caballos },
   ];
 
   const handleOffer = async () => {
@@ -132,31 +192,56 @@ export default function VehicleDetailPage({ params }: Props) {
 
           {/* ── GALERÍA (izquierda) ── */}
           <div className="lg:col-span-3 space-y-3">
-            {/* Main photo */}
-            <div className="relative h-72 md:h-[420px] rounded-2xl overflow-hidden bg-gray-200 group">
+            {/* Main photo con zoom lupa y click → lightbox */}
+            <div
+              ref={photoZoomRef}
+              className="relative h-72 md:h-[420px] rounded-2xl overflow-hidden bg-gray-200 group cursor-zoom-in"
+              onMouseMove={handlePhotoMouseMove}
+              onMouseLeave={() => setZoomPos((p) => ({ ...p, show: false }))}
+              onClick={() => setShowLightbox(true)}
+            >
               <Image
                 src={vehicle.fotos[currentPhoto]}
                 alt={vehicle.titulo}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-300"
                 priority
                 sizes="(max-width: 1024px) 100vw, 60vw"
               />
-              {/* Overlay controls */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+              {/* Lupa de zoom: ventana flotante que aparece al hover */}
+              {zoomPos.show && vehicle.fotos[currentPhoto] && (
+                <div
+                  className="hidden md:block absolute pointer-events-none border-4 border-white shadow-2xl rounded-xl overflow-hidden"
+                  style={{
+                    width: 220,
+                    height: 220,
+                    left: `calc(${zoomPos.x}% + 24px)`,
+                    top:  `calc(${zoomPos.y}% - 110px)`,
+                    backgroundImage: `url(${vehicle.fotos[currentPhoto]})`,
+                    backgroundSize: "750%",
+                    backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                    transform: "translate(-50%, 0)",
+                    maxWidth: "calc(100% - 48px)",
+                    zIndex: 5,
+                  }}
+                />
+              )}
+
+              {/* Overlay y botones (preserve clicks) */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
 
               {vehicle.fotos.length > 1 && (
                 <>
                   <button
-                    onClick={() => setCurrentPhoto((p) => Math.max(0, p - 1))}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                    onClick={(e) => { e.stopPropagation(); setCurrentPhoto((p) => Math.max(0, p - 1)); }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/95 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
                     disabled={currentPhoto === 0}
                   >
                     <CaretLeft size={20} color="#111418" />
                   </button>
                   <button
-                    onClick={() => setCurrentPhoto((p) => Math.min(vehicle.fotos.length - 1, p + 1))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                    onClick={(e) => { e.stopPropagation(); setCurrentPhoto((p) => Math.min(vehicle.fotos.length - 1, p + 1)); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/95 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
                     disabled={currentPhoto === vehicle.fotos.length - 1}
                   >
                     <CaretRight size={20} color="#111418" />
@@ -164,21 +249,35 @@ export default function VehicleDetailPage({ params }: Props) {
                 </>
               )}
 
-              {/* Photo counter */}
-              <div className="absolute bottom-4 right-4 bg-black/60 text-white text-[13px] font-semibold px-3 py-1 rounded-full">
-                {currentPhoto + 1} / {vehicle.fotos.length}
+              {/* Botón expandir + contador */}
+              <div className="absolute bottom-4 right-4 flex gap-2 z-10">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowLightbox(true); }}
+                  className="flex items-center gap-1.5 bg-black/70 hover:bg-black/85 text-white text-[12px] font-bold px-3 py-1.5 rounded-full transition-colors backdrop-blur-sm"
+                  title="Ver fotos completas"
+                >
+                  <MagnifyingGlassPlus size={14} weight="bold" />
+                  Ver completo
+                </button>
+                <span className="bg-black/70 text-white text-[12px] font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  {currentPhoto + 1} / {vehicle.fotos.length}
+                </span>
               </div>
 
-              {/* Action buttons */}
-              <div className="absolute top-4 right-4 flex gap-2">
+              {/* Action buttons — top-right (favorito + share) */}
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
                 <button
-                  onClick={() => setLiked(!liked)}
-                  className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md"
+                  onClick={(e) => { e.stopPropagation(); handleLike(); }}
+                  className={`w-11 h-11 rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 ${
+                    liked ? "bg-red-50" : "bg-white"
+                  }`}
+                  title={liked ? "Quitar de favoritos" : "Guardar en favoritos"}
                 >
                   <Heart size={20} weight={liked ? "fill" : "regular"} color={liked ? "#ef4444" : "#637488"} />
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     const url = window.location.href;
                     if (navigator.share) {
                       navigator.share({ title: vehicle.titulo, text: `Mira este ${vehicle.titulo} en MOVEL`, url });
@@ -188,7 +287,8 @@ export default function VehicleDetailPage({ params }: Props) {
                       );
                     }
                   }}
-                  className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                  className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                  title="Compartir"
                 >
                   <ShareNetwork size={20} color="#637488" />
                 </button>
@@ -303,6 +403,25 @@ export default function VehicleDetailPage({ params }: Props) {
                   Calcular gastos mensuales
                 </Link>
               </div>
+
+              {/* ── Publicado por (nombre del vendedor) ── */}
+              {(() => {
+                const vendedorNombre = (vehicle as { vendedor?: { nombre?: string } }).vendedor?.nombre
+                  ?? (vehicle.propietarios?.[0]?.nombre ?? "Vendedor verificado").split(/\s+/)[0];
+                const iniciales = vendedorNombre.slice(0, 2).toUpperCase();
+                return (
+                  <div className="mt-4 pt-4 border-t border-[#dce0e5] flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-movel-gradient flex items-center justify-center text-white font-bold text-[14px]">
+                      {iniciales}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold text-mute uppercase tracking-wide">Publicado por</p>
+                      <p className="text-[15px] font-bold text-ink truncate">{vendedorNombre}</p>
+                      <p className="text-[11px] text-mute">Vendedor particular en MOVEL</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Historial card */}
@@ -512,6 +631,136 @@ export default function VehicleDetailPage({ params }: Props) {
       <div className="md:hidden h-20" />
 
       <BottomNav />
+
+      {/* ════════════════════════════════════════════════════
+          LIGHTBOX: galería de fotos a tamaño completo
+      ════════════════════════════════════════════════════ */}
+      {showLightbox && (
+        <div
+          className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center animate-fade-in"
+          onClick={() => setShowLightbox(false)}
+        >
+          {/* Cerrar */}
+          <button
+            onClick={() => setShowLightbox(false)}
+            className="absolute top-4 right-4 w-11 h-11 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors z-10"
+            aria-label="Cerrar galería"
+          >
+            <XIcon size={22} color="white" weight="bold" />
+          </button>
+
+          {/* Contador + título */}
+          <div className="absolute top-4 left-4 text-white z-10">
+            <p className="text-[13px] font-bold">{vehicle.titulo}</p>
+            <p className="text-[12px] text-white/60">
+              Foto {currentPhoto + 1} de {vehicle.fotos.length}
+            </p>
+          </div>
+
+          {/* Foto principal a tamaño completo */}
+          <div className="relative w-full h-full max-w-7xl max-h-[90vh] mx-4 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={vehicle.fotos[currentPhoto]}
+              alt={vehicle.titulo}
+              className="max-w-full max-h-full object-contain rounded-lg select-none"
+              draggable={false}
+            />
+
+            {/* Navegación */}
+            {vehicle.fotos.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentPhoto((p) => Math.max(0, p - 1))}
+                  disabled={currentPhoto === 0}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors disabled:opacity-30"
+                >
+                  <CaretLeft size={26} color="white" weight="bold" />
+                </button>
+                <button
+                  onClick={() => setCurrentPhoto((p) => Math.min(vehicle.fotos.length - 1, p + 1))}
+                  disabled={currentPhoto === vehicle.fotos.length - 1}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors disabled:opacity-30"
+                >
+                  <CaretRight size={26} color="white" weight="bold" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Thumbnails inferiores */}
+          {vehicle.fotos.length > 1 && (
+            <div
+              className="absolute bottom-4 left-0 right-0 flex justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 py-2 max-w-full">
+                {vehicle.fotos.map((f, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPhoto(i)}
+                    className={`relative flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                      i === currentPhoto ? "border-white scale-110" : "border-transparent opacity-50 hover:opacity-100"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={f} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <p className="absolute bottom-4 right-4 text-white/40 text-[11px] hidden md:block">
+            ESC para cerrar · ← → para navegar
+          </p>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════
+          AUTH PROMPT: para guardar favoritos sin sesión
+      ════════════════════════════════════════════════════ */}
+      {showAuthPrompt && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-fade-in"
+          onClick={() => setShowAuthPrompt(false)}
+        >
+          <div
+            className="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl animate-scale-bounce relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowAuthPrompt(false)}
+              className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-cloud transition-colors"
+              aria-label="Cerrar"
+            >
+              <XIcon size={20} color="#7A8195" />
+            </button>
+            <div className="w-14 h-14 rounded-2xl bg-[#FFE8DC] flex items-center justify-center mb-4">
+              <Heart size={28} color="#FF6B3D" weight="fill" />
+            </div>
+            <h3 className="font-display text-[22px] text-movel-900 mb-2">Guarda tus favoritos</h3>
+            <p className="text-[14px] text-mute leading-relaxed mb-5">
+              Crea una cuenta o inicia sesión para guardar este carro y recibir alertas si baja de precio.
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <Link
+                href={`/auth?return=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`}
+                className="w-full flex items-center justify-center gap-2 py-3 btn-primary text-[14px] !rounded-xl"
+              >
+                <SignIn size={17} weight="bold" />
+                Iniciar sesión
+              </Link>
+              <Link
+                href={`/auth?modo=registro&return=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`}
+                className="w-full text-center py-3 border-2 border-movel-900 text-movel-900 font-bold rounded-xl text-[14px] hover:bg-movel-50 transition-colors"
+              >
+                Crear cuenta gratis
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

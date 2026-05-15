@@ -42,6 +42,15 @@ export async function GET() {
         ? fotosRaw
         : ["https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=1200&q=80"]; // placeholder genérico
 
+      // Nombre del vendedor: solo el primer nombre (sin apellidos por privacidad)
+      const nombreCompleto = String(p.nombre ?? "Vendedor").trim();
+      const vendedorPrimerNombre = nombreCompleto.split(/\s+/)[0] || "Vendedor";
+
+      // Cilindraje: lo extraemos del campo motor si está como "3.0L · 2998 cc" o similar
+      const motorStr = String(p.motor ?? "");
+      const cilindrajeMatch = motorStr.match(/(\d{3,4})\s*cc/i);
+      const cilindrajeFromMotor = cilindrajeMatch ? `${cilindrajeMatch[1]} cc` : null;
+
       return {
         id: slug,
         _supabaseId: id,                // ID real para /vehiculo/[id]
@@ -52,15 +61,17 @@ export async function GET() {
         precio: Number(p.precio ?? 0),
         kilometraje: km ? `${km.toLocaleString("es-CO")} km` : "0 km",
         transmision: String(p.transmision ?? "Automático"),
-        cilindros: "—",
+        cilindros: cilindrajeFromMotor ?? "—",
+        cilindraje: cilindrajeFromMotor,
         caballos: String(p.potencia ?? "—"),
         color: String(p.color ?? "—"),
         combustible: String(p.combustible ?? "Gasolina"),
-        motor: String(p.motor ?? "—"),
+        motor: motorStr || "—",
         descripcion: String(p.descripcion ?? ""),
         rating: 5,
         fotos,
-        propietarios: [{ nombre: "Vendedor verificado", desde: ano, hasta: new Date().getFullYear() }],
+        vendedor: { nombre: vendedorPrimerNombre },
+        propietarios: [{ nombre: vendedorPrimerNombre, desde: ano, hasta: new Date().getFullYear() }],
         siniestros: [],
         soat:          { vigente: false, hasta: "Por confirmar" },
         tecnomecanica: { vigente: false, hasta: "Por confirmar" },
