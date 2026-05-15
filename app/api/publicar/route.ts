@@ -19,6 +19,7 @@ async function notificarWhatsApp(mensaje: string) {
 async function insertPublicacion(data: Record<string, unknown>) {
   // ── 1. Intento completo (todos los campos) ──
   const fullPayload = {
+    user_id:      data.user_id ?? null,    // UUID del usuario autenticado (Supabase Auth)
     nombre:       String(data.nombre      ?? ""),
     email:        String(data.email       ?? ""),
     celular:      String(data.celular     ?? ""),

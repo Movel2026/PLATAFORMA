@@ -6,8 +6,9 @@ import {
   Car, TrendUp, Gavel, MagnifyingGlass, User, ChartBar, Warning,
   WhatsappLogo, ShieldCheck, Lock, ChatCircle, ArrowClockwise,
   Spinner, Database, Users, Envelope, Globe, DeviceMobile,
-  Desktop, ArrowUp, ArrowDown, Minus,
+  Desktop, ArrowUp, ArrowDown, Minus, DownloadSimple,
 } from "@phosphor-icons/react";
+import { exportToCSV } from "@/lib/export-csv";
 
 // ─── PIN gate ────────────────────────────────────────────────
 const ADMIN_PIN = "MOVEL2025";
@@ -541,17 +542,58 @@ export default function AdminPage() {
         {/* ── PUBLICACIONES ── */}
         {tab === "publicaciones" && (
           <div className="space-y-4">
-            {/* Search */}
-            <div className="relative">
-              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Buscar por marca, modelo, nombre..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
-                style={{ border: "1px solid #dce0e5" }}
-              />
+            {/* Toolbar */}
+            <div className="flex gap-2 flex-wrap items-stretch">
+              <div className="relative flex-1 min-w-[200px]">
+                <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar por marca, modelo, nombre..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                  style={{ border: "1px solid #dce0e5" }}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!stats?.publicaciones?.length) { alert("No hay datos para exportar"); return; }
+                  exportToCSV(stats.publicaciones, "publicaciones-movel", [
+                    { key: "id",                  label: "ID" },
+                    { key: "created_at",          label: "Fecha publicación", format: (v) => v ? new Date(String(v)).toLocaleString("es-CO") : "" },
+                    { key: "created_at",          label: "Días publicado",    format: (v) => v ? diasDesde(String(v)) : 0 },
+                    { key: "estado",              label: "Estado" },
+                    { key: "modo",                label: "Modalidad" },
+                    { key: "marca",               label: "Marca" },
+                    { key: "modelo",              label: "Modelo" },
+                    { key: "ano",                 label: "Año" },
+                    { key: "version",             label: "Versión" },
+                    { key: "color",               label: "Color" },
+                    { key: "ciudad",              label: "Ciudad" },
+                    { key: "kilometraje",         label: "Kilometraje" },
+                    { key: "precio",              label: "Precio" },
+                    { key: "carroceria",          label: "Carrocería" },
+                    { key: "combustible",         label: "Combustible" },
+                    { key: "transmision",         label: "Transmisión" },
+                    { key: "motor",               label: "Motor" },
+                    { key: "potencia",            label: "Potencia" },
+                    { key: "placa",               label: "Placa (privada)" },
+                    { key: "ultimo_digito_placa", label: "Último dígito placa" },
+                    { key: "total_fotos",         label: "Fotos cargadas" },
+                    { key: "accept_offers",       label: "Acepta ofertas",     format: (v) => v ? "Sí" : "No" },
+                    { key: "nombre",              label: "Vendedor" },
+                    { key: "email",               label: "Email" },
+                    { key: "celular",             label: "Celular" },
+                    { key: "descripcion",         label: "Descripción" },
+                    { key: "notas_admin",         label: "Notas admin" },
+                  ]);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white bg-[#0B1E4E] hover:bg-[#050E26] transition-colors"
+                title="Descargar todas las publicaciones en CSV (Excel)"
+              >
+                <DownloadSimple size={15} weight="bold" />
+                Descargar Excel
+              </button>
             </div>
 
             {!stats?.configured ? (
@@ -841,16 +883,39 @@ export default function AdminPage() {
         {/* ── OFERTAS ── */}
         {tab === "ofertas" && (
           <div className="space-y-4">
-            <div className="relative">
-              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Buscar por vehículo, nombre..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
-                style={{ border: "1px solid #dce0e5" }}
-              />
+            <div className="flex gap-2 flex-wrap items-stretch">
+              <div className="relative flex-1 min-w-[200px]">
+                <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar por vehículo, nombre..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                  style={{ border: "1px solid #dce0e5" }}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!stats?.ofertas?.length) { alert("No hay datos para exportar"); return; }
+                  exportToCSV(stats.ofertas, "ofertas-movel", [
+                    { key: "id",           label: "ID" },
+                    { key: "created_at",   label: "Fecha", format: (v) => v ? new Date(String(v)).toLocaleString("es-CO") : "" },
+                    { key: "vehiculo",     label: "Vehículo" },
+                    { key: "precio_pub",   label: "Precio publicación" },
+                    { key: "monto_oferta", label: "Monto oferta" },
+                    { key: "porcentaje",   label: "% del precio" },
+                    { key: "nombre",       label: "Comprador" },
+                    { key: "celular",      label: "Celular" },
+                    { key: "email",        label: "Email" },
+                    { key: "estado",       label: "Estado" },
+                  ]);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white bg-[#0B1E4E] hover:bg-[#050E26] transition-colors"
+              >
+                <DownloadSimple size={15} weight="bold" />
+                Descargar Excel
+              </button>
             </div>
 
             {!stats?.configured ? (
@@ -935,16 +1000,37 @@ export default function AdminPage() {
         {/* ── CONSULTAS ── */}
         {tab === "contactos" && (
           <div className="space-y-4">
-            <div className="relative">
-              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Buscar por nombre, email, vehículo..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
-                style={{ border: "1px solid #dce0e5" }}
-              />
+            <div className="flex gap-2 flex-wrap items-stretch">
+              <div className="relative flex-1 min-w-[200px]">
+                <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, email, vehículo..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                  style={{ border: "1px solid #dce0e5" }}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!stats?.contactos?.length) { alert("No hay datos para exportar"); return; }
+                  exportToCSV(stats.contactos, "contactos-movel", [
+                    { key: "id",         label: "ID" },
+                    { key: "created_at", label: "Fecha", format: (v) => v ? new Date(String(v)).toLocaleString("es-CO") : "" },
+                    { key: "nombre",     label: "Nombre" },
+                    { key: "email",      label: "Email" },
+                    { key: "celular",    label: "Celular" },
+                    { key: "vehiculo",   label: "Vehículo consultado" },
+                    { key: "mensaje",    label: "Mensaje" },
+                    { key: "estado",     label: "Estado" },
+                  ]);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white bg-[#0B1E4E] hover:bg-[#050E26] transition-colors"
+              >
+                <DownloadSimple size={15} weight="bold" />
+                Descargar Excel
+              </button>
             </div>
 
             {!stats?.configured ? (
@@ -1025,16 +1111,36 @@ export default function AdminPage() {
         {/* ── USUARIOS ── */}
         {tab === "usuarios" && (
           <div className="space-y-4">
-            <div className="relative">
-              <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Buscar por nombre, email, ciudad..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
-                style={{ border: "1px solid #dce0e5" }}
-              />
+            <div className="flex gap-2 flex-wrap items-stretch">
+              <div className="relative flex-1 min-w-[200px]">
+                <MagnifyingGlass size={16} color="#637488" className="absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, email, ciudad..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[14px] outline-none bg-white"
+                  style={{ border: "1px solid #dce0e5" }}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!stats?.usuarios?.length) { alert("No hay datos para exportar"); return; }
+                  exportToCSV(stats.usuarios, "usuarios-movel", [
+                    { key: "id",         label: "ID" },
+                    { key: "created_at", label: "Fecha registro", format: (v) => v ? new Date(String(v)).toLocaleString("es-CO") : "" },
+                    { key: "nombre",     label: "Nombre" },
+                    { key: "email",      label: "Email" },
+                    { key: "telefono",   label: "Teléfono" },
+                    { key: "ciudad",     label: "Ciudad" },
+                    { key: "origen",     label: "Origen" },
+                  ]);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white bg-[#0B1E4E] hover:bg-[#050E26] transition-colors"
+              >
+                <DownloadSimple size={15} weight="bold" />
+                Descargar Excel
+              </button>
             </div>
 
             {!stats?.configured ? (

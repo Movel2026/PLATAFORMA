@@ -20,9 +20,27 @@ interface Props {
   params: { id: string };
 }
 
+import type { Vehicle } from "@/lib/mock-data";
+
 export default function VehicleDetailPage({ params }: Props) {
-  const vehicle = getVehicleById(params.id);
-  if (!vehicle) notFound();
+  const mockVehicle = getVehicleById(params.id);
+  const [vehicleFromDb, setVehicleFromDb] = useState<Vehicle | null>(null);
+  const [loadingVehicle, setLoadingVehicle] = useState(!mockVehicle);
+
+  // Si no está en mock data, buscar en Supabase (publicaciones reales activas)
+  useEffect(() => {
+    if (mockVehicle) return;
+    fetch("/api/vehiculos")
+      .then((r) => r.ok ? r.json() : { vehicles: [] })
+      .then((d) => {
+        const found = (d.vehicles || []).find((v: Vehicle) => v.id === params.id);
+        setVehicleFromDb(found ?? null);
+      })
+      .catch(() => setVehicleFromDb(null))
+      .finally(() => setLoadingVehicle(false));
+  }, [params.id, mockVehicle]);
+
+  const vehicle = mockVehicle ?? vehicleFromDb;
 
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -37,11 +55,26 @@ export default function VehicleDetailPage({ params }: Props) {
   useEffect(() => {
     const stored = localStorage.getItem("movel_user");
     if (stored) {
-      const u = JSON.parse(stored);
-      if (u.name)  setOfferName(u.name);
-      if (u.phone) setOfferPhone(u.phone);
+      try {
+        const u = JSON.parse(stored);
+        if (u.name)  setOfferName(u.name);
+        if (u.phone) setOfferPhone(u.phone);
+      } catch { /* ignore */ }
     }
   }, []);
+
+  // ── Estados de carga ──
+  if (loadingVehicle) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cloud">
+        <div className="text-mute text-[14px]">Cargando vehículo…</div>
+      </div>
+    );
+  }
+  if (!vehicle) {
+    notFound();
+    return null;
+  }
 
   const specs = [
     { icon: <Car size={18} />, label: "Modelo", value: vehicle.modelo },

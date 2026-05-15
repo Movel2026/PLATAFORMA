@@ -36,9 +36,15 @@ export async function GET() {
       const ano = Number(p.ano ?? 0);
       const slug = `${marca}-${modelo}-${ano}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + `-${id.slice(0, 6)}`;
       const km = Number(p.kilometraje ?? 0);
+      // Fotos: leer fotos_urls (jsonb) o array vacío + fallback placeholder
+      const fotosRaw = Array.isArray(p.fotos_urls) ? p.fotos_urls as string[] : [];
+      const fotos = fotosRaw.length > 0
+        ? fotosRaw
+        : ["https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=1200&q=80"]; // placeholder genérico
 
       return {
         id: slug,
+        _supabaseId: id,                // ID real para /vehiculo/[id]
         titulo: `${marca} ${modelo} ${ano}`.trim(),
         marca,
         modelo,
@@ -53,7 +59,7 @@ export async function GET() {
         motor: String(p.motor ?? "—"),
         descripcion: String(p.descripcion ?? ""),
         rating: 5,
-        fotos: [], // Las fotos viven en storage aparte cuando se integre
+        fotos,
         propietarios: [{ nombre: "Vendedor verificado", desde: ano, hasta: new Date().getFullYear() }],
         siniestros: [],
         soat:          { vigente: false, hasta: "Por confirmar" },
@@ -66,11 +72,15 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({
-      vehicles,
-      configured: true,
-      count: vehicles.length,
-    });
+    return NextResponse.json(
+      { vehicles, configured: true, count: vehicles.length },
+      {
+        headers: {
+          // Cache edge 30s, stale-while-revalidate 5min → /buscar carga al instante
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err) {
     return NextResponse.json({ vehicles: [], error: String(err) }, { status: 500 });
   }

@@ -436,7 +436,7 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
         await fetch("/api/publicar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, totalFotos: photos.length, fotosUrls, modo: "360" }),
+          body: JSON.stringify({ ...form, totalFotos: photos.length, fotosUrls, modo: "360", user_id: user?.id ?? null }),
         });
       } catch { /* swallow */ }
       window.open(waLink, "_blank");
@@ -450,7 +450,7 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
       const res = await fetch("/api/publicar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, totalFotos: photos.length, fotosUrls, modo: "gratis" }),
+        body: JSON.stringify({ ...form, totalFotos: photos.length, fotosUrls, modo: "gratis", user_id: user?.id ?? null }),
       });
       const data = await res.json();
       if (!data.ok) console.warn("Publicación con advertencia:", data);

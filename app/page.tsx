@@ -151,19 +151,23 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════════════════════
           HERO — Búsqueda como protagonista
       ═══════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden">
+      <section className="relative min-h-[92vh] flex flex-col items-center justify-center overflow-hidden bg-movel-gradient-dark">
+        {/* Fondo gradient como fallback inmediato (sin esperar video) */}
+        <div className="absolute inset-0 bg-movel-gradient-dark" style={{ zIndex: 0 }} />
+
+        {/* Videos: solo se cargan en desktop (mobile pesa demasiado) */}
         <video
           ref={logoVideoRef}
           src="/videos/logo-movel.mp4"
-          autoPlay muted playsInline
+          autoPlay muted playsInline preload="metadata"
           onEnded={() => setShowLogo(false)}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] hidden md:block"
           style={{ opacity: showLogo ? 1 : 0, zIndex: 2 }}
         />
         <video
           src="/videos/video-fondo.mp4"
-          autoPlay muted loop playsInline
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms]"
+          autoPlay muted loop playsInline preload="metadata"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] hidden md:block"
           style={{ opacity: showLogo ? 0 : 1, zIndex: 1 }}
         />
         <div

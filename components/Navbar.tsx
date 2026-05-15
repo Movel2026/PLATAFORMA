@@ -209,6 +209,10 @@ export default function Navbar() {
                       <UserCircle size={18} color="#0B1E4E" />
                       Mi perfil
                     </Link>
+                    <Link href="/mis-publicaciones" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-3 hover:bg-cloud transition-colors text-[14px] text-ink">
+                      <span className="text-[16px]">🚗</span>
+                      Mis publicaciones
+                    </Link>
                     <Link href="/favoritos" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-3 hover:bg-cloud transition-colors text-[14px] text-ink">
                       <span className="text-[16px]">♥</span>
                       Mis favoritos
