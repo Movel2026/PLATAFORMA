@@ -70,8 +70,8 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     >
 
       {/* ── FOTO ── */}
-      <Link href={`/vehiculo/${vehicle.id}`}>
-        <div className="relative h-48 bg-gray-200 overflow-hidden img-zoom">
+      <div className="relative h-48 bg-gray-200 overflow-hidden img-zoom">
+        <Link href={`/vehiculo/${vehicle.id}`} className="absolute inset-0 z-[1]">
           <Image
             src={vehicle.fotos[0]}
             alt={vehicle.titulo}
@@ -79,50 +79,48 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
-
           {/* Gradiente inferior */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        </Link>
 
-          {/* Badge top-left: Subasta o Ciudad */}
-          <div className="absolute top-3 left-3 flex items-center gap-2 z-[2]">
-            {vehicle.subasta?.activa ? (
-              <span className="badge-live">Subasta</span>
-            ) : (
-              <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
-                <MapPin size={12} color="#7A8195" />
-                <span className="text-[11px] font-semibold text-mute">{vehicle.ciudad}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Badge tipo top-right */}
-          <div className="absolute top-3 right-3 bg-movel-gradient text-white rounded-full px-2.5 py-1 z-[2]">
-            <span className="text-[11px] font-bold">{vehicle.tipo}</span>
-          </div>
-
-          {/* Fotos counter bottom-left */}
-          {vehicle.fotos.length > 1 && (
-            <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/60 text-white rounded-full px-2 py-1">
-              <Images size={12} />
-              <span className="text-[11px] font-semibold">{vehicle.fotos.length} fotos</span>
+        {/* Badge top-left: Subasta o Ciudad */}
+        <div className="absolute top-3 left-3 flex items-center gap-2 z-[3] pointer-events-none">
+          {vehicle.subasta?.activa ? (
+            <span className="badge-live">Subasta</span>
+          ) : (
+            <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+              <MapPin size={12} color="#7A8195" />
+              <span className="text-[11px] font-semibold text-mute">{vehicle.ciudad}</span>
             </div>
           )}
         </div>
-      </Link>
 
-      {/* Botón corazón — flotante sobre la card */}
-      <button
-        onClick={handleLikeClick}
-        className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-md hover:scale-110 active:scale-95 transition-all"
-        aria-label={liked ? "Quitar de favoritos" : "Guardar favorito"}
-        style={{ top: "44px" }}
-      >
-        <Heart
-          size={16}
-          weight={liked ? "fill" : "regular"}
-          color={liked ? "#FF6B3D" : "#7A8195"}
-        />
-      </button>
+        {/* Botón corazón TOP-RIGHT (siempre visible, click no propaga al Link) */}
+        <button
+          onClick={handleLikeClick}
+          className="absolute top-3 right-3 z-[5] w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-lg hover:scale-110 active:scale-95 transition-all"
+          aria-label={liked ? "Quitar de favoritos" : "Guardar favorito"}
+        >
+          <Heart
+            size={17}
+            weight={liked ? "fill" : "regular"}
+            color={liked ? "#FF6B3D" : "#7A8195"}
+          />
+        </button>
+
+        {/* Badge tipo bottom-right */}
+        <div className="absolute bottom-3 right-3 bg-movel-gradient text-white rounded-full px-2.5 py-1 z-[3] pointer-events-none shadow-sm">
+          <span className="text-[11px] font-bold">{vehicle.tipo}</span>
+        </div>
+
+        {/* Fotos counter bottom-left */}
+        {vehicle.fotos.length > 1 && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/60 text-white rounded-full px-2 py-1 z-[3] pointer-events-none">
+            <Images size={12} />
+            <span className="text-[11px] font-semibold">{vehicle.fotos.length} fotos</span>
+          </div>
+        )}
+      </div>
 
       {/* ── INFO ── */}
       <Link href={`/vehiculo/${vehicle.id}`}>

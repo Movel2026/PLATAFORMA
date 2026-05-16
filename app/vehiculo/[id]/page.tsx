@@ -208,20 +208,22 @@ export default function VehicleDetailPage({ params }: Props) {
                 priority
                 sizes="(max-width: 1024px) 100vw, 60vw"
               />
-              {/* Lupa de zoom: ventana flotante que aparece al hover */}
+              {/* Lupa de zoom: círculo flotante que aparece al hover */}
               {zoomPos.show && vehicle.fotos[currentPhoto] && (
                 <div
-                  className="hidden md:block absolute pointer-events-none border-4 border-white shadow-2xl rounded-xl overflow-hidden"
+                  className="hidden md:block absolute pointer-events-none border-[3px] border-white shadow-2xl overflow-hidden"
                   style={{
-                    width: 220,
-                    height: 220,
-                    left: `calc(${zoomPos.x}% + 24px)`,
-                    top:  `calc(${zoomPos.y}% - 110px)`,
+                    width: 200,
+                    height: 200,
+                    borderRadius: "9999px",   // redondo
+                    left: `${zoomPos.x}%`,
+                    top:  `${zoomPos.y}%`,
                     backgroundImage: `url(${vehicle.fotos[currentPhoto]})`,
-                    backgroundSize: "750%",
+                    backgroundSize: "400%",   // zoom 4x (no 7.5x)
                     backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
-                    transform: "translate(-50%, 0)",
-                    maxWidth: "calc(100% - 48px)",
+                    backgroundRepeat: "no-repeat",
+                    transform: "translate(-50%, -50%)",
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.05)",
                     zIndex: 5,
                   }}
                 />
@@ -342,7 +344,14 @@ export default function VehicleDetailPage({ params }: Props) {
             />
 
             {/* Calculadora de gastos — embebida (colapsada por defecto) */}
-            <CalculadoraGastos avaluo={vehicle.precio} defaultOpen={false} theme="light" />
+            <CalculadoraGastos
+              avaluo={vehicle.precio}
+              marca={vehicle.marca}
+              modelo={vehicle.modelo}
+              ano={vehicle.año}
+              defaultOpen={false}
+              theme="light"
+            />
           </div>
 
           {/* ── INFO / CTAs (derecha) ── */}

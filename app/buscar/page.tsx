@@ -6,6 +6,7 @@ import { MagnifyingGlass, SlidersHorizontal, X } from "@phosphor-icons/react";
 import { vehicles as mockVehicles, Vehicle } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
+import { fuzzyMatch } from "@/lib/fuzzy-search";
 
 const marcas = ["Toyota", "Mazda", "Chevrolet", "Kia", "Renault", "Hyundai", "Nissan", "Ford"];
 const tipos = ["SUV", "Sedán", "Hatchback", "Camioneta"];
@@ -106,10 +107,10 @@ function BuscarContent() {
   const filtered = sortVehicles(vehicles.filter((v) => {
     const km = parseInt(v.kilometraje.replace(/\D/g, "")) || 0;
     const dig = ultimoDigitoPlaca(v.id);
-    const matchSearch =
-      !search ||
-      v.titulo.toLowerCase().includes(search.toLowerCase()) ||
-      v.marca.toLowerCase().includes(search.toLowerCase());
+    // Búsqueda fuzzy: tolera typos, normaliza tildes/separadores
+    // Ej: "cx30" → CX-30, "chvrolet" → Chevrolet, "mazdá" → Mazda
+    const haystack = `${v.titulo} ${v.marca} ${v.modelo} ${v.tipo} ${v.ciudad} ${v.año}`;
+    const matchSearch = !search || fuzzyMatch(search, haystack);
     const matchMarca       = !selectedMarca || v.marca === selectedMarca;
     const matchTipo        = !selectedTipo  || v.tipo === selectedTipo;
     const matchTransmision = !selectedTransmision || v.transmision === selectedTransmision;

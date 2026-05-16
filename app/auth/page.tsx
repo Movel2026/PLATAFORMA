@@ -59,7 +59,7 @@ function AuthContent() {
     e.preventDefault();
     setError(null);
     if (!supabaseBrowserConfigured()) {
-      setError("La autenticación no está configurada. Contacta al equipo MOVEL.");
+      setError("Supabase aún no está conectado. Si eres el admin, configura NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en Vercel → Settings → Environment Variables → Production, y haz Redeploy. Diagnóstico: /api/health");
       return;
     }
     setSubmitting(true);
@@ -100,7 +100,7 @@ function AuthContent() {
       return;
     }
     if (!supabaseBrowserConfigured()) {
-      setError("La autenticación no está configurada. Contacta al equipo MOVEL.");
+      setError("Supabase aún no está conectado. Si eres el admin, configura NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en Vercel → Settings → Environment Variables → Production, y haz Redeploy. Diagnóstico: /api/health");
       return;
     }
     setSubmitting(true);

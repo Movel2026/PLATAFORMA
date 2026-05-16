@@ -31,29 +31,65 @@ interface CalcResult {
 }
 
 export interface CalculadoraGastosProps {
-  /** Avalúo del vehículo en COP. Si no se pasa, se usa el precio */
+  /** Avalúo o precio del vehículo en COP. Usado como fallback si no hay match en Min de Transporte */
   avaluo: number;
+  /** Marca del vehículo (opcional). Si se pasa, busca el avalúo oficial del Min de Transporte */
+  marca?: string;
+  /** Modelo/línea (opcional). Junto con marca y año busca el avalúo real */
+  modelo?: string;
+  /** Año del vehículo (opcional) */
+  ano?: number;
   /** Si es true, abre el panel expandido por defecto */
   defaultOpen?: boolean;
   /** Variante de tema: "dark" (sobre fondo oscuro) o "light" (sobre fondo claro) */
   theme?: "dark" | "light";
 }
 
-export default function CalculadoraGastos({ avaluo, defaultOpen = false, theme = "light" }: CalculadoraGastosProps) {
+export default function CalculadoraGastos({ avaluo, marca, modelo, ano, defaultOpen = false, theme = "light" }: CalculadoraGastosProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [result, setResult] = useState<CalcResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [incluyeSeguro, setIncluyeSeguro] = useState(true);
   const [incluyeParqueadero, setIncluyeParqueadero] = useState(true);
+  // Avalúo oficial obtenido del Min de Transporte (si hay match)
+  const [avaluoOficial, setAvaluoOficial] = useState<number | null>(null);
+  const [fuenteAvaluo, setFuenteAvaluo] = useState<"oficial" | "precio">("precio");
+
+  // Buscar avalúo oficial del Min de Transporte si se proporciona marca+modelo+ano
+  useEffect(() => {
+    if (!marca || !modelo || !ano) {
+      setAvaluoOficial(null);
+      setFuenteAvaluo("precio");
+      return;
+    }
+    fetch(`/api/catalog/avaluo?brand=${encodeURIComponent(marca)}&linea=${encodeURIComponent(modelo)}&ano=${ano}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.avaluo && data.avaluo > 0) {
+          setAvaluoOficial(data.avaluo);
+          setFuenteAvaluo("oficial");
+        } else {
+          setAvaluoOficial(null);
+          setFuenteAvaluo("precio");
+        }
+      })
+      .catch(() => {
+        setAvaluoOficial(null);
+        setFuenteAvaluo("precio");
+      });
+  }, [marca, modelo, ano]);
+
+  // Avalúo efectivo: oficial > avaluo proporcionado (precio)
+  const avaluoEfectivo = avaluoOficial ?? avaluo;
 
   useEffect(() => {
-    if (!avaluo || avaluo <= 0) return;
+    if (!avaluoEfectivo || avaluoEfectivo <= 0) return;
     setLoading(true);
-    fetch(`/api/calculadora/impuesto?avaluo=${avaluo}&seguro=${incluyeSeguro}&parqueadero=${incluyeParqueadero}`)
+    fetch(`/api/calculadora/impuesto?avaluo=${avaluoEfectivo}&seguro=${incluyeSeguro}&parqueadero=${incluyeParqueadero}`)
       .then((r) => r.json())
       .then(setResult)
       .finally(() => setLoading(false));
-  }, [avaluo, incluyeSeguro, incluyeParqueadero]);
+  }, [avaluoEfectivo, incluyeSeguro, incluyeParqueadero]);
 
   const isDark = theme === "dark";
   const containerCls = isDark
@@ -107,6 +143,28 @@ export default function CalculadoraGastos({ avaluo, defaultOpen = false, theme =
 
             {result && (
               <div className="p-5">
+                {/* Fuente del avalúo */}
+                <div className={`rounded-xl px-3 py-2 mb-3 flex items-start gap-2 text-[11px] ${
+                  fuenteAvaluo === "oficial"
+                    ? "bg-green-50 border border-green-200 text-green-800"
+                    : "bg-amber-50 border border-amber-200 text-amber-800"
+                }`}>
+                  <Info size={13} weight="fill" className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    {fuenteAvaluo === "oficial" ? (
+                      <>
+                        <strong>Avalúo oficial Min. de Transporte 2026:</strong> {fmt(avaluoEfectivo)}.
+                        Los impuestos se calculan sobre este valor (no sobre el precio publicado).
+                      </>
+                    ) : (
+                      <>
+                        <strong>Cálculo estimado sobre {fmt(avaluoEfectivo)}.</strong>
+                        {" "}Sin coincidencia exacta con catálogo Min. de Transporte, usamos el precio como referencia.
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 {/* Impuesto destacado */}
                 <div className="rounded-2xl p-4 mb-4"
                   style={{ background: "linear-gradient(135deg, #1565c0, #1978e5)" }}>
