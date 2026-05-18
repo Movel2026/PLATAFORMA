@@ -399,7 +399,7 @@ export default function HomePage() {
             <p className="text-[11px] font-bold text-movel-600 uppercase tracking-[0.15em] mb-3">Simple y transparente</p>
             <h2 className="font-display text-[28px] md:text-[40px] gradient-text mb-3 flex items-center justify-center gap-2 flex-wrap">
               ¿Cómo funciona{" "}
-              <MovelLogo variant="primary" size={32} animate={false} className="inline-block" />
+              <MovelLogo variant="gradient" size={52} animate={false} className="inline-block" />
               ?
             </h2>
             <p className="text-[15px] md:text-[16px] text-mute max-w-xl mx-auto">
@@ -550,7 +550,7 @@ export default function HomePage() {
             <p className="text-[11px] font-bold text-movel-600 uppercase tracking-[0.15em] mb-3">Nuestra diferencia</p>
             <h2 className="font-display text-[28px] md:text-[40px] gradient-text flex items-center justify-center gap-2 flex-wrap">
               ¿Por qué elegir{" "}
-              <MovelLogo variant="primary" size={32} animate={false} className="inline-block" />
+              <MovelLogo variant="gradient" size={52} animate={false} className="inline-block" />
               ?
             </h2>
           </div>

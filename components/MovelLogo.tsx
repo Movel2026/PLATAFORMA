@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 
 /**
@@ -13,7 +14,7 @@ import Image from "next/image";
  *   - "primary" / "mono":          logo invertido a azul navy con filter CSS (para fondos claros)
  */
 interface Props {
-  variant?: "primary" | "white" | "mono" | "gradient-light";
+  variant?: "primary" | "white" | "mono" | "gradient" | "gradient-light";
   /** Altura aproximada en px (32, 40, 88). */
   size?: number;
   /** Mantenido por compatibilidad con la API anterior. */
@@ -35,13 +36,37 @@ export function MovelLogo({
   const height = size;
   const width  = Math.round(size * ASPECT);
 
+  // Variante "gradient": usa CSS mask para colorear el logo con el mismo
+  // gradiente que la clase .gradient-text (sin depender de background-clip).
+  if (variant === "gradient") {
+    return (
+      <span
+        className={className}
+        aria-label="MOVEL"
+        style={{
+          display: "inline-block",
+          width,
+          height,
+          flexShrink: 0,
+          background: "linear-gradient(135deg, #0B1E4E 0%, #1B57C0 50%, #3F8CFF 100%)",
+          WebkitMaskImage: "url(/logo-movel.png)",
+          WebkitMaskSize: "contain",
+          WebkitMaskRepeat: "no-repeat",
+          WebkitMaskPosition: "center",
+          maskImage: "url(/logo-movel.png)",
+          maskSize: "contain",
+          maskRepeat: "no-repeat",
+          maskPosition: "center",
+        } as React.CSSProperties}
+      />
+    );
+  }
+
   // El PNG es blanco. Para variantes "primary" y "mono", invertimos a navy con filter CSS.
   const filter = (() => {
     if (variant === "primary" || variant === "mono") {
-      // Invierte el blanco → casi negro y le da un tinte navy con sepia + hue
       return "invert(13%) sepia(73%) saturate(2010%) hue-rotate(213deg) brightness(95%) contrast(102%)";
     }
-    // white / gradient-light: dejar tal cual
     return undefined;
   })();
 

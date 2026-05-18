@@ -190,7 +190,7 @@ function AuthContent() {
           <div className="hidden lg:block pt-8">
             <h1 className="font-display text-[40px] leading-tight text-movel-900 mb-3 flex items-center gap-3 flex-wrap">
               Únete a{" "}
-              <MovelLogo variant="primary" size={36} animate={false} className="inline-block" />
+              <MovelLogo variant="gradient" size={48} animate={false} className="inline-block" />
             </h1>
             <p className="text-[16px] text-mute mb-8 leading-relaxed max-w-md">
               Crea tu cuenta para publicar vehículos, recibir ofertas y guardar tus favoritos.
