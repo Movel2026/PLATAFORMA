@@ -170,20 +170,22 @@ export default function HomePage() {
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] hidden md:block"
           style={{ opacity: showLogo ? 0 : 1, zIndex: 1 }}
         />
+        {/* Overlay: más oscuro arriba para el chip y abajo para el fade, dejando el centro abierto para el video */}
         <div
           className="absolute inset-0"
           style={{
             zIndex: 3,
-            background: "linear-gradient(180deg, rgba(11,30,78,0.55) 0%, rgba(11,30,78,0.45) 40%, rgba(5,14,38,0.92) 100%)"
+            background: "linear-gradient(180deg, rgba(8,16,40,0.78) 0%, rgba(11,30,78,0.30) 30%, rgba(11,30,78,0.35) 60%, rgba(5,14,38,0.94) 100%)"
           }}
         />
 
-        <div className="relative flex flex-col items-center px-4 pt-16 pb-20 w-full max-w-5xl" style={{ zIndex: 10 }}>
+        <div className="relative flex flex-col items-center px-4 pt-20 md:pt-24 pb-24 w-full max-w-3xl" style={{ zIndex: 10 }}>
+          {/* ── Bloque 1: badge superior ── */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="mb-7"
+            className="mb-10"
           >
             <span className="inline-flex items-center gap-2 bg-movel-900/40 border border-movel-400/50 text-movel-200 text-[12px] font-bold px-4 py-2 rounded-full backdrop-blur-sm">
               <Sparkle size={14} weight="fill" color="#3F8CFF" className="animate-pulse" />
@@ -191,21 +193,22 @@ export default function HomePage() {
             </span>
           </motion.div>
 
+          {/* ── Bloque 2: logo + título + subtítulo (núcleo del hero) ── */}
           <motion.div
             initial={{ opacity: 0, scale: 0.88 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.8, ease: EASE_OUT }}
-            className="mb-7"
-            style={{ filter: "drop-shadow(0 0 50px rgba(63,140,255,0.45))" }}
+            className="mb-10 md:mb-12"
+            style={{ filter: "drop-shadow(0 0 60px rgba(63,140,255,0.5))" }}
           >
-            <MovelLogo variant="white" size={92} animate />
+            <MovelLogo variant="white" size={88} animate />
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.65, duration: 0.7 }}
-            className="font-display text-center text-[34px] sm:text-[44px] md:text-[56px] leading-[0.95] mb-5 max-w-3xl"
+            className="font-display text-center text-[32px] sm:text-[42px] md:text-[54px] leading-[1.02] mb-6"
           >
             <span className="text-white">Encuentra tu próximo carro</span>
             <br />
@@ -216,17 +219,18 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.78, duration: 0.55 }}
-            className="text-[15px] md:text-[17px] text-white/70 text-center mb-9 max-w-xl font-medium"
+            className="text-[15px] md:text-[17px] text-white/75 text-center mb-12 md:mb-14 max-w-lg font-medium leading-relaxed"
           >
-            Compra y vende vehículos con asesoría 360°. Solo 3% de comisión si vendemos por ti.
+            Compra y vende vehículos con asesoría 360°.<br className="hidden sm:block" /> Solo 3% de comisión si vendemos por ti.
           </motion.p>
 
+          {/* ── Bloque 3: buscador (acción principal) ── */}
           <motion.form
             onSubmit={handleSearch}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.88, duration: 0.6 }}
-            className="w-full max-w-2xl bg-white rounded-2xl p-2 flex gap-2 shadow-2xl shadow-black/40 mb-4 border border-white/20"
+            className="w-full max-w-2xl bg-white rounded-2xl p-2 flex gap-2 shadow-2xl shadow-black/40 mb-6 border border-white/20"
           >
             <div className="flex-1 flex items-center gap-3 bg-cloud rounded-xl px-5 py-3.5">
               <MagnifyingGlass size={20} color="#7A8195" />
@@ -247,11 +251,12 @@ export default function HomePage() {
             </button>
           </motion.form>
 
+          {/* ── Bloque 4: chips de búsqueda rápida ── */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.95, duration: 0.5 }}
-            className="flex flex-wrap justify-center gap-2 mb-7 max-w-xl"
+            className="flex flex-wrap justify-center gap-2 mb-10 max-w-xl"
           >
             {["SUV", "Sedán", "Camioneta", "Hasta $50M", "Automático"].map((chip) => (
               <button
@@ -264,11 +269,12 @@ export default function HomePage() {
             ))}
           </motion.div>
 
+          {/* ── Bloque 5: CTAs secundarios (vender + filtros) ── */}
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.0, duration: 0.55 }}
-            className="flex gap-3 mb-5 w-full max-w-2xl"
+            className="flex gap-3 w-full max-w-2xl"
           >
             <Link
               href="/publicar"

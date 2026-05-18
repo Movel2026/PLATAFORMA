@@ -3,21 +3,20 @@
 import { useEffect, useRef } from "react";
 
 /**
- * MovelLogo — Logo oficial Movel con velocímetro animado.
+ * MovelLogo — Logo oficial Movel 2.0
+ *
+ * Diseño: "MOVEL" en bold compacto, con velocímetro INTEGRADO dentro de la letra O.
+ * La aguja apunta diagonal (estilo speedometer) y hace un sweep sutil al cargar.
  *
  * Variantes:
- *   - "primary":   gradiente azul Movel sobre fondo claro (default)
- *   - "white":     letras blancas sobre fondos oscuros
- *   - "mono":      negro plano (impresión, favicons grandes)
+ *   - "primary":        gradiente azul Movel sobre fondo claro (default)
+ *   - "white":          letras blancas sobre fondos oscuros
+ *   - "mono":           negro/azul plano (impresión, favicons grandes)
  *   - "gradient-light": degradado claro para hero oscuro
- *
- * La aguja del velocímetro hace un sweep 0° → 220° al cargar (una sola vez por sesión).
  */
 interface Props {
   variant?: "primary" | "white" | "mono" | "gradient-light";
-  /** Altura aproximada en px (32, 40, 56). El SVG es responsive. */
-  size?: number;
-  /** Animar la aguja al montar. Por defecto true en cliente. */
+  size?: number;       // altura aproximada en px
   animate?: boolean;
   className?: string;
 }
@@ -28,44 +27,43 @@ export function MovelLogo({
   animate = true,
   className = "",
 }: Props) {
-  const needleRef = useRef<SVGLineElement>(null);
+  const needleRef = useRef<SVGGElement>(null);
 
-  // Sweep de la aguja: 0° → 220° una sola vez al montar
+  // Sweep sutil: la aguja arranca un poco más arriba y baja hacia su posición final
   useEffect(() => {
     if (!animate || !needleRef.current) return;
     const needle = needleRef.current;
-    // Reset
-    needle.style.transformOrigin = "36px 16px";
-    needle.style.transform = "rotate(-130deg)";
-    needle.style.transition = "transform 900ms cubic-bezier(0.16, 1, 0.3, 1)";
-    // Trigger animation in next frame
+    needle.style.transformOrigin = "55px 22px";
+    needle.style.transform = "rotate(-60deg)";
+    needle.style.transition = "transform 1100ms cubic-bezier(0.16, 1, 0.3, 1)";
     const t = setTimeout(() => {
-      if (needleRef.current) needleRef.current.style.transform = "rotate(90deg)";
-    }, 100);
+      if (needleRef.current) needleRef.current.style.transform = "rotate(0deg)";
+    }, 150);
     return () => clearTimeout(t);
   }, [animate]);
 
-  const ratio = size / 36; // viewBox h = 36
-  const w = 120 * ratio;
-  const h = 36 * ratio;
+  // Tamaño: viewBox de 220x44 → mantiene proporción del texto MOVEL compacto
+  const ratio = size / 44;
+  const w = 220 * ratio;
+  const h = 44 * ratio;
 
   // Colores según variante
-  const fill = (() => {
-    if (variant === "primary") return "url(#movel-grad-primary)";
-    if (variant === "white") return "white";
-    if (variant === "mono") return "#0B1E4E";
+  const textFill = (() => {
+    if (variant === "primary")        return "url(#movel-grad-primary)";
+    if (variant === "white")          return "#ffffff";
+    if (variant === "mono")           return "#0B1E4E";
     return "url(#movel-grad-light)";
   })();
 
-  const dialBg     = variant === "white" || variant === "gradient-light" ? "rgba(255,255,255,0.15)" : "#0B1E4E";
-  const dialStroke = variant === "white" || variant === "gradient-light" ? "white" : "white";
-  const tickColor  = variant === "white" || variant === "gradient-light" ? "white" : "white";
+  const ringColor   = variant === "white" || variant === "gradient-light" ? "#ffffff" : "#0B1E4E";
+  const needleColor = variant === "white" || variant === "gradient-light" ? "#ffffff" : "#0B1E4E";
+  const tickColor   = variant === "white" || variant === "gradient-light" ? "#ffffff" : "#0B1E4E";
 
   return (
     <svg
       width={w}
       height={h}
-      viewBox="0 0 120 36"
+      viewBox="0 0 220 44"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="MOVEL"
@@ -74,60 +72,57 @@ export function MovelLogo({
       style={{ display: "block" }}
     >
       <defs>
-        <linearGradient id="movel-grad-primary" x1="0" y1="0" x2="120" y2="36" gradientUnits="userSpaceOnUse">
+        <linearGradient id="movel-grad-primary" x1="0" y1="0" x2="220" y2="44" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#0B1E4E" />
           <stop offset="50%" stopColor="#1B57C0" />
           <stop offset="100%" stopColor="#3F8CFF" />
         </linearGradient>
-        <linearGradient id="movel-grad-light" x1="0" y1="0" x2="120" y2="36" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#A5C6FF" />
-          <stop offset="55%" stopColor="#D7E5FF" />
-          <stop offset="100%" stopColor="#ffffff" />
+        <linearGradient id="movel-grad-light" x1="0" y1="0" x2="220" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="55%" stopColor="#E5EEFF" />
+          <stop offset="100%" stopColor="#A5C6FF" />
         </linearGradient>
       </defs>
 
-      {/* M */}
+      {/* MOVEL — todas las letras juntas en un solo bloque */}
       <text
-        x="0" y="28"
-        fontFamily="Arial Black, Archivo Black, sans-serif"
-        fontSize="30" fontWeight="900" fontStyle="italic"
-        fill={fill}
-      >M</text>
+        x="0" y="36"
+        fontFamily="'Archivo Black', 'Arial Black', Impact, sans-serif"
+        fontSize="44"
+        fontWeight="900"
+        letterSpacing="-1"
+        fill={textFill}
+      >
+        MOVEL
+      </text>
 
-      {/* O con velocímetro */}
+      {/* Velocímetro INSCRITO en la letra O (centrado aproximadamente en x=55) */}
       <g>
-        <text
-          x="23" y="28"
-          fontFamily="Arial Black, Archivo Black, sans-serif"
-          fontSize="30" fontWeight="900" fontStyle="italic"
-          fill={fill}
-        >O</text>
-        {/* Esfera del velocímetro */}
-        <circle cx="36" cy="16" r="7" fill={dialBg} opacity="0.85" />
-        <circle cx="36" cy="16" r="7" fill="none" stroke={dialStroke} strokeWidth="1.2" />
-        {/* Aguja (animada) */}
-        <line
-          ref={needleRef}
-          x1="36" y1="16" x2="36" y2="10"
-          stroke={tickColor}
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        {/* Eje */}
-        <circle cx="36" cy="16" r="1.2" fill={tickColor} />
-        {/* Marcas cardinales */}
-        <line x1="29.5" y1="16" x2="31"   y2="16" stroke={tickColor} strokeWidth="1" strokeLinecap="round" />
-        <line x1="36"   y1="9.5" x2="36"  y2="11" stroke={tickColor} strokeWidth="1" strokeLinecap="round" />
-        <line x1="42.5" y1="16" x2="41"   y2="16" stroke={tickColor} strokeWidth="1" strokeLinecap="round" />
-      </g>
+        {/* Anillo interior del velocímetro (decorativo, no tapa la O) */}
+        <circle cx="55" cy="22" r="10" fill="none" stroke={ringColor} strokeWidth="1" opacity="0.55" />
 
-      {/* VEL */}
-      <text
-        x="51" y="28"
-        fontFamily="Arial Black, Archivo Black, sans-serif"
-        fontSize="30" fontWeight="900" fontStyle="italic"
-        fill={fill}
-      >VEL</text>
+        {/* Marcas de ticks alrededor del dial */}
+        <g stroke={tickColor} strokeWidth="1.4" strokeLinecap="round" opacity="0.85">
+          <line x1="55"   y1="13"   x2="55"   y2="15.2" />
+          <line x1="61.5" y1="15.5" x2="60"   y2="17"   />
+          <line x1="64"   y1="22"   x2="61.8" y2="22"   />
+          <line x1="61.5" y1="28.5" x2="60"   y2="27"   />
+          <line x1="48.5" y1="28.5" x2="50"   y2="27"   />
+          <line x1="46"   y1="22"   x2="48.2" y2="22"   />
+          <line x1="48.5" y1="15.5" x2="50"   y2="17"   />
+        </g>
+
+        {/* Aguja del velocímetro (apunta diagonal hacia abajo-derecha) */}
+        <g ref={needleRef}>
+          <path
+            d="M 55 22 L 63.5 26.5 L 55 23.4 Z"
+            fill={needleColor}
+          />
+        </g>
+
+        {/* Eje central */}
+        <circle cx="55" cy="22" r="1.6" fill={needleColor} />
+      </g>
     </svg>
   );
 }
