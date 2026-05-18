@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { MagnifyingGlass, SlidersHorizontal, X } from "@phosphor-icons/react";
+import { MagnifyingGlass, SlidersHorizontal, X, ShieldCheck } from "@phosphor-icons/react";
 import { vehicles as mockVehicles, Vehicle } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
@@ -59,6 +59,7 @@ function BuscarContent() {
   const [kmMin, setKmMin] = useState<string>("");
   const [kmMax, setKmMax] = useState<string>("");
 
+  const [soloVerificados, setSoloVerificados] = useState(params.get("verificados") === "1");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [ordenar, setOrdenar] = useState("recientes");
 
@@ -126,10 +127,11 @@ function BuscarContent() {
       : ((!anoMinN || v.año >= anoMinN) && (!anoMaxN || v.año <= anoMaxN));
     const matchKmMin       = !kmMinN || km >= kmMinN;
     const matchKmMax       = !kmMaxN || km <= kmMaxN;
+    const matchVerificado  = !soloVerificados || v.verificado_movel === true;
     return (
       matchSearch && matchMarca && matchModelo && matchTipo && matchTransmision && matchCiudad &&
       matchCombustible && matchDigitos &&
-      matchPrecioMin && matchPrecioMax && matchAno && matchKmMin && matchKmMax
+      matchPrecioMin && matchPrecioMax && matchAno && matchKmMin && matchKmMax && matchVerificado
     );
   }));
 
@@ -155,7 +157,7 @@ function BuscarContent() {
     setPrecioMin(""); setPrecioMax("");
     setAnoMin(""); setAnoMax(""); setAnoUnico("");
     setKmMin(""); setKmMax("");
-    setSearch("");
+    setSearch(""); setSoloVerificados(false);
     router.replace("/buscar");
   }
 
@@ -164,7 +166,7 @@ function BuscarContent() {
 
   const hasFilters = !!(
     selectedMarca || selectedModelo || selectedTipo || selectedTransmision || selectedCiudad ||
-    selectedCombustible.length || selectedDigitos.length ||
+    selectedCombustible.length || selectedDigitos.length || soloVerificados ||
     precioMin || precioMax || anoMin || anoMax || anoUnico || kmMin || kmMax
   );
 
@@ -242,6 +244,20 @@ function BuscarContent() {
                   </button>
                 )}
               </div>
+
+              {/* Verificados MOVEL */}
+              <button
+                onClick={() => setSoloVerificados(!soloVerificados)}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border-2 font-bold text-[13px] transition-all ${
+                  soloVerificados
+                    ? "border-movel-900 text-white"
+                    : "border-[#dce0e5] text-mute hover:border-movel-300"
+                }`}
+                style={soloVerificados ? { background: "linear-gradient(135deg,#0B1E4E,#1565c0)" } : {}}
+              >
+                <ShieldCheck size={16} weight={soloVerificados ? "fill" : "regular"} color={soloVerificados ? "white" : "#1565c0"} />
+                Solo verificados <span className={soloVerificados ? "text-white/80" : "text-movel-600"}>MOVEL</span>
+              </button>
 
               {/* Marca */}
               <div>
@@ -524,6 +540,16 @@ function BuscarContent() {
             <div className="p-4">
               {/* Reutiliza la misma sidebar — se le redirige al usuario */}
               <p className="text-[13px] text-mute mb-3">Usa los filtros y se aplican automáticamente.</p>
+              <button
+                onClick={() => setSoloVerificados(!soloVerificados)}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border-2 font-bold text-[13px] transition-all mb-4 ${
+                  soloVerificados ? "border-movel-900 text-white" : "border-[#dce0e5] text-mute"
+                }`}
+                style={soloVerificados ? { background: "linear-gradient(135deg,#0B1E4E,#1565c0)" } : {}}
+              >
+                <ShieldCheck size={16} weight={soloVerificados ? "fill" : "regular"} color={soloVerificados ? "white" : "#1565c0"} />
+                Solo verificados <span className={soloVerificados ? "text-white/80" : "text-movel-600"}>MOVEL</span>
+              </button>
               {hasFilters && (
                 <button onClick={() => { clearFilters(); setShowMobileFilters(false); }} className="w-full mb-4 py-2.5 border-2 border-movel-900 text-movel-900 font-bold rounded-xl text-[13px]">
                   Limpiar todo

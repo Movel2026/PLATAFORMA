@@ -89,14 +89,20 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </Link>
 
-        {/* Badge top-left: Subasta o Ciudad */}
-        <div className="absolute top-3 left-3 flex items-center gap-2 z-[3] pointer-events-none">
+        {/* Badge top-left: Subasta o Ciudad + Verificado MOVEL */}
+        <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 z-[3] pointer-events-none">
           {vehicle.subasta?.activa ? (
             <span className="badge-live">Subasta</span>
           ) : (
             <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
               <MapPin size={12} color="#7A8195" />
               <span className="text-[11px] font-semibold text-mute">{vehicle.ciudad}</span>
+            </div>
+          )}
+          {vehicle.verificado_movel && (
+            <div className="flex items-center gap-1 rounded-full px-2.5 py-1 shadow-sm" style={{ background: "linear-gradient(135deg,#0B1E4E,#1565c0)" }}>
+              <ShieldCheck size={11} color="white" weight="fill" />
+              <span className="text-[10px] font-bold text-white tracking-wide">Verificado MOVEL</span>
             </div>
           )}
         </div>

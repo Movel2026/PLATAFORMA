@@ -78,6 +78,7 @@ export async function GET() {
         whatsapp: String(p.celular ?? "573175737083").replace(/\D/g, ""),
         ciudad: String(p.ciudad ?? "Colombia"),
         tipo: String(p.carroceria ?? "Sedán"),
+        verificado_movel: p.publicado_por === "movel",
         ultimoDigitoPlaca: p.ultimo_digito_placa ?? null,
         publicado_en: p.created_at ?? null,
       };

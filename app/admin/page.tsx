@@ -193,7 +193,7 @@ function MiniChart({ data }: { data: Record<string, number> }) {
 }
 
 // ─── Main Dashboard ──────────────────────────────────────────
-type Tab = "resumen" | "publicaciones" | "ofertas" | "contactos" | "usuarios" | "trafico";
+type Tab = "resumen" | "publicaciones" | "ofertas" | "contactos" | "usuarios" | "trafico" | "publicar";
 
 export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
@@ -206,6 +206,16 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  // ── Formulario "Publicar vehículo MOVEL" ──
+  const [pubForm, setPubForm] = useState({
+    marca: "", modelo: "", ano: "", version: "", precio: "", kilometraje: "",
+    ciudad: "Bogotá", color: "", transmision: "Automático", combustible: "Gasolina",
+    carroceria: "SUV", motor: "", potencia: "", pasajeros: "5",
+    descripcion: "", fotos_txt: "",
+  });
+  const [pubLoading, setPubLoading] = useState(false);
+  const [pubMsg, setPubMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
   // ── Estado de edición y notas del admin ──
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
@@ -321,12 +331,13 @@ export default function AdminPage() {
   if (!unlocked) return <PinGate onUnlock={handleUnlock} />;
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "resumen",       label: "Resumen",       icon: <ChartBar size={16} /> },
-    { id: "publicaciones", label: "Publicaciones", icon: <Car size={16} /> },
-    { id: "ofertas",       label: "Ofertas",       icon: <Gavel size={16} /> },
-    { id: "contactos",     label: "Consultas",     icon: <ChatCircle size={16} /> },
-    { id: "usuarios",      label: "Usuarios",      icon: <Users size={16} /> },
-    { id: "trafico",       label: "Tráfico SEO",   icon: <Globe size={16} /> },
+    { id: "resumen",       label: "Resumen",           icon: <ChartBar size={16} /> },
+    { id: "publicaciones", label: "Publicaciones",     icon: <Car size={16} /> },
+    { id: "publicar",      label: "Publicar vehículo", icon: <UploadSimple size={16} /> },
+    { id: "ofertas",       label: "Ofertas",           icon: <Gavel size={16} /> },
+    { id: "contactos",     label: "Consultas",         icon: <ChatCircle size={16} /> },
+    { id: "usuarios",      label: "Usuarios",          icon: <Users size={16} /> },
+    { id: "trafico",       label: "Tráfico SEO",       icon: <Globe size={16} /> },
   ];
 
   const noSupabase = stats && !stats.configured;
@@ -1395,6 +1406,153 @@ export default function AdminPage() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* ── Tab: Publicar vehículo MOVEL ──────────────────── */}
+        {tab === "publicar" && (
+          <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#0B1E4E,#1565c0)" }}>
+                <ShieldCheck size={20} color="white" weight="fill" />
+              </div>
+              <div>
+                <h2 className="text-[18px] font-black text-[#111418]">Publicar vehículo MOVEL</h2>
+                <p className="text-[13px] text-[#637488]">Se publica directamente como activo y aparece con el sello "Verificado MOVEL"</p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setPubLoading(true);
+                setPubMsg(null);
+                try {
+                  const fotosUrls = pubForm.fotos_txt
+                    .split("\n")
+                    .map((u) => u.trim())
+                    .filter(Boolean);
+                  const res = await fetch("/api/admin/publicar-movel", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "x-admin-pin": adminPin },
+                    body: JSON.stringify({ ...pubForm, fotos_urls: fotosUrls }),
+                  });
+                  const json = await res.json();
+                  if (json.ok) {
+                    setPubMsg({ ok: true, text: `✅ Vehículo publicado y ya visible en el sitio (ID: ${json.id})` });
+                    setPubForm({ marca: "", modelo: "", ano: "", version: "", precio: "", kilometraje: "",
+                      ciudad: "Bogotá", color: "", transmision: "Automático", combustible: "Gasolina",
+                      carroceria: "SUV", motor: "", potencia: "", pasajeros: "5", descripcion: "", fotos_txt: "" });
+                  } else {
+                    setPubMsg({ ok: false, text: `❌ Error: ${json.error}` });
+                  }
+                } catch (err) {
+                  setPubMsg({ ok: false, text: `❌ Error de red: ${String(err)}` });
+                } finally {
+                  setPubLoading(false);
+                }
+              }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              {/* Campos básicos */}
+              {[
+                { key: "marca",       label: "Marca *",              placeholder: "Ej: Toyota" },
+                { key: "modelo",      label: "Modelo *",             placeholder: "Ej: Corolla" },
+                { key: "ano",         label: "Año *",                placeholder: "Ej: 2022" },
+                { key: "version",     label: "Versión",              placeholder: "Ej: XEI 2.0 CVT" },
+                { key: "precio",      label: "Precio COP *",         placeholder: "Ej: 85000000" },
+                { key: "kilometraje", label: "Kilometraje (km)",     placeholder: "Ej: 42000" },
+                { key: "color",       label: "Color",                placeholder: "Ej: Blanco perlado" },
+                { key: "motor",       label: "Motor",                placeholder: "Ej: 2.0L · 1998 cc" },
+                { key: "potencia",    label: "Potencia",             placeholder: "Ej: 152 CV" },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">{label}</label>
+                  <input
+                    type="text"
+                    placeholder={placeholder}
+                    value={pubForm[key as keyof typeof pubForm]}
+                    onChange={(e) => setPubForm((p) => ({ ...p, [key]: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] text-[#111418] outline-none focus:border-movel-500 transition-colors"
+                  />
+                </div>
+              ))}
+
+              {/* Selects */}
+              {[
+                { key: "ciudad",      label: "Ciudad",      opts: ["Bogotá","Medellín","Cali","Barranquilla","Cartagena","Bucaramanga","Pereira","Manizales"] },
+                { key: "carroceria",  label: "Carrocería",  opts: ["SUV","Sedán","Hatchback","Camioneta","Coupé","Pick-up","Van","Minivan"] },
+                { key: "transmision", label: "Transmisión", opts: ["Automático","Manual","CVT","Doble embrague"] },
+                { key: "combustible", label: "Combustible", opts: ["Gasolina","Diésel","Híbrido","Eléctrico","Mild Hybrid"] },
+                { key: "pasajeros",   label: "Pasajeros",   opts: ["2","4","5","6","7","8"] },
+              ].map(({ key, label, opts }) => (
+                <div key={key}>
+                  <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">{label}</label>
+                  <select
+                    value={pubForm[key as keyof typeof pubForm]}
+                    onChange={(e) => setPubForm((p) => ({ ...p, [key]: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] text-[#111418] outline-none focus:border-movel-500 bg-white"
+                  >
+                    {opts.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              ))}
+
+              {/* Descripción — ocupa todo el ancho */}
+              <div className="md:col-span-2">
+                <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">Descripción</label>
+                <textarea
+                  rows={3}
+                  placeholder="Descripción del vehículo, historial, extras incluidos..."
+                  value={pubForm.descripcion}
+                  onChange={(e) => setPubForm((p) => ({ ...p, descripcion: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] text-[#111418] outline-none focus:border-movel-500 resize-none"
+                />
+              </div>
+
+              {/* URLs de fotos — una por línea */}
+              <div className="md:col-span-2">
+                <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">URLs de fotos (una por línea)</label>
+                <textarea
+                  rows={4}
+                  placeholder={"https://tudominio.com/foto1.jpg\nhttps://tudominio.com/foto2.jpg"}
+                  value={pubForm.fotos_txt}
+                  onChange={(e) => setPubForm((p) => ({ ...p, fotos_txt: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[13px] text-[#111418] outline-none focus:border-movel-500 resize-none font-mono"
+                />
+                <p className="text-[11px] text-[#637488] mt-1">Pega las URLs públicas de Supabase Storage o cualquier CDN. Si no tienes fotos aún, deja vacío y edita después.</p>
+              </div>
+
+              {/* Mensaje de resultado */}
+              {pubMsg && (
+                <div className={`md:col-span-2 p-3.5 rounded-xl text-[13px] font-semibold ${pubMsg.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                  {pubMsg.text}
+                </div>
+              )}
+
+              {/* Submit */}
+              <div className="md:col-span-2">
+                <button
+                  type="submit"
+                  disabled={pubLoading || !pubForm.marca || !pubForm.modelo || !pubForm.ano || !pubForm.precio}
+                  className="w-full py-3.5 rounded-xl font-black text-white text-[15px] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ background: "linear-gradient(135deg,#0B1E4E,#1565c0)" }}
+                >
+                  {pubLoading ? <Spinner size={20} className="animate-spin" /> : <ShieldCheck size={20} weight="fill" />}
+                  {pubLoading ? "Publicando..." : "Publicar como vehículo MOVEL verificado"}
+                </button>
+              </div>
+            </form>
+
+            {/* Nota sobre SQL */}
+            <div className="mt-5 p-4 rounded-xl bg-amber-50 border border-amber-200">
+              <p className="text-[12px] font-bold text-amber-800 mb-1">⚠️ SQL requerido en Supabase (solo la primera vez)</p>
+              <pre className="text-[11px] text-amber-700 font-mono whitespace-pre-wrap">
+{`ALTER TABLE publicaciones
+  ADD COLUMN IF NOT EXISTS publicado_por TEXT DEFAULT 'usuario';`}
+              </pre>
+              <p className="text-[11px] text-amber-600 mt-1">Ejecuta esto en Supabase → SQL Editor una sola vez para activar el sello "Verificado MOVEL".</p>
+            </div>
           </div>
         )}
 

@@ -34,6 +34,7 @@ export interface Vehicle {
   whatsapp: string;
   ciudad: string;
   tipo: string;
+  verificado_movel?: boolean;
   subasta?: {
     activa: boolean;
     precioBase: number;
