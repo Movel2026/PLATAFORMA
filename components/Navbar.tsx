@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   List, X, WhatsappLogo, SignIn, SignOut,
   Gavel, Calculator, ChatsCircle, CaretDown,
-  UploadSimple, Handshake, UserCircle,
+  UserCircle,
 } from "@phosphor-icons/react";
 import { MovelLogo } from "./MovelLogo";
 import { useCursorGlow } from "@/lib/hooks/useCursorGlow";
@@ -22,32 +22,11 @@ const navSecondary = [
   { label: "Foro",        href: "/foro",        icon: ChatsCircle,  hot: false },
 ];
 
-// Opciones del dropdown Vender
-const venderOptions = [
-  {
-    href: "/publicar?modo=gratis",
-    icon: UploadSimple,
-    title: "Publica gratis",
-    desc: "$0 comisión · Tú lo manejas",
-  },
-  {
-    href: "/publicar?modo=360",
-    icon: Handshake,
-    title: "Servicio integral 360°",
-    desc: "Nosotros lo hacemos · 3% comisión",
-    badge: "Recomendado",
-  },
-];
-
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [venderOpen, setVenderOpen] = useState(false);
-  const [publicarOpen, setPublicarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const venderRef = useRef<HTMLDivElement>(null);
-  const publicarRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const glowPublicar = useCursorGlow();
   const glowLogin    = useCursorGlow();
@@ -59,11 +38,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Click fuera para cerrar dropdowns
+  // Click fuera para cerrar el menú de usuario
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (venderRef.current && !venderRef.current.contains(e.target as Node)) setVenderOpen(false);
-      if (publicarRef.current && !publicarRef.current.contains(e.target as Node)) setPublicarOpen(false);
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
     };
     document.addEventListener("mousedown", onClick);
@@ -106,60 +83,17 @@ export default function Navbar() {
               );
             })}
 
-            {/* Dropdown Vender */}
-            <div className="relative" ref={venderRef}>
-              <button
-                onClick={() => setVenderOpen(!venderOpen)}
-                className={`flex items-center gap-1 px-5 py-2.5 rounded-xl text-[15px] font-bold transition-all duration-200 ${
-                  pathname.startsWith("/publicar")
-                    ? "text-white bg-white/15"
-                    : "text-white/95 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                Vender
-                <CaretDown size={14} weight="bold" className={`transition-transform ${venderOpen ? "rotate-180" : ""}`} />
-              </button>
-
-              {venderOpen && (
-                <div className="absolute top-full mt-2 left-0 w-80 bg-white rounded-2xl shadow-2xl border border-[#dce0e5] overflow-hidden animate-fade-in-down z-50">
-                  {!user && (
-                    <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-start gap-2">
-                      <SignIn size={14} color="#d97706" weight="bold" className="flex-shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-amber-800 leading-snug">
-                        <strong>Debes iniciar sesión</strong> para publicar y administrar tus vehículos.
-                      </p>
-                    </div>
-                  )}
-                  {venderOptions.map((opt) => {
-                    const Icon = opt.icon;
-                    const targetHref = user ? opt.href : `/auth?return=${encodeURIComponent(opt.href)}`;
-                    return (
-                      <Link
-                        key={opt.href}
-                        href={targetHref}
-                        onClick={() => setVenderOpen(false)}
-                        className="flex items-start gap-3 p-4 hover:bg-cloud transition-colors border-b border-[#f0f2f4] last:border-b-0"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-movel-50 flex items-center justify-center flex-shrink-0">
-                          <Icon size={20} color="#0B1E4E" weight="fill" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-display text-[15px] text-movel-900 leading-tight">{opt.title}</p>
-                            {opt.badge && (
-                              <span className="text-[9px] font-black uppercase tracking-wider bg-sky text-white px-1.5 py-0.5 rounded-full">
-                                {opt.badge}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[12px] text-mute mt-0.5">{opt.desc}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            {/* Vender → va al selector grande */}
+            <Link
+              href={user ? "/publicar" : "/auth?return=/publicar"}
+              className={`px-5 py-2.5 rounded-xl text-[15px] font-bold transition-all duration-200 ${
+                pathname.startsWith("/publicar")
+                  ? "text-white bg-white/15"
+                  : "text-white/95 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              Vender
+            </Link>
 
             <span className="w-px h-5 bg-white/15 mx-2" aria-hidden />
 
@@ -250,59 +184,14 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Dropdown Publicar vehículo */}
-            <div className="relative" ref={publicarRef}>
-              <button
-                onClick={() => setPublicarOpen(!publicarOpen)}
-                {...glowPublicar}
-                className="cursor-glow btn-sky text-[14px] !py-2.5 !px-5 !rounded-xl flex items-center gap-1.5"
-              >
-                Publicar vehículo
-                <CaretDown size={13} weight="bold" className={`transition-transform ${publicarOpen ? "rotate-180" : ""}`} />
-              </button>
-              {publicarOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#dce0e5] overflow-hidden animate-fade-in-down z-50">
-                  {/* Aviso si no hay sesión */}
-                  {!user && (
-                    <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-start gap-2">
-                      <SignIn size={14} color="#d97706" weight="bold" className="flex-shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-amber-800 leading-snug">
-                        <strong>Debes iniciar sesión</strong> para publicar y luego administrar tu vehículo.
-                      </p>
-                    </div>
-                  )}
-                  {venderOptions.map((opt) => {
-                    const Icon = opt.icon;
-                    const targetHref = user
-                      ? opt.href
-                      : `/auth?return=${encodeURIComponent(opt.href)}`;
-                    return (
-                      <Link
-                        key={opt.href}
-                        href={targetHref}
-                        onClick={() => setPublicarOpen(false)}
-                        className="flex items-start gap-3 p-4 hover:bg-cloud transition-colors border-b border-[#f0f2f4] last:border-b-0"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-movel-50 flex items-center justify-center flex-shrink-0">
-                          <Icon size={20} color="#0B1E4E" weight="fill" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-display text-[15px] text-movel-900 leading-tight">{opt.title}</p>
-                            {opt.badge && (
-                              <span className="text-[9px] font-black uppercase tracking-wider bg-sky text-white px-1.5 py-0.5 rounded-full">
-                                {opt.badge}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[12px] text-mute mt-0.5">{opt.desc}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            {/* Publicar vehículo → va al selector grande */}
+            <Link
+              href={user ? "/publicar" : "/auth?return=/publicar"}
+              {...glowPublicar}
+              className="cursor-glow btn-sky text-[14px] !py-2.5 !px-5 !rounded-xl"
+            >
+              Publicar vehículo
+            </Link>
           </div>
 
           {/* Mobile hamburger */}
@@ -322,36 +211,13 @@ export default function Navbar() {
           <Link href="/buscar" onClick={() => setMobileOpen(false)} className="flex items-center justify-between px-4 py-3.5 rounded-xl text-[16px] font-bold text-white hover:bg-white/10 transition-colors">
             Comprar
           </Link>
-          {/* Dropdown Vender mobile (expandido por defecto) */}
-          <div className="rounded-xl bg-white/5 p-2">
-            <p className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-white/50">Vender</p>
-            {venderOptions.map((opt) => {
-              const Icon = opt.icon;
-              return (
-                <Link
-                  key={opt.href}
-                  href={opt.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <Icon size={18} color="#3F8CFF" weight="fill" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[14px] font-bold text-white leading-tight">{opt.title}</p>
-                      {opt.badge && (
-                        <span className="text-[9px] font-black uppercase bg-sky text-white px-1.5 py-0.5 rounded-full">
-                          {opt.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-white/55 mt-0.5">{opt.desc}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <Link
+            href={user ? "/publicar" : "/auth?return=/publicar"}
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center justify-between px-4 py-3.5 rounded-xl text-[16px] font-bold text-white hover:bg-white/10 transition-colors"
+          >
+            Vender
+          </Link>
           <div className="h-px bg-white/10 my-2" />
           {navSecondary.map((link) => (
             <Link

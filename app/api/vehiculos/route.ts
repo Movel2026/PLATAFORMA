@@ -87,8 +87,8 @@ export async function GET() {
       { vehicles, configured: true, count: vehicles.length },
       {
         headers: {
-          // Cache edge 30s, stale-while-revalidate 5min → /buscar carga al instante
-          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=300",
+          // Sin cache: cuando admin activa un vehículo, debe aparecer al instante
+          "Cache-Control": "no-store, max-age=0",
         },
       }
     );
