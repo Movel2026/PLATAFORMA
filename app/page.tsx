@@ -148,13 +148,33 @@ function PickupIcon() {
   );
 }
 
+function ConvertibleIcon() {
+  return (
+    <svg viewBox="0 0 180 80" className="w-20 h-9">
+      {/* Carrocería descapotable: sin techo, perfil muy bajo, cofre largo */}
+      <path d="M14,52 L14,46 L22,44 L32,40 L52,34 L68,28 L100,26 L134,26 L146,30 L156,36 L164,42 L166,46 L166,52 Z"
+        fill="currentColor" opacity="0.88"/>
+      {/* Parabrisas corto sin techo */}
+      <path d="M68,28 L68,36 L100,36 L100,26 Z" fill="white" opacity="0.4"/>
+      {/* Marco puerta conductor */}
+      <path d="M104,26 L104,36 L130,36 L134,26 Z" fill="white" opacity="0.3"/>
+      {/* Interior / cockpit hint */}
+      <path d="M56,34 L68,28 L68,34 Z" fill="white" opacity="0.2"/>
+      <circle cx="42" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="42" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="148" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+    </svg>
+  );
+}
+
 const tipos = [
-  { label: "SUV",       icon: SuvIcon },
-  { label: "Sedán",     icon: SedanIcon },
-  { label: "Hatchback", icon: HatchbackIcon },
-  { label: "Camioneta", icon: CamionetaIcon },
-  { label: "Coupé",     icon: CoupeIcon },
-  { label: "Pick-up",   icon: PickupIcon },
+  { label: "SUV / Camioneta", icon: SuvIcon },
+  { label: "Sedán",           icon: SedanIcon },
+  { label: "Hatchback",       icon: HatchbackIcon },
+  { label: "Pick-up",         icon: PickupIcon },
+  { label: "Coupé",           icon: CoupeIcon },
+  { label: "Convertible",     icon: ConvertibleIcon },
 ];
 
 // ── Cursor glow helper ───────────────────────────────────────────────
@@ -376,7 +396,7 @@ export default function HomePage() {
             transition={{ delay: 0.95, duration: 0.5 }}
             className="flex flex-wrap justify-center gap-2 mb-10 max-w-xl"
           >
-            {["SUV", "Sedán", "Camioneta", "Hasta $50M", "Automático"].map((chip) => (
+            {["SUV / Camioneta", "Sedán", "Pick-up", "Hasta $50M", "Automático"].map((chip) => (
               <button
                 key={chip}
                 onClick={() => router.push(`/buscar?q=${encodeURIComponent(chip)}`)}
@@ -1020,7 +1040,7 @@ export default function HomePage() {
               <h4 className="text-[14px] font-bold mb-4 text-white">Comprar</h4>
               <ul className="space-y-2.5">
                 <li><Link href="/buscar" className="text-[14px] text-white/55 hover:text-white transition-colors">Todos los carros</Link></li>
-                <li><Link href="/buscar?tipo=SUV" className="text-[14px] text-white/55 hover:text-white transition-colors">SUVs disponibles</Link></li>
+                <li><Link href="/buscar?tipo=SUV+%2F+Camioneta" className="text-[14px] text-white/55 hover:text-white transition-colors">SUVs y Camionetas</Link></li>
                 <li><Link href="/buscar?tipo=Sedan" className="text-[14px] text-white/55 hover:text-white transition-colors">Sedanes</Link></li>
                 <li><Link href="/buscar?precioMax=50000000" className="text-[14px] text-white/55 hover:text-white transition-colors">Carros económicos</Link></li>
               </ul>

@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
       modelo:        String(data.modelo       ?? "").trim(),
       ano:           Number(data.ano)          || null,
       version:       String(data.version      ?? "").trim(),
+      placa:         String(data.placa        ?? "").trim().toUpperCase() || null,
+      ultimo_digito_placa: String(data.ultimo_digito_placa ?? "").trim() || null,
       precio:        parseInt(String(data.precio ?? "0").replace(/\D/g, "")) || 0,
       kilometraje:   parseInt(String(data.kilometraje ?? "0").replace(/\D/g, "")) || 0,
       ciudad:        String(data.ciudad       ?? "").trim(),
@@ -40,9 +42,18 @@ export async function POST(req: NextRequest) {
       fotos_urls:    fotosUrls,
       total_fotos:   fotosUrls.length,
       accept_offers: !!data.accept_offers,
+      propietarios:  String(data.propietarios ?? "").trim() || null,
+      uso:           String(data.uso          ?? "").trim() || null,
+      soat_vigente:  String(data.soat_vigente ?? "").trim() || null,
+      soat_hasta:    String(data.soat_hasta   ?? "").trim() || null,
+      tecno_vigente: String(data.tecno_vigente?? "").trim() || null,
+      tecno_hasta:   String(data.tecno_hasta  ?? "").trim() || null,
+      sin_siniestros:!!data.sin_siniestros,
+      siniestros_desc:String(data.siniestros_desc??"").trim() || null,
+      extras:        String(data.extras       ?? "").trim() || null,
       modo:          "movel",
-      estado:        "activo",       // se publica directamente
-      publicado_por: "movel",        // marca como verificado MOVEL
+      estado:        "activo",
+      publicado_por: "movel",
     };
 
     const { data: inserted, error } = await supabaseAdmin

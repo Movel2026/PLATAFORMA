@@ -226,11 +226,11 @@ function PublicarContent() {
   // Mapeo tipo vehicle-db → carrocería amigable para el form
   const tipoToCarroceria: Record<string, string> = {
     AUTOMOVILES:              "Sedán",
-    "CAMIONETAS Y CAMPEROS":  "SUV",
-    "CAMIONETAS DOBLECABINA": "Pickup / Camioneta",
+    "CAMIONETAS Y CAMPEROS":  "SUV / Camioneta",
+    "CAMIONETAS DOBLECABINA": "Pick-up",
     ELECTRICOS:               "Eléctrico",
     HIBRIDOS:                 "Híbrido",
-    PASAJEROS:                "Minivan",
+    PASAJEROS:                "SUV / Camioneta",
     CARGA:                    "Furgoneta",
   };
 

@@ -208,10 +208,16 @@ export default function AdminPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   // ── Formulario "Publicar vehículo MOVEL" ──
   const [pubForm, setPubForm] = useState({
-    marca: "", modelo: "", ano: "", version: "", precio: "", kilometraje: "",
+    marca: "", modelo: "", ano: "", version: "", placa: "", precio: "", kilometraje: "",
     ciudad: "Bogotá", color: "", transmision: "Automático", combustible: "Gasolina",
-    carroceria: "SUV", motor: "", potencia: "", pasajeros: "5",
+    carroceria: "SUV / Camioneta", motor: "", potencia: "", pasajeros: "5",
     descripcion: "", fotos_txt: "",
+    accept_offers: false,
+    propietarios: "", uso: "",
+    soat_vigente: "", soat_hasta: "",
+    tecno_vigente: "", tecno_hasta: "",
+    sin_siniestros: true, siniestros_desc: "",
+    extras: "",
   });
   const [pubLoading, setPubLoading] = useState(false);
   const [pubMsg, setPubMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -1435,14 +1441,21 @@ export default function AdminPage() {
                   const res = await fetch("/api/admin/publicar-movel", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "x-admin-pin": adminPin },
-                    body: JSON.stringify({ ...pubForm, fotos_urls: fotosUrls }),
+                    body: JSON.stringify({
+                      ...pubForm,
+                      fotos_urls: fotosUrls,
+                      ultimo_digito_placa: pubForm.placa ? pubForm.placa.slice(-1) : "",
+                    }),
                   });
                   const json = await res.json();
                   if (json.ok) {
                     setPubMsg({ ok: true, text: `✅ Vehículo publicado y ya visible en el sitio (ID: ${json.id})` });
-                    setPubForm({ marca: "", modelo: "", ano: "", version: "", precio: "", kilometraje: "",
+                    setPubForm({ marca: "", modelo: "", ano: "", version: "", placa: "", precio: "", kilometraje: "",
                       ciudad: "Bogotá", color: "", transmision: "Automático", combustible: "Gasolina",
-                      carroceria: "SUV", motor: "", potencia: "", pasajeros: "5", descripcion: "", fotos_txt: "" });
+                      carroceria: "SUV / Camioneta", motor: "", potencia: "", pasajeros: "5", descripcion: "", fotos_txt: "",
+                      accept_offers: false, propietarios: "", uso: "",
+                      soat_vigente: "", soat_hasta: "", tecno_vigente: "", tecno_hasta: "",
+                      sin_siniestros: true, siniestros_desc: "", extras: "" });
                   } else {
                     setPubMsg({ ok: false, text: `❌ Error: ${json.error}` });
                   }
@@ -1454,12 +1467,13 @@ export default function AdminPage() {
               }}
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-              {/* Campos básicos */}
+              {/* ── Identificación básica ── */}
               {[
                 { key: "marca",       label: "Marca *",              placeholder: "Ej: Toyota" },
-                { key: "modelo",      label: "Modelo *",             placeholder: "Ej: Corolla" },
+                { key: "modelo",      label: "Modelo *",             placeholder: "Ej: Land Cruiser Prado" },
                 { key: "ano",         label: "Año *",                placeholder: "Ej: 2022" },
-                { key: "version",     label: "Versión",              placeholder: "Ej: XEI 2.0 CVT" },
+                { key: "version",     label: "Versión / Trim",       placeholder: "Ej: XEI 2.0 CVT" },
+                { key: "placa",       label: "Placa (privada)",      placeholder: "Ej: ABC123" },
                 { key: "precio",      label: "Precio COP *",         placeholder: "Ej: 85000000" },
                 { key: "kilometraje", label: "Kilometraje (km)",     placeholder: "Ej: 42000" },
                 { key: "color",       label: "Color",                placeholder: "Ej: Blanco perlado" },
@@ -1471,46 +1485,108 @@ export default function AdminPage() {
                   <input
                     type="text"
                     placeholder={placeholder}
-                    value={pubForm[key as keyof typeof pubForm]}
+                    value={String(pubForm[key as keyof typeof pubForm])}
                     onChange={(e) => setPubForm((p) => ({ ...p, [key]: e.target.value }))}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] text-[#111418] outline-none focus:border-movel-500 transition-colors"
                   />
                 </div>
               ))}
 
-              {/* Selects */}
+              {/* ── Selects ── */}
               {[
-                { key: "ciudad",      label: "Ciudad",      opts: ["Bogotá","Medellín","Cali","Barranquilla","Cartagena","Bucaramanga","Pereira","Manizales"] },
-                { key: "carroceria",  label: "Carrocería",  opts: ["SUV","Sedán","Hatchback","Camioneta","Coupé","Pick-up","Van","Minivan"] },
+                { key: "ciudad",      label: "Ciudad",      opts: ["Bogotá","Medellín","Cali","Barranquilla","Cartagena","Bucaramanga","Pereira","Manizales","Ibagué","Villavicencio","Cúcuta","Santa Marta","Pasto","Otra ciudad"] },
+                { key: "carroceria",  label: "Carrocería",  opts: ["Sedán","Hatchback","SUV / Camioneta","Pick-up","Coupé","Convertible"] },
                 { key: "transmision", label: "Transmisión", opts: ["Automático","Manual","CVT","Doble embrague"] },
                 { key: "combustible", label: "Combustible", opts: ["Gasolina","Diésel","Híbrido","Eléctrico","Mild Hybrid"] },
                 { key: "pasajeros",   label: "Pasajeros",   opts: ["2","4","5","6","7","8"] },
+                { key: "propietarios",label: "Propietarios",opts: ["","1 propietario","2 propietarios","3 propietarios","4 o más","No sé"] },
+                { key: "uso",         label: "Uso del vehículo", opts: ["","Particular","Empresa / Flota","Taxi / Plataformas","Escuela de conducción","Otro"] },
+                { key: "soat_vigente",label: "SOAT",        opts: ["","vigente","vencido","no_se"] },
+                { key: "tecno_vigente",label:"Tecnomecánica",opts: ["","vigente","vencida","no_aplica","no_se"] },
               ].map(({ key, label, opts }) => (
                 <div key={key}>
                   <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">{label}</label>
                   <select
-                    value={pubForm[key as keyof typeof pubForm]}
+                    value={String(pubForm[key as keyof typeof pubForm])}
                     onChange={(e) => setPubForm((p) => ({ ...p, [key]: e.target.value }))}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] text-[#111418] outline-none focus:border-movel-500 bg-white"
                   >
-                    {opts.map((o) => <option key={o} value={o}>{o}</option>)}
+                    {opts.map((o) => <option key={o} value={o}>{o || "— Seleccionar —"}</option>)}
                   </select>
                 </div>
               ))}
 
-              {/* Descripción — ocupa todo el ancho */}
+              {/* Fechas SOAT / Tecno si están vigentes */}
+              {pubForm.soat_vigente === "vigente" && (
+                <div>
+                  <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">SOAT vigente hasta</label>
+                  <input type="date" value={pubForm.soat_hasta}
+                    onChange={(e) => setPubForm((p) => ({ ...p, soat_hasta: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] outline-none focus:border-movel-500" />
+                </div>
+              )}
+              {pubForm.tecno_vigente === "vigente" && (
+                <div>
+                  <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">Tecnomecánica vigente hasta</label>
+                  <input type="date" value={pubForm.tecno_hasta}
+                    onChange={(e) => setPubForm((p) => ({ ...p, tecno_hasta: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] outline-none focus:border-movel-500" />
+                </div>
+              )}
+
+              {/* ── Acepta ofertas ── */}
+              <div className="md:col-span-2 flex items-center gap-3 p-3.5 rounded-xl border border-[#dce0e5]">
+                <input type="checkbox" id="accept_offers_pub" checked={pubForm.accept_offers}
+                  onChange={(e) => setPubForm((p) => ({ ...p, accept_offers: e.target.checked }))}
+                  className="w-4 h-4 accent-movel-700 cursor-pointer" />
+                <label htmlFor="accept_offers_pub" className="text-[14px] font-semibold text-[#111418] cursor-pointer">
+                  Acepta ofertas de compradores
+                </label>
+              </div>
+
+              {/* ── Siniestros ── */}
+              <div className="md:col-span-2 p-4 rounded-xl border border-[#dce0e5] bg-[#f8f9fa]">
+                <p className="text-[13px] font-bold text-[#111418] mb-2">¿El vehículo ha tenido siniestros?</p>
+                <div className="flex gap-2 mb-2">
+                  <button type="button" onClick={() => setPubForm((p) => ({ ...p, sin_siniestros: true }))}
+                    className={`px-4 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${pubForm.sin_siniestros ? "bg-green-500 text-white border-green-500" : "border-[#dce0e5] text-[#7A8195]"}`}>
+                    No, ninguno
+                  </button>
+                  <button type="button" onClick={() => setPubForm((p) => ({ ...p, sin_siniestros: false }))}
+                    className={`px-4 py-2 rounded-lg text-[13px] font-bold border-2 transition-all ${!pubForm.sin_siniestros ? "bg-amber-500 text-white border-amber-500" : "border-[#dce0e5] text-[#7A8195]"}`}>
+                    Sí, uno o más
+                  </button>
+                </div>
+                {!pubForm.sin_siniestros && (
+                  <textarea rows={2} placeholder="Describe el tipo de choque y reparación..."
+                    value={pubForm.siniestros_desc}
+                    onChange={(e) => setPubForm((p) => ({ ...p, siniestros_desc: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 text-[13px] outline-none focus:border-amber-400 resize-none bg-white" />
+                )}
+              </div>
+
+              {/* ── Extras ── */}
+              <div className="md:col-span-2">
+                <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">Extras y accesorios</label>
+                <textarea rows={2} placeholder="Ej: Techo panorámico, cámara de reversa, rines originales, pantalla táctil..."
+                  value={pubForm.extras}
+                  onChange={(e) => setPubForm((p) => ({ ...p, extras: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[13px] outline-none focus:border-movel-500 resize-none" />
+              </div>
+
+              {/* ── Descripción ── */}
               <div className="md:col-span-2">
                 <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">Descripción</label>
                 <textarea
                   rows={3}
-                  placeholder="Descripción del vehículo, historial, extras incluidos..."
+                  placeholder="Descripción del vehículo, historial, estado general..."
                   value={pubForm.descripcion}
                   onChange={(e) => setPubForm((p) => ({ ...p, descripcion: e.target.value }))}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#dce0e5] text-[14px] text-[#111418] outline-none focus:border-movel-500 resize-none"
                 />
               </div>
 
-              {/* URLs de fotos — una por línea */}
+              {/* ── URLs de fotos — una por línea ── */}
               <div className="md:col-span-2">
                 <label className="text-[12px] font-bold text-[#111418] uppercase tracking-[0.08em] mb-1.5 block">URLs de fotos (una por línea)</label>
                 <textarea

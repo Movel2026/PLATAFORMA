@@ -1,24 +1,59 @@
-import { notFound } from "next/navigation";
-import { getVehicleById } from "@/lib/mock-data";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, notFound } from "next/navigation";
+import Link from "next/link";
+import { getVehicleById, Vehicle } from "@/lib/mock-data";
 import PageHeader from "@/components/PageHeader";
 import DocumentBadge from "@/components/DocumentBadge";
 import BottomNav from "@/components/BottomNav";
-import { UserCircle, Warning, FileText, CalendarCheck, ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { UserCircle, Warning, FileText, CalendarCheck, ArrowRight, ArrowLeft, Spinner } from "@phosphor-icons/react";
 
-interface Props {
-  params: { id: string };
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
 }
 
-export default function HistorialPage({ params }: Props) {
-  const vehicle = getVehicleById(params.id);
-  if (!vehicle) notFound();
+export default function HistorialPage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString("es-CO", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const mockVehicle = getVehicleById(id);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(mockVehicle ?? null);
+  const [loading, setLoading] = useState(!mockVehicle);
+  const [notFoundState, setNotFoundState] = useState(false);
+
+  useEffect(() => {
+    if (mockVehicle) return;
+    fetch("/api/vehiculos")
+      .then((r) => r.ok ? r.json() : { vehicles: [] })
+      .then((d) => {
+        const found = (d.vehicles || []).find((v: Vehicle) => v.id === id);
+        if (found) setVehicle(found);
+        else setNotFoundState(true);
+      })
+      .catch(() => setNotFoundState(true))
+      .finally(() => setLoading(false));
+  }, [id, mockVehicle]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size={32} className="animate-spin text-movel-600" />
+      </div>
+    );
+  }
+
+  if (notFoundState || !vehicle) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4">
+        <p className="text-[18px] font-bold text-[#111418]">Vehículo no encontrado</p>
+        <Link href="/buscar" className="btn-primary !rounded-xl px-6 py-2.5 text-[14px]">
+          Ver vehículos disponibles
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -26,6 +61,7 @@ export default function HistorialPage({ params }: Props) {
       <PageHeader title="Historial" />
 
       <div className="px-4 space-y-6 mt-2">
+
         {/* Propietarios */}
         <section>
           <div className="flex items-center gap-2 mb-3">
@@ -66,9 +102,7 @@ export default function HistorialPage({ params }: Props) {
             {vehicle.siniestros.length === 0 ? (
               <div className="px-4 py-3 bg-white flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                <p className="text-[15px] text-green-700 font-semibold">
-                  Sin siniestros reportados
-                </p>
+                <p className="text-[15px] text-green-700 font-semibold">Sin siniestros reportados</p>
               </div>
             ) : (
               vehicle.siniestros.map((s, i) => (
@@ -134,6 +168,13 @@ export default function HistorialPage({ params }: Props) {
             ))}
           </div>
         </section>
+
+        <Link
+          href={`/vehiculo/${id}`}
+          className="flex items-center gap-2 text-[14px] text-movel-600 font-semibold hover:underline"
+        >
+          <ArrowLeft size={16} /> Volver al vehículo
+        </Link>
       </div>
 
       <BottomNav />

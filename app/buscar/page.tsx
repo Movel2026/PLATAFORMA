@@ -9,7 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import { fuzzyMatch } from "@/lib/fuzzy-search";
 
 const marcas = ["Toyota", "Mazda", "Chevrolet", "Kia", "Renault", "Hyundai", "Nissan", "Ford", "Honda", "Mitsubishi"];
-const tipos = ["SUV", "Sedán", "Hatchback", "Camioneta", "Coupé", "Pick-up"];
+const tipos = ["Sedán", "Hatchback", "SUV / Camioneta", "Pick-up", "Coupé", "Convertible"];
 const transmisiones = ["Automático", "Manual"];
 const ciudades = ["Bogotá", "Medellín", "Cali", "Barranquilla"];
 const combustibles = ["Gasolina", "Híbrido", "Diésel", "Eléctrico", "Mild Hybrid", "Gasolina y gas"];
@@ -115,7 +115,8 @@ function BuscarContent() {
     const matchSearch = !search || fuzzyMatch(search, haystack);
     const matchMarca       = !selectedMarca || v.marca === selectedMarca;
     const matchModelo      = !selectedModelo || v.modelo === selectedModelo;
-    const matchTipo        = !selectedTipo  || v.tipo === selectedTipo;
+    const matchTipo        = !selectedTipo  || v.tipo === selectedTipo ||
+      (selectedTipo === "SUV / Camioneta" && (v.tipo === "SUV" || v.tipo === "Camioneta"));
     const matchTransmision = !selectedTransmision || v.transmision === selectedTransmision;
     const matchCiudad      = !selectedCiudad || v.ciudad === selectedCiudad;
     const matchCombustible = selectedCombustible.length === 0 || selectedCombustible.includes(v.combustible);
