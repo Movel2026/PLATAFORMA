@@ -7,7 +7,10 @@ import { getVehicleById, Vehicle } from "@/lib/mock-data";
 import PageHeader from "@/components/PageHeader";
 import DocumentBadge from "@/components/DocumentBadge";
 import BottomNav from "@/components/BottomNav";
-import { UserCircle, Warning, FileText, CalendarCheck, ArrowRight, ArrowLeft, Spinner } from "@phosphor-icons/react";
+import {
+  UserCircle, Warning, FileText, CalendarCheck, ArrowLeft, Spinner,
+  WhatsappLogo, Wrench, ShieldCheck, ArrowsLeftRight, CaretDown, CaretUp,
+} from "@phosphor-icons/react";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -23,6 +26,7 @@ export default function HistorialPage() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(mockVehicle ?? null);
   const [loading, setLoading] = useState(!mockVehicle);
   const [notFoundState, setNotFoundState] = useState(false);
+  const [expandedService, setExpandedService] = useState<string | null>(null);
 
   useEffect(() => {
     if (mockVehicle) return;
@@ -148,24 +152,88 @@ export default function HistorialPage() {
           </div>
         </section>
 
-        {/* Servicios disponibles */}
+        {/* Servicios MOVEL */}
         <section>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-1">
             <CalendarCheck size={22} color="#1978e5" weight="fill" />
-            <h2 className="text-[16px] font-bold text-[#111418]">Servicios disponibles</h2>
+            <h2 className="text-[16px] font-bold text-[#111418]">Servicios MOVEL</h2>
           </div>
-          <div className="border border-[#dce0e5] rounded-xl overflow-hidden">
-            {["Agendar peritaje", "Comprar garantía"].map((service, i) => (
-              <button
-                key={service}
-                className={`w-full px-4 py-4 bg-white flex items-center justify-between hover:bg-[#f0f2f4] transition-colors ${
-                  i === 0 ? "border-b border-[#dce0e5]" : ""
-                }`}
-              >
-                <span className="text-[15px] font-semibold text-[#111418]">{service}</span>
-                <ArrowRight size={18} color="#637488" />
-              </button>
-            ))}
+          <p className="text-[12px] text-[#637488] mb-3 ml-8">
+            Servicios prestados directamente por el equipo MOVEL para vendedores y compradores.
+          </p>
+          <div className="space-y-3">
+            {[
+              {
+                id: "peritaje",
+                Icon: Wrench,
+                titulo: "Peritaje técnico",
+                resumen: "Inspección profesional del vehículo antes de comprar o vender",
+                descripcion:
+                  "Nuestros técnicos revisan en detalle el estado mecánico, latonería, pintura, kilometraje real y documentos del vehículo. Al finalizar recibes un informe completo para tomar la mejor decisión con total seguridad.",
+                waMsg: "Hola MOVEL! Me interesa el servicio de *Peritaje Técnico* para un vehículo. ¿Me dan más información?",
+              },
+              {
+                id: "garantia",
+                Icon: ShieldCheck,
+                titulo: "Garantía vehicular",
+                resumen: "Protección post-venta contra fallas mecánicas inesperadas",
+                descripcion:
+                  "Cubre fallas mecánicas que aparezcan después de la compra. Puedes elegir la duración y cobertura según tu presupuesto. Ideal para vehículos usados: te da tranquilidad como comprador y hace tu oferta más atractiva como vendedor.",
+                waMsg: "Hola MOVEL! Me interesa la *Garantía Vehicular*. ¿Me pueden dar más información y costos?",
+              },
+              {
+                id: "traspaso",
+                Icon: ArrowsLeftRight,
+                titulo: "Traspaso en el RUNT",
+                resumen: "Gestión legal completa del traspaso — vendedor y comprador protegidos",
+                descripcion:
+                  "Nos encargamos de todo el proceso legal ante el RUNT. Si eres vendedor, te garantizamos que el vehículo sale oficialmente de tu nombre. Si eres comprador, te garantizamos que queda registrado a tu nombre correctamente. Sin filas, sin errores, sin estrés. Tú solo firmas.",
+                waMsg: "Hola MOVEL! Me interesa el servicio de *Traspaso en el RUNT*. ¿Me pueden ayudar y dar más información?",
+              },
+            ].map(({ id, Icon, titulo, resumen, descripcion, waMsg }) => {
+              const isOpen = expandedService === id;
+              return (
+                <div
+                  key={id}
+                  className="bg-white rounded-2xl border border-[#dce0e5] overflow-hidden transition-shadow hover:shadow-sm"
+                >
+                  <button
+                    onClick={() => setExpandedService(isOpen ? null : id)}
+                    className="w-full px-4 py-4 flex items-center gap-3 text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: "linear-gradient(135deg,#0B1E4E,#1565c0)" }}>
+                      <Icon size={18} color="white" weight="fill" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-bold text-[#111418] leading-tight">{titulo}</p>
+                      <p className="text-[12px] text-[#637488] mt-0.5 leading-snug">{resumen}</p>
+                    </div>
+                    {isOpen
+                      ? <CaretUp size={18} color="#637488" className="flex-shrink-0" />
+                      : <CaretDown size={18} color="#637488" className="flex-shrink-0" />
+                    }
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-4 pb-4 border-t border-[#f0f2f4]">
+                      <p className="text-[14px] text-[#374151] leading-relaxed mt-3 mb-4">
+                        {descripcion}
+                      </p>
+                      <a
+                        href={`https://wa.me/573175737083?text=${encodeURIComponent(waMsg)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[14px] text-white bg-[#25d366] hover:bg-[#20b858] transition-colors"
+                      >
+                        <WhatsappLogo size={18} weight="fill" />
+                        Me interesa — hablar con MOVEL
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 

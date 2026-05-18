@@ -8,7 +8,7 @@ import {
   UploadSimple, X, CheckCircle, Image as ImageIcon,
   Car, FileText, CurrencyCircleDollar, ClipboardText,
   Warning, Info, Handshake, WhatsappLogo, SignIn,
-  Camera, Wrench, UsersThree, CalendarCheck,
+  Camera, Wrench, UsersThree, CalendarCheck, ArrowsLeftRight,
 } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
 import { MovelLogo } from "@/components/MovelLogo";
@@ -169,6 +169,8 @@ function PublicarContent() {
     revisionAlDia: false, mantenimientoAgencia: false,
     llavesRepuesto: false, kitHerramientas: false,
     extras: "",
+    // Traspaso MOVEL
+    traspasoInteres: false,
   });
 
   const [autoSpecs,  setAutoSpecs]  = useState<EspecificacionesTecnicas | null>(null);
@@ -1178,6 +1180,74 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
               </div>
             </div>
           </div>
+
+          {/* ════════════════════════════════════════
+              SECCIÓN 6 — TRASPASO MOVEL (solo modo gratis)
+          ════════════════════════════════════════ */}
+          {!isServicioIntegral && (
+            <div className="bg-white rounded-2xl p-6 border border-[#dce0e5]">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg,#0B1E4E,#1565c0)" }}>
+                  <ArrowsLeftRight size={18} color="white" weight="bold" />
+                </div>
+                <div>
+                  <h2 className="text-[17px] font-bold text-[#111418] leading-tight">¿Quieres que MOVEL gestione el traspaso?</h2>
+                  <p className="text-[11px] text-[#7A8195]">Servicio adicional · opcional</p>
+                </div>
+              </div>
+
+              <p className="text-[14px] text-[#374151] leading-relaxed mb-4">
+                Nos encargamos del traspaso legal ante el <strong>RUNT</strong>: garantizamos que el vehículo
+                sale de tu nombre como vendedor, y que el comprador quede registrado correctamente.
+                Sin filas, sin errores, sin estrés — tú solo firmas.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setF("traspasoInteres", true)}
+                  className={`flex-1 py-3 rounded-xl text-[14px] font-bold border-2 transition-all flex items-center justify-center gap-2 ${
+                    form.traspasoInteres
+                      ? "border-[#0B1E4E] bg-[#0B1E4E] text-white"
+                      : "border-[#dce0e5] text-[#7A8195] hover:border-[#0B1E4E]"
+                  }`}
+                >
+                  <CheckCircle size={16} weight={form.traspasoInteres ? "fill" : "regular"} />
+                  Sí, me interesa el traspaso con MOVEL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setF("traspasoInteres", false)}
+                  className={`flex-1 py-3 rounded-xl text-[14px] font-bold border-2 transition-all ${
+                    !form.traspasoInteres
+                      ? "border-[#dce0e5] bg-[#f0f2f4] text-[#374151]"
+                      : "border-[#dce0e5] text-[#7A8195]"
+                  }`}
+                >
+                  No por ahora
+                </button>
+              </div>
+
+              {form.traspasoInteres && (
+                <div className="mt-3 p-3.5 rounded-xl bg-[#e8f0fd] border border-movel-200 flex items-start gap-2.5">
+                  <CheckCircle size={16} color="#0B1E4E" weight="fill" className="flex-shrink-0 mt-0.5" />
+                  <p className="text-[13px] text-[#0B1E4E] leading-relaxed">
+                    <strong>Anotado.</strong> Un asesor MOVEL te contactará para coordinar el traspaso una vez confirmada la venta.
+                    También puedes escribirnos ahora:{" "}
+                    <a
+                      href="https://wa.me/573175737083?text=Hola%20MOVEL!%20Me%20interesa%20el%20servicio%20de%20*Traspaso%20en%20el%20RUNT*%20para%20mi%20veh%C3%ADculo."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold underline underline-offset-2 hover:text-movel-600"
+                    >
+                      WhatsApp →
+                    </a>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Submit ── */}
           <button
