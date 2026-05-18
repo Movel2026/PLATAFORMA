@@ -170,12 +170,20 @@ export default function HomePage() {
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] hidden md:block"
           style={{ opacity: showLogo ? 0 : 1, zIndex: 1 }}
         />
-        {/* Overlay: más oscuro arriba para el chip y abajo para el fade, dejando el centro abierto para el video */}
+        {/* Overlay vertical: más oscuro arriba/abajo, abierto en el centro */}
         <div
           className="absolute inset-0"
           style={{
             zIndex: 3,
-            background: "linear-gradient(180deg, rgba(8,16,40,0.78) 0%, rgba(11,30,78,0.30) 30%, rgba(11,30,78,0.35) 60%, rgba(5,14,38,0.94) 100%)"
+            background: "linear-gradient(180deg, rgba(8,16,40,0.85) 0%, rgba(11,30,78,0.35) 25%, rgba(11,30,78,0.40) 65%, rgba(5,14,38,0.96) 100%)"
+          }}
+        />
+        {/* Vignette radial: más oscuro al centro (donde va el texto), para que las letras no se confundan con el video */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            zIndex: 4,
+            background: "radial-gradient(ellipse 60% 50% at 50% 55%, rgba(8,16,40,0.55) 0%, rgba(8,16,40,0.20) 50%, transparent 80%)"
           }}
         />
 
@@ -199,7 +207,9 @@ export default function HomePage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.8, ease: EASE_OUT }}
             className="mb-10 md:mb-12"
-            style={{ filter: "drop-shadow(0 0 60px rgba(63,140,255,0.5))" }}
+            style={{
+              filter: "drop-shadow(0 0 60px rgba(63,140,255,0.5)) drop-shadow(0 4px 24px rgba(0,0,0,0.55))",
+            }}
           >
             <MovelLogo variant="white" size={88} animate />
           </motion.div>
@@ -209,6 +219,9 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.65, duration: 0.7 }}
             className="font-display text-center text-[32px] sm:text-[42px] md:text-[54px] leading-[1.02] mb-6"
+            style={{
+              textShadow: "0 2px 20px rgba(0,0,0,0.7), 0 4px 40px rgba(0,0,0,0.5)",
+            }}
           >
             <span className="text-white">Encuentra tu próximo carro</span>
             <br />
@@ -219,7 +232,10 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.78, duration: 0.55 }}
-            className="text-[15px] md:text-[17px] text-white/75 text-center mb-12 md:mb-14 max-w-lg font-medium leading-relaxed"
+            className="text-[15px] md:text-[17px] text-white/85 text-center mb-12 md:mb-14 max-w-lg font-medium leading-relaxed"
+            style={{
+              textShadow: "0 1px 10px rgba(0,0,0,0.65)",
+            }}
           >
             Compra y vende vehículos con asesoría 360°.<br className="hidden sm:block" /> Solo 3% de comisión si vendemos por ti.
           </motion.p>

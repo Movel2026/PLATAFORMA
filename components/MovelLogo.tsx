@@ -1,69 +1,52 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
 /**
- * MovelLogo — Logo oficial Movel 2.0
+ * MovelLogo — Réplica exacta del logo oficial de Movel.
  *
- * Diseño: "MOVEL" en bold compacto, con velocímetro INTEGRADO dentro de la letra O.
- * La aguja apunta diagonal (estilo speedometer) y hace un sweep sutil al cargar.
+ * Diseño: "MOVEL" en una sola palabra (bold, sin itálica, letras tight).
+ * La letra O contiene una aguja de velocímetro apuntando ~15° arriba-derecha
+ * con un punto pivote en el centro. Sin anillos extra, sin ticks.
  *
  * Variantes:
- *   - "primary":        gradiente azul Movel sobre fondo claro (default)
- *   - "white":          letras blancas sobre fondos oscuros
- *   - "mono":           negro/azul plano (impresión, favicons grandes)
- *   - "gradient-light": degradado claro para hero oscuro
+ *   - "primary":        gradiente azul Movel sobre fondo claro
+ *   - "white":          blanco sólido sobre fondos oscuros (default del hero)
+ *   - "mono":           azul navy plano
+ *   - "gradient-light": degradado claro
  */
 interface Props {
   variant?: "primary" | "white" | "mono" | "gradient-light";
-  size?: number;       // altura aproximada en px
-  animate?: boolean;
+  size?: number;       // altura en px (default 44)
+  animate?: boolean;   // mantenido por compatibilidad con la API anterior
   className?: string;
 }
 
 export function MovelLogo({
   variant = "primary",
-  size = 36,
-  animate = true,
+  size = 44,
+  animate = true, // eslint-disable-line @typescript-eslint/no-unused-vars
   className = "",
 }: Props) {
-  const needleRef = useRef<SVGGElement>(null);
+  // viewBox 240 × 56 → la altura real es 56 y la palabra ocupa todo el ancho
+  const ratio = size / 56;
+  const w = 240 * ratio;
+  const h = 56 * ratio;
 
-  // Sweep sutil: la aguja arranca un poco más arriba y baja hacia su posición final
-  useEffect(() => {
-    if (!animate || !needleRef.current) return;
-    const needle = needleRef.current;
-    needle.style.transformOrigin = "55px 22px";
-    needle.style.transform = "rotate(-60deg)";
-    needle.style.transition = "transform 1100ms cubic-bezier(0.16, 1, 0.3, 1)";
-    const t = setTimeout(() => {
-      if (needleRef.current) needleRef.current.style.transform = "rotate(0deg)";
-    }, 150);
-    return () => clearTimeout(t);
-  }, [animate]);
-
-  // Tamaño: viewBox de 220x44 → mantiene proporción del texto MOVEL compacto
-  const ratio = size / 44;
-  const w = 220 * ratio;
-  const h = 44 * ratio;
-
-  // Colores según variante
   const textFill = (() => {
     if (variant === "primary")        return "url(#movel-grad-primary)";
     if (variant === "white")          return "#ffffff";
     if (variant === "mono")           return "#0B1E4E";
     return "url(#movel-grad-light)";
   })();
-
-  const ringColor   = variant === "white" || variant === "gradient-light" ? "#ffffff" : "#0B1E4E";
-  const needleColor = variant === "white" || variant === "gradient-light" ? "#ffffff" : "#0B1E4E";
-  const tickColor   = variant === "white" || variant === "gradient-light" ? "#ffffff" : "#0B1E4E";
+  // El acento del velocímetro siempre va del color complementario fuerte:
+  // blanco si el texto es color, color si el texto es blanco
+  const accent = variant === "white" || variant === "gradient-light" ? "#0B1E4E" : "#ffffff";
+  const needleColor = variant === "white" || variant === "gradient-light" ? "#ffffff" : "#ffffff";
 
   return (
     <svg
       width={w}
       height={h}
-      viewBox="0 0 220 44"
+      viewBox="0 0 240 56"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="MOVEL"
@@ -72,56 +55,57 @@ export function MovelLogo({
       style={{ display: "block" }}
     >
       <defs>
-        <linearGradient id="movel-grad-primary" x1="0" y1="0" x2="220" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#0B1E4E" />
-          <stop offset="50%" stopColor="#1B57C0" />
+        <linearGradient id="movel-grad-primary" x1="0" y1="0" x2="240" y2="56" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#0B1E4E" />
+          <stop offset="50%"  stopColor="#1B57C0" />
           <stop offset="100%" stopColor="#3F8CFF" />
         </linearGradient>
-        <linearGradient id="movel-grad-light" x1="0" y1="0" x2="220" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="55%" stopColor="#E5EEFF" />
+        <linearGradient id="movel-grad-light" x1="0" y1="0" x2="240" y2="56" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#ffffff" />
+          <stop offset="55%"  stopColor="#E5EEFF" />
           <stop offset="100%" stopColor="#A5C6FF" />
         </linearGradient>
       </defs>
 
-      {/* MOVEL — todas las letras juntas en un solo bloque */}
+      {/*
+        Texto MOVEL — usamos Impact / Archivo Black para que las letras sean
+        muy heavy y compactas, con letter-spacing negativo para que se peguen.
+        textLength fuerza el ancho exacto del bloque y mantiene la consistencia.
+      */}
       <text
-        x="0" y="36"
-        fontFamily="'Archivo Black', 'Arial Black', Impact, sans-serif"
-        fontSize="44"
+        x="0"
+        y="46"
+        fontFamily="Impact, 'Archivo Black', 'Arial Black', sans-serif"
+        fontSize="60"
         fontWeight="900"
-        letterSpacing="-1"
+        letterSpacing="0"
         fill={textFill}
+        textLength="240"
+        lengthAdjust="spacingAndGlyphs"
       >
         MOVEL
       </text>
 
-      {/* Velocímetro INSCRITO en la letra O (centrado aproximadamente en x=55) */}
-      <g>
-        {/* Anillo interior del velocímetro (decorativo, no tapa la O) */}
-        <circle cx="55" cy="22" r="10" fill="none" stroke={ringColor} strokeWidth="1" opacity="0.55" />
-
-        {/* Marcas de ticks alrededor del dial */}
-        <g stroke={tickColor} strokeWidth="1.4" strokeLinecap="round" opacity="0.85">
-          <line x1="55"   y1="13"   x2="55"   y2="15.2" />
-          <line x1="61.5" y1="15.5" x2="60"   y2="17"   />
-          <line x1="64"   y1="22"   x2="61.8" y2="22"   />
-          <line x1="61.5" y1="28.5" x2="60"   y2="27"   />
-          <line x1="48.5" y1="28.5" x2="50"   y2="27"   />
-          <line x1="46"   y1="22"   x2="48.2" y2="22"   />
-          <line x1="48.5" y1="15.5" x2="50"   y2="17"   />
-        </g>
-
-        {/* Aguja del velocímetro (apunta diagonal hacia abajo-derecha) */}
-        <g ref={needleRef}>
+      {/*
+        Aguja del velocímetro DENTRO de la letra O.
+        Posición del centro de la O en este viewBox: x≈68, y≈28
+        La aguja apunta arriba-derecha (~15° sobre la horizontal),
+        con forma de pointer (gruesa en la base, fina en la punta).
+      */}
+      <g transform="translate(68 28)">
+        {/* Pivote / base (un círculo pequeño que sirve como ancla visual) */}
+        <circle cx="0" cy="0" r="2" fill={needleColor} />
+        {/* Aguja: triángulo apuntando arriba-derecha. Rotado ~-15° para inclinarla. */}
+        <g transform="rotate(-15)">
           <path
-            d="M 55 22 L 63.5 26.5 L 55 23.4 Z"
+            d="M 0 -1.6 L 10.5 -0.6 L 10.5 0.6 L 0 1.6 Z"
             fill={needleColor}
           />
+          {/* Punta redondeada de la aguja */}
+          <circle cx="10.5" cy="0" r="0.9" fill={needleColor} />
         </g>
-
-        {/* Eje central */}
-        <circle cx="55" cy="22" r="1.6" fill={needleColor} />
+        {/* Tapón central (encima de todo) */}
+        <circle cx="0" cy="0" r="1.6" fill={accent} opacity="0" />
       </g>
     </svg>
   );
