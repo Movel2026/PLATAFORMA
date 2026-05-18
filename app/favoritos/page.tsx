@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, MagnifyingGlass, Trash, CarProfile } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
@@ -11,12 +11,14 @@ function fmtCOP(n: number) {
   return "$ " + n.toLocaleString("es-CO");
 }
 
-const initialFavoritos = [
-  { id: "f1", titulo: "Toyota Hilux 4x4 2022", marca: "Toyota", precio: 178_000_000, km: "24.500 km", ciudad: "Medellín" },
-  { id: "f2", titulo: "BMW 320i M Sport 2023", marca: "BMW", precio: 215_000_000, km: "8.500 km", ciudad: "Bogotá" },
-  { id: "f3", titulo: "Mazda CX-5 Grand Touring 2022", marca: "Mazda", precio: 127_000_000, km: "18.200 km", ciudad: "Cali" },
-  { id: "f4", titulo: "Honda Civic RS 2023", marca: "Honda", precio: 89_000_000, km: "6.200 km", ciudad: "Medellín" },
-];
+interface FavItem {
+  id: string;
+  titulo: string;
+  marca?: string;
+  precio: number;
+  km?: string;
+  ciudad?: string;
+}
 
 function EmptyState() {
   return (
@@ -47,7 +49,26 @@ function EmptyState() {
 }
 
 export default function FavoritosPage() {
-  const [favoritos, setFavoritos] = useState(initialFavoritos);
+  const [favoritos, setFavoritos] = useState<FavItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  // Cargar desde localStorage al montar
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("movel_favoritos");
+      const data: FavItem[] = raw ? JSON.parse(raw) : [];
+      setFavoritos(data);
+    } catch {
+      setFavoritos([]);
+    }
+    setLoaded(true);
+  }, []);
+
+  // Guardar en localStorage cada vez que cambian
+  useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem("movel_favoritos", JSON.stringify(favoritos));
+  }, [favoritos, loaded]);
 
   function quitar(id: string) {
     setFavoritos((prev) => prev.filter((f) => f.id !== id));
@@ -58,6 +79,18 @@ export default function FavoritosPage() {
   }
 
   const hayFavoritos = favoritos.length > 0;
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] pb-24">
+        <MovelPageHeader />
+        <div className="flex items-center justify-center py-20 text-[#637488] text-[14px]">
+          Cargando…
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-24">
@@ -124,9 +157,11 @@ export default function FavoritosPage() {
                         {item.titulo}
                       </p>
                       <p className="text-[#1978e5] text-[15px] font-black">{fmtCOP(item.precio)}</p>
-                      <p className="text-[#637488] text-[12px] mt-0.5">
-                        {item.km} · {item.ciudad}
-                      </p>
+                      {(item.km || item.ciudad) && (
+                        <p className="text-[#637488] text-[12px] mt-0.5">
+                          {[item.km, item.ciudad].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
                       <div className="flex gap-2 mt-2.5">
                         <Link
                           href={`/vehiculo/${item.id}`}

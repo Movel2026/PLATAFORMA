@@ -8,6 +8,7 @@ import {
   UploadSimple, X, CheckCircle, Image as ImageIcon,
   Car, FileText, CurrencyCircleDollar, ClipboardText,
   Warning, Info, Handshake, WhatsappLogo, SignIn,
+  Camera, Wrench, UsersThree, CalendarCheck,
 } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
 import { useUser } from "@/lib/hooks/useUser";

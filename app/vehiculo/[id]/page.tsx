@@ -73,11 +73,30 @@ export default function VehicleDetailPage({ params }: Props) {
     if (!vehicle) return;
     const next = !liked;
     setLiked(next);
-    const sb = getSupabaseBrowser();
-    if (sb) {
-      if (next) await sb.from("favoritos").upsert({ user_id: user.id, vehicle_id: vehicle.id });
-      else      await sb.from("favoritos").delete().eq("user_id", user.id).eq("vehicle_id", vehicle.id);
-    }
+
+    // Sincronizar con localStorage (siempre funciona)
+    try {
+      const raw = localStorage.getItem("movel_favoritos");
+      const favs: { id: string; titulo: string; precio: number; km?: string }[] = raw ? JSON.parse(raw) : [];
+      if (next) {
+        if (!favs.find((f) => f.id === vehicle.id)) {
+          favs.push({ id: vehicle.id, titulo: vehicle.titulo, precio: vehicle.precio, km: vehicle.kilometraje });
+        }
+      } else {
+        const idx = favs.findIndex((f) => f.id === vehicle.id);
+        if (idx !== -1) favs.splice(idx, 1);
+      }
+      localStorage.setItem("movel_favoritos", JSON.stringify(favs));
+    } catch { /* ignore */ }
+
+    // Intentar también en Supabase (si la tabla existe)
+    try {
+      const sb = getSupabaseBrowser();
+      if (sb) {
+        if (next) await sb.from("favoritos").upsert({ user_id: user.id, vehicle_id: vehicle.id });
+        else      await sb.from("favoritos").delete().eq("user_id", user.id).eq("vehicle_id", vehicle.id);
+      }
+    } catch { /* tabla aún no creada */ }
   }
 
   // Zoom lupa al mover el mouse sobre la foto principal

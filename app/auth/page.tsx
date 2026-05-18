@@ -124,30 +124,42 @@ function AuthContent() {
       if (err) {
         if (err.message.includes("already registered")) {
           setError("Ya existe una cuenta con este correo. Inicia sesión.");
+        } else if (err.message.includes("rate limit") || err.message.includes("email rate")) {
+          setError("Demasiados intentos. Espera unos minutos e intenta de nuevo.");
+        } else if (err.message.includes("invalid email") || err.message.includes("Unable to validate")) {
+          setError("El correo electrónico no es válido.");
+        } else if (err.message.includes("Password should")) {
+          setError("La contraseña debe tener al menos 8 caracteres.");
         } else {
           setError(err.message);
         }
         return;
       }
-      // Guardar metadata en tabla users (opcional, si la has creado)
+      // Guardar metadata en tabla usuarios
       try {
         if (data.user) {
           await fetch("/api/registro", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              id: data.user.id,
-              nombre: regNombre,
-              email: regEmail,
-              telefono: regTelefono,
-              ciudad: regCiudad,
-              origen: "web_signup",
+              name:   regNombre,
+              email:  regEmail,
+              phone:  regTelefono,
+              city:   regCiudad,
+              source: "web_signup",
             }),
           });
         }
       } catch { /* opcional */ }
 
-      setSuccess("¡Cuenta creada! Revisa tu correo para confirmar la dirección. Una vez confirmada podrás iniciar sesión.");
+      // Si ya hay sesión activa (verificación desactivada), redirigir directo
+      if (data.session) {
+        router.replace(returnUrl);
+        return;
+      }
+
+      // Si requiere verificación de correo
+      setSuccess("¡Cuenta creada! Revisa tu correo para confirmar tu dirección y luego inicia sesión.");
       setTab("login");
     } catch (e) {
       setError(String(e));

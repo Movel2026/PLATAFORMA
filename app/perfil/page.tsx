@@ -2,29 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   UserCircle, CarProfile, Heart, Bell, GearSix, SignOut,
   Star, MapPin, Pencil, WhatsappLogo, ArrowRight, Camera,
-  CurrencyDollar, Eye, PlusCircle,
+  CurrencyDollar, Eye, PlusCircle, SignIn,
 } from "@phosphor-icons/react";
 import MovelPageHeader from "@/components/MovelPageHeader";
 import BottomNav from "@/components/BottomNav";
+import { useUser } from "@/lib/hooks/useUser";
 
 function fmtCOP(n: number) {
   return "$ " + n.toLocaleString("es-CO");
 }
 
 type ProfileTab = "info" | "publicaciones" | "favoritos";
-
-interface UserData {
-  name: string;
-  email: string;
-  phone: string;
-  city: string;
-  joinDate: string;
-  avatar: string | null;
-}
 
 interface FavItem {
   id: string;
@@ -35,51 +28,45 @@ interface FavItem {
 }
 
 export default function PerfilPage() {
+  const { user, loading: userLoading, signOut, configured } = useUser();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ProfileTab>("info");
-  const [user, setUser] = useState<UserData | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [favoritos, setFavoritos] = useState<FavItem[]>([]);
 
+  // Leer favoritos de localStorage
   useEffect(() => {
-    const session = localStorage.getItem("movel_session");
-    const userData = localStorage.getItem("movel_user");
-
-    if (session) {
-      try {
-        const s = JSON.parse(session);
-        if (s.loggedIn) setIsLoggedIn(true);
-      } catch { /* ignore */ }
-    }
-
-    if (userData) {
-      try {
-        const u = JSON.parse(userData);
-        setUser({
-          name:     u.name     || "Usuario MOVEL",
-          email:    u.email    || "",
-          phone:    u.phone    || "",
-          city:     u.city     || "Colombia",
-          joinDate: u.joinDate || new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" }),
-          avatar:   u.avatar   || null,
-        });
-        setIsLoggedIn(true);
-      } catch { /* ignore */ }
-    }
-
-    // Leer favoritos reales del localStorage
     try {
       const favs = JSON.parse(localStorage.getItem("movel_favoritos") || "[]");
       setFavoritos(favs);
     } catch { /* ignore */ }
   }, []);
 
-  function handleLogout() {
-    localStorage.removeItem("movel_session");
-    window.location.href = "/auth";
+  async function handleLogout() {
+    await signOut();
+    router.push("/auth");
   }
 
-  /* ── not logged in ── */
-  if (!isLoggedIn) {
+  // Extraer datos del usuario desde Supabase auth metadata
+  const nombre   = user?.user_metadata?.nombre   || user?.email?.split("@")[0] || "Usuario MOVEL";
+  const email    = user?.email || "";
+  const telefono = user?.user_metadata?.telefono || "";
+  const ciudad   = user?.user_metadata?.ciudad   || "Colombia";
+  const joinDate = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("es-CO", { month: "long", year: "numeric" })
+    : new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" });
+
+  /* ── Cargando ── */
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: "linear-gradient(160deg, #08101e 0%, #0d1b2e 55%, #0f2040 100%)" }}>
+        <p className="text-white/40 text-[14px]">Cargando…</p>
+      </div>
+    );
+  }
+
+  /* ── No autenticado ── */
+  if (!user) {
     return (
       <div className="min-h-screen pb-24"
         style={{ background: "linear-gradient(160deg, #08101e 0%, #0d1b2e 55%, #0f2040 100%)" }}>
@@ -120,13 +107,9 @@ export default function PerfilPage() {
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
                 style={{ background: "linear-gradient(135deg, #1565c0, #42a5f5)" }}>
-                {user?.avatar ? (
-                  <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white text-[32px] font-black">
-                    {user?.name?.charAt(0)?.toUpperCase() ?? "?"}
-                  </span>
-                )}
+                <span className="text-white text-[32px] font-black">
+                  {nombre.charAt(0).toUpperCase()}
+                </span>
               </div>
               <button className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#1978e5] flex items-center justify-center border-2 border-[#08101e]">
                 <Camera size={12} color="white" weight="fill" />
@@ -136,19 +119,19 @@ export default function PerfilPage() {
             {/* info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <p className="text-white text-[18px] font-black truncate">{user?.name}</p>
+                <p className="text-white text-[18px] font-black truncate">{nombre}</p>
                 <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-[#1978e5]/15 text-[#60a5fa] border border-[#1978e5]/30">
                   ✅ Miembro
                 </span>
               </div>
-              <p className="text-white/45 text-[12px] mb-0.5">{user?.email}</p>
-              {user?.city && (
+              <p className="text-white/45 text-[12px] mb-0.5">{email}</p>
+              {ciudad && (
                 <div className="flex items-center gap-1 text-white/35 text-[12px]">
                   <MapPin size={12} />
-                  {user.city}
+                  {ciudad}
                 </div>
               )}
-              <p className="text-white/25 text-[11px] mt-1">Miembro desde {user?.joinDate}</p>
+              <p className="text-white/25 text-[11px] mt-1">Miembro desde {joinDate}</p>
             </div>
 
             <button className="shrink-0 w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
@@ -156,7 +139,7 @@ export default function PerfilPage() {
             </button>
           </div>
 
-          {/* stats row — datos reales */}
+          {/* stats row */}
           <div className="mt-5 grid grid-cols-2 gap-3">
             {[
               { label: "Favoritos guardados", value: favoritos.length.toString() },
@@ -198,10 +181,10 @@ export default function PerfilPage() {
               <div className="rounded-2xl overflow-hidden mb-4"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 {[
-                  { icon: Bell, label: "Notificaciones", sub: "Alertas de precios y mensajes", href: "/foro" },
-                  { icon: WhatsappLogo, label: "WhatsApp vinculado", sub: user?.phone || "No registrado", href: user?.phone ? `https://wa.me/${user.phone.replace(/\D/g,"")}` : "#" },
-                  { icon: CurrencyDollar, label: "Historial de pagos", sub: "Ver transacciones", href: "#" },
-                  { icon: Star, label: "Mis reseñas", sub: "Ver y gestionar reseñas", href: "#" },
+                  { icon: Bell,          label: "Notificaciones",   sub: "Alertas de precios y mensajes",       href: "/foro" },
+                  { icon: WhatsappLogo,  label: "WhatsApp vinculado", sub: telefono || "No registrado",         href: telefono ? `https://wa.me/57${telefono.replace(/\D/g,"")}` : "#" },
+                  { icon: CurrencyDollar, label: "Historial de pagos", sub: "Ver transacciones",                href: "#" },
+                  { icon: Star,          label: "Mis reseñas",       sub: "Ver y gestionar reseñas",            href: "#" },
                 ].map(({ icon: Icon, label, sub, href }, i, arr) => (
                   <Link key={label} href={href}
                     className={`flex items-center justify-between px-4 py-4 hover:bg-white/5 transition-colors ${
