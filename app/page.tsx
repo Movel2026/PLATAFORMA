@@ -37,14 +37,116 @@ const marcas = [
   "Hyundai", "Nissan", "Ford", "Honda", "Mitsubishi",
 ];
 
-// ── Carrocería icons (refinados, más grandes y limpios) ──────────────
+// ── Carrocería icons — siluetas laterales realistas ──────────────────
 
-function SedanIcon()     { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,25 L18,25 L24,13 L56,13 L62,21 L75,21 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M21,24 L25,15 L50,15 L50,24 Z" fill="currentColor" opacity="0.25"/><path d="M52,24 L52,15 L60,15 L64,21 L64,24 Z" fill="currentColor" opacity="0.25"/><circle cx="18" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
-function HatchbackIcon() { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,27 L18,27 L24,13 L52,13 L66,31 L75,31 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M21,26 L25,15 L50,15 L50,26 Z" fill="currentColor" opacity="0.25"/><circle cx="18" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
-function SuvIcon()       { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,18 L16,18 L22,8 L62,8 L66,14 L75,14 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M19,18 L23,10 L44,10 L44,18 Z" fill="currentColor" opacity="0.25"/><path d="M46,18 L46,10 L62,10 L64,14 L64,18 Z" fill="currentColor" opacity="0.25"/><circle cx="19" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="61" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
-function CamionetaIcon() { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,17 L18,17 L22,8 L64,8 L70,17 L75,20 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M19,17 L22,10 L44,10 L44,17 Z" fill="currentColor" opacity="0.25"/><circle cx="19" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
-function CoupeIcon()     { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,29 L20,29 L30,14 L58,13 L68,27 L75,27 L75,37 Z" fill="currentColor" opacity="0.9"/><path d="M24,28 L32,16 L54,15 L54,28 Z" fill="currentColor" opacity="0.25"/><circle cx="18" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="6.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
-function PickupIcon()    { return <svg viewBox="0 0 80 44" className="w-12 h-7"><path d="M5,37 L5,18 L15,18 L19,9 L42,9 L42,37 Z" fill="currentColor" opacity="0.9"/><path d="M17,18 L20,11 L40,11 L40,18 Z" fill="currentColor" opacity="0.25"/><path d="M42,26 L42,37 L75,37 L75,26 Z" fill="currentColor" opacity="0.9"/><line x1="42" y1="26" x2="75" y2="26" stroke="white" strokeWidth="1.4"/><circle cx="18" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/><circle cx="62" cy="37" r="7.5" fill="white" stroke="currentColor" strokeWidth="2.5"/></svg>; }
+function SuvIcon() {
+  return (
+    <svg viewBox="0 0 180 80" className="w-20 h-9">
+      <path d="M14,52 L164,52 L160,38 L150,30 L144,24 L128,18 L32,20 L22,28 L14,38 Z"
+        fill="currentColor" opacity="0.88"/>
+      <path d="M32,20 L32,38 L68,38 L68,18 Z" fill="white" opacity="0.35"/>
+      <path d="M72,18 L72,38 L118,38 L118,18 Z" fill="white" opacity="0.35"/>
+      <path d="M122,18 L128,18 L144,24 L150,30 L150,38 L122,38 Z" fill="white" opacity="0.35"/>
+      <circle cx="42" cy="64" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="42" cy="64" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="148" cy="64" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="148" cy="64" r="5"  fill="currentColor" opacity="0.4"/>
+    </svg>
+  );
+}
+
+function SedanIcon() {
+  return (
+    <svg viewBox="0 0 180 80" className="w-20 h-9">
+      {/* 3-box: bumper → trunk step → C-pillar → roof → A-pillar → hood → bumper */}
+      <path d="M14,52 L14,44 L20,44 L20,32 L40,32 L46,24 L52,18 L122,18 L130,22 L142,28 L150,34 L160,40 L164,44 L164,52 Z"
+        fill="currentColor" opacity="0.88"/>
+      <path d="M52,18 L52,30 L84,30 L84,18 Z" fill="white" opacity="0.35"/>
+      <path d="M88,18 L88,30 L120,30 L120,18 Z" fill="white" opacity="0.35"/>
+      <path d="M124,18 L130,22 L142,28 L142,30 L124,30 Z" fill="white" opacity="0.35"/>
+      <circle cx="40" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="40" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="148" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+    </svg>
+  );
+}
+
+function HatchbackIcon() {
+  return (
+    <svg viewBox="0 0 180 80" className="w-20 h-9">
+      {/* 2-box: rear slopes directly from roofline down to bumper */}
+      <path d="M14,52 L14,44 L20,36 L30,26 L44,18 L52,16 L122,16 L130,20 L142,28 L150,34 L160,40 L164,44 L164,52 Z"
+        fill="currentColor" opacity="0.88"/>
+      <path d="M52,16 L52,30 L84,30 L84,16 Z" fill="white" opacity="0.35"/>
+      <path d="M88,16 L88,30 L120,30 L120,16 Z" fill="white" opacity="0.35"/>
+      <path d="M124,16 L130,20 L142,28 L142,30 L124,30 Z" fill="white" opacity="0.35"/>
+      <circle cx="38" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="38" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="148" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+    </svg>
+  );
+}
+
+function CamionetaIcon() {
+  return (
+    <svg viewBox="0 0 180 80" className="w-20 h-9">
+      {/* Grande y alta — más cuadrada que el SUV, carrocería tipo 4x4 */}
+      <path d="M12,52 L12,36 L18,24 L26,16 L136,14 L150,20 L156,28 L163,36 L166,44 L166,52 Z"
+        fill="currentColor" opacity="0.88"/>
+      <path d="M26,16 L26,36 L64,36 L64,14 Z" fill="white" opacity="0.35"/>
+      <path d="M68,14 L68,36 L120,36 L120,14 Z" fill="white" opacity="0.35"/>
+      <path d="M124,14 L136,14 L150,20 L156,28 L156,36 L124,36 Z" fill="white" opacity="0.35"/>
+      {/* Rack de techo */}
+      <line x1="30" y1="14" x2="132" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
+      <line x1="60" y1="10" x2="60" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
+      <line x1="90" y1="10" x2="90" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
+      <line x1="120" y1="10" x2="120" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
+      <circle cx="44" cy="64" r="15" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="44" cy="64" r="5.5" fill="currentColor" opacity="0.4"/>
+      <circle cx="150" cy="64" r="15" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="150" cy="64" r="5.5" fill="currentColor" opacity="0.4"/>
+    </svg>
+  );
+}
+
+function CoupeIcon() {
+  return (
+    <svg viewBox="0 0 180 80" className="w-20 h-9">
+      {/* Silueta baja, cofre largo, techo inclinado que cae hacia la cola */}
+      <path d="M14,52 L14,46 L24,44 L32,36 L48,24 L58,18 L106,16 L128,20 L146,28 L158,36 L166,42 L168,46 L168,52 Z"
+        fill="currentColor" opacity="0.88"/>
+      <path d="M58,18 L58,32 L88,32 L88,16 Z" fill="white" opacity="0.35"/>
+      <path d="M92,16 L92,32 L122,32 L122,18 Z" fill="white" opacity="0.35"/>
+      <path d="M126,20 L128,20 L146,28 L146,32 L126,32 Z" fill="white" opacity="0.35"/>
+      <circle cx="40" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="40" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="152" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="152" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+    </svg>
+  );
+}
+
+function PickupIcon() {
+  return (
+    <svg viewBox="0 0 180 80" className="w-20 h-9">
+      {/* Cabina */}
+      <path d="M88,52 L88,36 L94,26 L102,20 L130,18 L140,22 L150,30 L156,36 L162,42 L164,46 L164,52 Z"
+        fill="currentColor" opacity="0.88"/>
+      <path d="M102,20 L102,36 L124,36 L124,18 Z" fill="white" opacity="0.35"/>
+      <path d="M128,18 L130,18 L140,22 L150,30 L150,36 L128,36 Z" fill="white" opacity="0.35"/>
+      {/* Platón / bed */}
+      <path d="M14,52 L14,42 L88,42 L88,52 Z" fill="currentColor" opacity="0.88"/>
+      {/* Riel del platón */}
+      <line x1="14" y1="42" x2="88" y2="42" stroke="currentColor" strokeWidth="1.5" opacity="0.6"/>
+      <circle cx="36" cy="63" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="36" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="148" cy="63" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+    </svg>
+  );
+}
 
 const tipos = [
   { label: "SUV",       icon: SuvIcon },
@@ -487,8 +589,8 @@ export default function HomePage() {
                 onMouseMove={onGlowMove}
                 className={`reveal reveal-delay-${(i % 5) + 1} cursor-glow cursor-glow-soft group flex items-center gap-3 p-3.5 rounded-xl bg-white border border-[#e5e7eb] hover:border-movel-300 hover:shadow-movel transition-all`}
               >
-                <div className="text-mute group-hover:text-movel-900 transition-colors flex-shrink-0 w-9 h-9 flex items-center justify-center">
-                  <BrandIcon name={m} size={32} />
+                <div className="text-mute group-hover:text-movel-900 transition-colors flex-shrink-0 w-10 h-10 flex items-center justify-center">
+                  <BrandIcon name={m} size={36} />
                 </div>
                 <span className="text-[14px] font-bold text-ink group-hover:text-movel-900 transition-colors">
                   {m}

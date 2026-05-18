@@ -1,12 +1,7 @@
 /**
- * BrandIcons — Iconos geométricos abstractos para marcas automotrices.
- *
- * Son representaciones estilizadas (no logos oficiales) diseñadas para
- * funcionar como marcadores visuales reconocibles en listados.
- *
- * Todos renderizan en viewBox 64×64 con stroke `currentColor`.
+ * BrandIcons — Representaciones SVG de logos de marcas automotrices.
+ * Todas las marcas usan sus formas emblemáticas reconocibles.
  */
-
 import React from "react";
 
 interface BrandIconProps {
@@ -14,141 +9,127 @@ interface BrandIconProps {
   size?: number;
 }
 
-const baseAttrs = (size = 32): React.SVGAttributes<SVGElement> => ({
-  width: size,
-  height: size,
-  viewBox: "0 0 64 64",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 2.8,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-});
-
-// ── Toyota ─ Oval con detalle interno (3 elipses) ───────────────────
-export function ToyotaIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Toyota — Tres elipses superpuestas formando la T ───────────────────
+export function ToyotaIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <ellipse cx="32" cy="32" rx="26" ry="18" />
-      <ellipse cx="32" cy="32" rx="8" ry="16" />
-      <ellipse cx="32" cy="32" rx="18" ry="6" />
+    <svg width={size} height={size} viewBox="0 0 100 65" fill="none" stroke="currentColor" className={className}>
+      <ellipse cx="50" cy="33" rx="47" ry="28" strokeWidth="5.5" />
+      <ellipse cx="50" cy="37" rx="15" ry="26" strokeWidth="5" />
+      <ellipse cx="50" cy="24" rx="30" ry="11" strokeWidth="5" />
     </svg>
   );
 }
 
-// ── Mazda ─ Oval con M estilizada ───────────────────────────────────
-export function MazdaIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Mazda — Alas en V en oval ──────────────────────────────────────────
+export function MazdaIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <ellipse cx="32" cy="32" rx="26" ry="19" />
-      <path d="M18 41 Q24 22 32 32 Q40 22 46 41" />
+    <svg width={size} height={size} viewBox="0 0 100 60" fill="none" stroke="currentColor" strokeLinecap="round" className={className}>
+      <ellipse cx="50" cy="30" rx="47" ry="26" strokeWidth="4" />
+      <path d="M16,46 C22,20 38,18 50,34 C62,18 78,20 84,46" strokeWidth="5" />
+      <path d="M28,46 C32,30 40,26 50,38 C60,26 68,30 72,46" strokeWidth="4" />
     </svg>
   );
 }
 
-// ── Chevrolet ─ Bowtie / cruz estilizada ────────────────────────────
-export function ChevroletIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Chevrolet — Corbata / Bowtie ───────────────────────────────────────
+export function ChevroletIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className} fill="currentColor" stroke="none">
-      <path d="M4 28 L60 28 L52 36 L12 36 Z" />
-      <path d="M22 22 L42 22 L38 28 L26 28 Z" />
-      <path d="M22 42 L42 42 L38 36 L26 36 Z" />
+    <svg width={size} height={size} viewBox="0 0 100 42" fill="currentColor" stroke="none" className={className}>
+      {/* Left arm — angled right edge */}
+      <path d="M2,8 L44,8 L38,34 L2,34 Z" />
+      {/* Right arm — angled left edge */}
+      <path d="M56,8 L98,8 L98,34 L62,34 Z" />
     </svg>
   );
 }
 
-// ── Kia ─ Wordmark italic en oval ───────────────────────────────────
-export function KiaIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Kia — Letras KIA en bloque bold ───────────────────────────────────
+export function KiaIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <ellipse cx="32" cy="32" rx="28" ry="14" />
-      <text
-        x="32" y="40"
-        fontFamily="Arial Black, Archivo Black, sans-serif"
-        fontSize="16"
-        fontWeight="900"
-        fontStyle="italic"
-        textAnchor="middle"
-        fill="currentColor"
-        stroke="none"
-        letterSpacing="0.5"
-      >KIA</text>
+    <svg width={size} height={size} viewBox="0 0 96 44" fill="currentColor" stroke="none" className={className}>
+      {/* K */}
+      <path d="M4,6 L4,38 L13,38 L13,26 L24,38 L35,38 L21,22 L34,6 L23,6 L13,20 L13,6 Z" />
+      {/* I */}
+      <path d="M40,6 L40,38 L49,38 L49,6 Z" />
+      {/* A */}
+      <path d="M63,6 L51,38 L61,38 L64,30 L78,30 L81,38 L91,38 L79,6 Z M67,23 L71,11 L75,23 Z" />
     </svg>
   );
 }
 
-// ── Renault ─ Diamante / lozange con interior ───────────────────────
-export function RenaultIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Renault — Doble diamante ───────────────────────────────────────────
+export function RenaultIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <path d="M32 6 L54 32 L32 58 L10 32 Z" />
-      <path d="M32 14 L46 32 L32 50 L18 32 Z" />
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="4" strokeLinejoin="miter" className={className}>
+      <path d="M32,4 L58,32 L32,60 L6,32 Z" />
+      <path d="M32,14 L50,32 L32,50 L14,32 Z" />
     </svg>
   );
 }
 
-// ── Hyundai ─ H italic en oval ──────────────────────────────────────
-export function HyundaiIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Hyundai — H cursiva en oval ────────────────────────────────────────
+export function HyundaiIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <ellipse cx="32" cy="32" rx="28" ry="14" />
-      <path d="M22 24 L18 40 M42 24 L46 40 M21 32 L43 32" strokeWidth="3" />
+    <svg width={size} height={size} viewBox="0 0 100 65" fill="none" stroke="currentColor" strokeLinecap="round" className={className}>
+      <ellipse cx="50" cy="33" rx="47" ry="28" strokeWidth="4.5" />
+      {/* Left vertical — italic lean */}
+      <line x1="30" y1="20" x2="24" y2="46" strokeWidth="6" />
+      {/* Right vertical */}
+      <line x1="70" y1="20" x2="64" y2="46" strokeWidth="6" />
+      {/* Curved crossbar */}
+      <path d="M30,33 Q50,27 64,33" strokeWidth="5.5" />
     </svg>
   );
 }
 
-// ── Nissan ─ Circle con barra horizontal ────────────────────────────
-export function NissanIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Nissan — Círculo con banda horizontal ─────────────────────────────
+export function NissanIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <circle cx="32" cy="32" r="20" />
-      <rect x="6" y="28" width="52" height="8" fill="currentColor" stroke="none" />
-      <rect x="10" y="30" width="44" height="4" fill="white" stroke="none" />
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" stroke="currentColor" className={className}>
+      <circle cx="50" cy="50" r="46" strokeWidth="4.5" />
+      {/* Wide horizontal band */}
+      <rect x="4" y="40" width="92" height="20" fill="currentColor" stroke="none" />
+      {/* "N" letters hint inside band */}
+      <text x="50" y="55" fontFamily="Arial, sans-serif" fontSize="13" fontWeight="700" textAnchor="middle" fill="white" stroke="none" letterSpacing="1">NISSAN</text>
     </svg>
   );
 }
 
-// ── Ford ─ Oval clásico ─────────────────────────────────────────────
-export function FordIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Ford — Óvalo con script ────────────────────────────────────────────
+export function FordIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <ellipse cx="32" cy="32" rx="28" ry="14" strokeWidth="3" />
-      <text
-        x="32" y="38"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontSize="15"
-        fontWeight="700"
-        fontStyle="italic"
-        textAnchor="middle"
-        fill="currentColor"
-        stroke="none"
-      >Ford</text>
+    <svg width={size} height={size} viewBox="0 0 110 55" fill="none" stroke="currentColor" strokeWidth="3.5" className={className}>
+      <ellipse cx="55" cy="28" rx="52" ry="24" />
+      <text x="55" y="36" fontFamily="Georgia, 'Times New Roman', serif" fontSize="24" fontWeight="700" fontStyle="italic" textAnchor="middle" fill="currentColor" stroke="none">Ford</text>
     </svg>
   );
 }
 
-// ── Honda ─ H en marco geométrico ───────────────────────────────────
-export function HondaIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Honda — Marca H con alas ───────────────────────────────────────────
+export function HondaIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className}>
-      <rect x="6" y="14" width="52" height="36" rx="4" />
-      <path d="M20 22 L20 42 M44 22 L44 42 M20 32 L44 32" strokeWidth="4" />
+    <svg width={size} height={size} viewBox="0 0 80 64" fill="currentColor" stroke="none" className={className}>
+      {/* Left column */}
+      <path d="M8,10 L20,10 L20,28 L60,28 L60,10 L72,10 L72,54 L60,54 L60,36 L20,36 L20,54 L8,54 Z" />
     </svg>
   );
 }
 
-// ── Mitsubishi ─ 3 diamantes ────────────────────────────────────────
-export function MitsubishiIcon({ className = "", size = 32 }: BrandIconProps) {
+// ── Mitsubishi — Tres diamantes ────────────────────────────────────────
+export function MitsubishiIcon({ className = "", size = 36 }: BrandIconProps) {
   return (
-    <svg {...baseAttrs(size)} className={className} fill="currentColor" stroke="none">
-      <path d="M32 8 L40 22 L24 22 Z" />
-      <path d="M14 36 L22 50 L6 50 Z" />
-      <path d="M50 36 L58 50 L42 50 Z" />
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="currentColor" stroke="none" className={className}>
+      {/* Top diamond */}
+      <path d="M32,4 L43,21 L32,21 L21,21 Z" />
+      {/* Bottom-left diamond */}
+      <path d="M19,24 L8,42 L19,42 L30,24 Z" />
+      {/* Bottom-right diamond */}
+      <path d="M45,24 L56,42 L45,42 L34,24 Z" />
     </svg>
   );
 }
 
-// ── Map ────────────────────────────────────────────────────────────
+// ── Map ────────────────────────────────────────────────────────────────
 const BRAND_ICON_MAP: Record<string, React.FC<BrandIconProps>> = {
   toyota:     ToyotaIcon,
   mazda:      MazdaIcon,
@@ -166,20 +147,13 @@ interface BrandIconMapProps extends BrandIconProps {
   name: string;
 }
 
-export function BrandIcon({ name, className = "", size = 32 }: BrandIconMapProps) {
+export function BrandIcon({ name, className = "", size = 36 }: BrandIconMapProps) {
   const Icon = BRAND_ICON_MAP[name.toLowerCase()];
   if (!Icon) {
     return (
       <svg width={size} height={size} viewBox="0 0 64 64" className={className}>
-        <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" strokeWidth="2.8" />
-        <text
-          x="32" y="42"
-          fontFamily="Archivo Black, Arial Black, sans-serif"
-          fontSize="24"
-          fontWeight="900"
-          textAnchor="middle"
-          fill="currentColor"
-        >{name.charAt(0).toUpperCase()}</text>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="3.5" />
+        <text x="32" y="42" fontFamily="Archivo Black, Arial Black, sans-serif" fontSize="26" fontWeight="900" textAnchor="middle" fill="currentColor">{name.charAt(0).toUpperCase()}</text>
       </svg>
     );
   }
