@@ -17,23 +17,14 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   const [liked, setLiked] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
-  // Cargar favoritos: si hay sesión, desde Supabase; si no, desde localStorage
+  // Cargar estado del favorito desde localStorage (fuente de verdad)
   useEffect(() => {
-    if (user) {
-      const sb = getSupabaseBrowser();
-      if (sb) {
-        sb.from("favoritos")
-          .select("vehicle_id")
-          .eq("user_id", user.id)
-          .eq("vehicle_id", vehicle.id)
-          .maybeSingle()
-          .then(({ data }) => setLiked(!!data));
-      }
-    } else if (typeof window !== "undefined") {
-      const favs = JSON.parse(localStorage.getItem("movel_favs") || "[]");
-      setLiked(favs.includes(vehicle.id));
-    }
-  }, [vehicle.id, user]);
+    if (typeof window === "undefined") return;
+    try {
+      const favs = JSON.parse(localStorage.getItem("movel_favoritos") || "[]");
+      setLiked(favs.some((f: { id: string }) => f.id === vehicle.id));
+    } catch { /* ignore */ }
+  }, [vehicle.id]);
 
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -44,15 +35,30 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     }
     const next = !liked;
     setLiked(next);
-    // Persistir en Supabase
-    const sb = getSupabaseBrowser();
-    if (sb) {
+
+    // Persistir en localStorage con datos completos del vehículo
+    try {
+      const raw = localStorage.getItem("movel_favoritos");
+      const favs: { id: string; titulo: string; precio: number; km?: string }[] = raw ? JSON.parse(raw) : [];
       if (next) {
-        await sb.from("favoritos").upsert({ user_id: user.id, vehicle_id: vehicle.id });
+        if (!favs.find((f) => f.id === vehicle.id)) {
+          favs.push({ id: vehicle.id, titulo: vehicle.titulo, precio: vehicle.precio, km: vehicle.kilometraje });
+        }
       } else {
-        await sb.from("favoritos").delete().eq("user_id", user.id).eq("vehicle_id", vehicle.id);
+        const idx = favs.findIndex((f) => f.id === vehicle.id);
+        if (idx !== -1) favs.splice(idx, 1);
       }
-    }
+      localStorage.setItem("movel_favoritos", JSON.stringify(favs));
+    } catch { /* ignore */ }
+
+    // Intentar también en Supabase (best-effort, si la tabla existe)
+    try {
+      const sb = getSupabaseBrowser();
+      if (sb) {
+        if (next) await sb.from("favoritos").upsert({ user_id: user.id, vehicle_id: vehicle.id });
+        else      await sb.from("favoritos").delete().eq("user_id", user.id).eq("vehicle_id", vehicle.id);
+      }
+    } catch { /* tabla aún no creada */ }
   };
 
   // Cursor glow handler
@@ -108,11 +114,6 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           />
         </button>
 
-        {/* Badge tipo bottom-right */}
-        <div className="absolute bottom-3 right-3 bg-movel-gradient text-white rounded-full px-2.5 py-1 z-[3] pointer-events-none shadow-sm">
-          <span className="text-[11px] font-bold">{vehicle.tipo}</span>
-        </div>
-
         {/* Fotos counter bottom-left */}
         {vehicle.fotos.length > 1 && (
           <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/60 text-white rounded-full px-2 py-1 z-[3] pointer-events-none">
@@ -136,17 +137,24 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             )}
           </div>
 
-          {/* Estrellas */}
-          <div className="flex gap-0.5 mb-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                size={12}
-                weight={i < vehicle.rating ? "fill" : "regular"}
-                color={i < vehicle.rating ? "#FF6B3D" : "#dce0e5"}
-              />
-            ))}
-            <span className="text-[11px] text-mute ml-1">({vehicle.rating}.0)</span>
+          {/* Estrellas + tipo de carrocería */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  size={12}
+                  weight={i < vehicle.rating ? "fill" : "regular"}
+                  color={i < vehicle.rating ? "#FF6B3D" : "#dce0e5"}
+                />
+              ))}
+              <span className="text-[11px] text-mute ml-1">({vehicle.rating}.0)</span>
+            </div>
+            {vehicle.tipo && (
+              <span className="bg-movel-gradient text-white rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-sm">
+                {vehicle.tipo}
+              </span>
+            )}
           </div>
 
           {/* Specs chips */}

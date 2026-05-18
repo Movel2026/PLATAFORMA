@@ -41,6 +41,7 @@ function BuscarContent() {
   // Estado inicial leído de la URL (carrocerías y marcas pueden venir desde la home)
   const [search, setSearch]                       = useState(params.get("q") || "");
   const [selectedMarca, setSelectedMarca]         = useState(params.get("marca") || "");
+  const [selectedModelo, setSelectedModelo]       = useState(params.get("modelo") || "");
   const [selectedTipo, setSelectedTipo]           = useState(params.get("tipo") || "");
   const [selectedTransmision, setSelectedTransmision] = useState(params.get("transmision") || "");
   const [selectedCiudad, setSelectedCiudad]       = useState(params.get("ciudad") || "");
@@ -112,6 +113,7 @@ function BuscarContent() {
     const haystack = `${v.titulo} ${v.marca} ${v.modelo} ${v.tipo} ${v.ciudad} ${v.año}`;
     const matchSearch = !search || fuzzyMatch(search, haystack);
     const matchMarca       = !selectedMarca || v.marca === selectedMarca;
+    const matchModelo      = !selectedModelo || v.modelo === selectedModelo;
     const matchTipo        = !selectedTipo  || v.tipo === selectedTipo;
     const matchTransmision = !selectedTransmision || v.transmision === selectedTransmision;
     const matchCiudad      = !selectedCiudad || v.ciudad === selectedCiudad;
@@ -125,14 +127,30 @@ function BuscarContent() {
     const matchKmMin       = !kmMinN || km >= kmMinN;
     const matchKmMax       = !kmMaxN || km <= kmMaxN;
     return (
-      matchSearch && matchMarca && matchTipo && matchTransmision && matchCiudad &&
+      matchSearch && matchMarca && matchModelo && matchTipo && matchTransmision && matchCiudad &&
       matchCombustible && matchDigitos &&
       matchPrecioMin && matchPrecioMax && matchAno && matchKmMin && matchKmMax
     );
   }));
 
+  // Modelos disponibles según marca seleccionada (o todos si no hay marca)
+  const modelosDisponibles = Array.from(new Set(
+    vehicles
+      .filter((v) => !selectedMarca || v.marca === selectedMarca)
+      .map((v) => v.modelo)
+      .filter(Boolean)
+  )).sort();
+
+  // Si la marca cambia y el modelo seleccionado ya no aplica, limpiarlo
+  useEffect(() => {
+    if (selectedModelo && !modelosDisponibles.includes(selectedModelo)) {
+      setSelectedModelo("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMarca]);
+
   function clearFilters() {
-    setSelectedMarca(""); setSelectedTipo(""); setSelectedTransmision("");
+    setSelectedMarca(""); setSelectedModelo(""); setSelectedTipo(""); setSelectedTransmision("");
     setSelectedCiudad(""); setSelectedCombustible([]); setSelectedDigitos([]);
     setPrecioMin(""); setPrecioMax("");
     setAnoMin(""); setAnoMax(""); setAnoUnico("");
@@ -145,7 +163,7 @@ function BuscarContent() {
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 
   const hasFilters = !!(
-    selectedMarca || selectedTipo || selectedTransmision || selectedCiudad ||
+    selectedMarca || selectedModelo || selectedTipo || selectedTransmision || selectedCiudad ||
     selectedCombustible.length || selectedDigitos.length ||
     precioMin || precioMax || anoMin || anoMax || anoUnico || kmMin || kmMax
   );
@@ -243,6 +261,23 @@ function BuscarContent() {
                   ))}
                 </div>
               </div>
+
+              {/* Modelo (dinámico según marca + publicaciones reales) */}
+              {modelosDisponibles.length > 0 && (
+                <div>
+                  <p className="text-[12px] font-bold text-ink uppercase tracking-[0.1em] mb-2.5">Modelo</p>
+                  <select
+                    value={selectedModelo}
+                    onChange={(e) => setSelectedModelo(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-[#dce0e5] text-[13px] text-ink bg-white focus:outline-none focus:border-movel-900"
+                  >
+                    <option value="">Todos los modelos</option>
+                    {modelosDisponibles.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Tipo */}
               <div>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Car, Clock, CheckCircle, PauseCircle,
   Trash, Eye, SignIn, Plus, WhatsappLogo, CurrencyCircleDollar,
+  PencilSimple, X, UploadSimple, FloppyDisk,
 } from "@phosphor-icons/react";
 import { useUser } from "@/lib/hooks/useUser";
 import BottomNav from "@/components/BottomNav";
@@ -46,10 +46,16 @@ const diasDesde = (iso: string) => {
 
 export default function MisPublicacionesPage() {
   const { user, loading: userLoading, configured } = useUser();
-  const router = useRouter();
   const [publicaciones, setPublicaciones] = useState<MiPublicacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null);
+  const [editing, setEditing] = useState<MiPublicacion | null>(null);
+
+  function showToast(msg: string, type: "ok" | "err" = "ok") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  }
 
   useEffect(() => {
     if (userLoading) return;
@@ -63,6 +69,13 @@ export default function MisPublicacionesPage() {
       .finally(() => setLoading(false));
   }, [user, userLoading]);
 
+  const ESTADO_MSG: Record<string, string> = {
+    activo:    "Publicación reactivada",
+    pausado:   "Publicación pausada",
+    vendido:   "¡Marcada como vendida! Notificamos al equipo MOVEL",
+    eliminado: "Publicación eliminada",
+  };
+
   async function cambiarEstado(id: string, estado: string) {
     if (!user) return;
     setUpdatingId(id);
@@ -74,14 +87,56 @@ export default function MisPublicacionesPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        setPublicaciones((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, estado } : p))
-        );
+        if (estado === "eliminado") {
+          setPublicaciones((prev) => prev.filter((p) => p.id !== id));
+        } else {
+          setPublicaciones((prev) =>
+            prev.map((p) => (p.id === id ? { ...p, estado } : p))
+          );
+        }
+        showToast(ESTADO_MSG[estado] || "Actualizado correctamente", "ok");
       } else {
-        alert("No se pudo actualizar: " + (data.error || ""));
+        showToast("No se pudo actualizar: " + (data.error || ""), "err");
       }
     } catch (err) {
-      alert("Error: " + err);
+      showToast("Error: " + String(err), "err");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function guardarEdicion(payload: { precio?: number; fotos_urls?: string[] }) {
+    if (!user || !editing) return;
+    setUpdatingId(editing.id);
+    try {
+      const res = await fetch("/api/mis-publicaciones", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editing.id,
+          email: user.email,
+          userId: user.id,
+          ...payload,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setPublicaciones((prev) =>
+          prev.map((p) => (p.id === editing.id
+            ? {
+                ...p,
+                ...(payload.precio !== undefined ? { precio: payload.precio } : {}),
+                ...(payload.fotos_urls ? { fotos_urls: payload.fotos_urls, total_fotos: payload.fotos_urls.length } : {}),
+              }
+            : p))
+        );
+        showToast("Cambios guardados. Equipo MOVEL notificado", "ok");
+        setEditing(null);
+      } else {
+        showToast("Error: " + (data.error || ""), "err");
+      }
+    } catch (err) {
+      showToast("Error: " + String(err), "err");
     } finally {
       setUpdatingId(null);
     }
@@ -230,6 +285,15 @@ export default function MisPublicacionesPage() {
                             <Eye size={13} /> Ver en el sitio
                           </Link>
                         )}
+                        {p.estado !== "eliminado" && p.estado !== "vendido" && (
+                          <button
+                            onClick={() => setEditing(p)}
+                            disabled={isUpdating}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-bold bg-movel-50 text-movel-900 rounded-lg hover:bg-movel-100 transition-colors disabled:opacity-50"
+                          >
+                            <PencilSimple size={13} weight="fill" /> Editar
+                          </button>
+                        )}
                         {p.estado === "activo" && (
                           <button
                             onClick={() => cambiarEstado(p.id, "vendido")}
@@ -293,7 +357,187 @@ export default function MisPublicacionesPage() {
         )}
       </div>
 
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-2xl shadow-2xl text-[13px] font-bold flex items-center gap-2 ${
+          toast.type === "ok" ? "bg-green-600 text-white" : "bg-red-600 text-white"
+        }`}>
+          {toast.type === "ok" ? <CheckCircle size={18} weight="fill" /> : <X size={18} weight="bold" />}
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Modal de edición */}
+      {editing && (
+        <EditModal
+          publicacion={editing}
+          onClose={() => setEditing(null)}
+          onSave={guardarEdicion}
+          saving={updatingId === editing.id}
+        />
+      )}
+
       <BottomNav />
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Modal de edición: cambiar precio y agregar/quitar fotos
+ * ────────────────────────────────────────────────────────────────────── */
+function EditModal({
+  publicacion,
+  onClose,
+  onSave,
+  saving,
+}: {
+  publicacion: MiPublicacion;
+  onClose: () => void;
+  onSave: (p: { precio?: number; fotos_urls?: string[] }) => void;
+  saving: boolean;
+}) {
+  const [precio, setPrecio] = useState<string>(String(publicacion.precio || ""));
+  const [fotos, setFotos] = useState<string[]>(Array.isArray(publicacion.fotos_urls) ? publicacion.fotos_urls : []);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const nuevas: string[] = [];
+    for (const file of Array.from(files)) {
+      if (fotos.length + nuevas.length >= 20) break;
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", `pub_${publicacion.id}`);
+      try {
+        const r = await fetch("/api/upload-foto", { method: "POST", body: fd });
+        const d = await r.json();
+        if (d.ok && d.url) nuevas.push(d.url);
+      } catch { /* ignore */ }
+    }
+    setFotos((prev) => [...prev, ...nuevas]);
+    setUploading(false);
+  }
+
+  function quitarFoto(idx: number) {
+    setFotos((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function handleSubmit() {
+    const precioNum = Number(precio.replace(/\D/g, ""));
+    const payload: { precio?: number; fotos_urls?: string[] } = {};
+    if (precioNum > 0 && precioNum !== publicacion.precio) payload.precio = precioNum;
+    if (JSON.stringify(fotos) !== JSON.stringify(publicacion.fotos_urls || [])) payload.fotos_urls = fotos;
+    if (Object.keys(payload).length === 0) {
+      onClose();
+      return;
+    }
+    onSave(payload);
+  }
+
+  const precioFmt = precio ? new Intl.NumberFormat("es-CO").format(Number(precio.replace(/\D/g, ""))) : "";
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] px-4">
+      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-[#dce0e5] p-5 flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-[22px] text-movel-900">Editar publicación</h2>
+            <p className="text-[12px] text-mute mt-0.5">{publicacion.marca} {publicacion.modelo} {publicacion.ano}</p>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-cloud transition-colors">
+            <X size={20} color="#7A8195" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-6">
+          {/* Precio */}
+          <div>
+            <label className="block text-[13px] font-bold text-ink mb-2">Precio (COP)</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-mute font-bold">$</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={precioFmt}
+                onChange={(e) => setPrecio(e.target.value)}
+                className="w-full pl-8 pr-4 py-3 bg-cloud rounded-xl text-[16px] font-bold text-ink outline-none focus:bg-white focus:ring-2 focus:ring-movel-900"
+                placeholder="0"
+              />
+            </div>
+            <p className="text-[11px] text-mute mt-1.5">Precio actual: $ {publicacion.precio.toLocaleString("es-CO")}</p>
+          </div>
+
+          {/* Fotos */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[13px] font-bold text-ink">Fotos ({fotos.length}/20)</label>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || fotos.length >= 20}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-movel-50 text-movel-900 rounded-lg text-[12px] font-bold hover:bg-movel-100 transition-colors disabled:opacity-50"
+              >
+                <UploadSimple size={14} weight="bold" />
+                {uploading ? "Subiendo..." : "Agregar fotos"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+            </div>
+
+            {fotos.length === 0 ? (
+              <div className="border-2 border-dashed border-[#dce0e5] rounded-xl p-8 text-center text-mute text-[13px]">
+                Sin fotos. Agrega al menos 3 para que tu publicación destaque.
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {fotos.map((url, i) => (
+                  <div key={`${url}-${i}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-[#dce0e5] group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                    {i === 0 && (
+                      <span className="absolute top-1 left-1 bg-movel-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">Principal</span>
+                    )}
+                    <button
+                      onClick={() => quitarFoto(i)}
+                      className="absolute top-1 right-1 w-6 h-6 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} color="white" weight="bold" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Aviso */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-[12px] text-blue-800">
+            ℹ️ Los cambios se reflejarán en el sitio público al instante y el equipo MOVEL será notificado.
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-white border-t border-[#dce0e5] p-4 flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 border border-[#dce0e5] text-mute font-bold rounded-xl hover:bg-cloud transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving || uploading}
+            className="flex-1 btn-primary !rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            <FloppyDisk size={17} weight="fill" />
+            {saving ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
