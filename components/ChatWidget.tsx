@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { WhatsappLogo, X, PaperPlaneTilt, Robot, CaretDown } from "@phosphor-icons/react";
+import { MovelLogo } from "@/components/MovelLogo";
 
 interface Message {
   role: "user" | "assistant";
@@ -118,7 +119,7 @@ export default function ChatWidget() {
                 <Robot size={20} weight="fill" />
               </div>
               <div>
-                <p className="text-[14px] font-black">MOVEL IA</p>
+                <p className="text-[14px] font-black flex items-center gap-1.5"><MovelLogo variant="white" size={18} animate={false} className="inline-block" /> IA</p>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-green-400 rounded-full" />
                   <span className="text-[11px] text-white/70">Asesor virtual · En línea</span>

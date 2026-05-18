@@ -397,7 +397,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 reveal">
             <p className="text-[11px] font-bold text-movel-600 uppercase tracking-[0.15em] mb-3">Simple y transparente</p>
-            <h2 className="font-display text-[28px] md:text-[40px] gradient-text mb-3">¿Cómo funciona MOVEL?</h2>
+            <h2 className="font-display text-[28px] md:text-[40px] gradient-text mb-3 flex items-center justify-center gap-2 flex-wrap">
+              ¿Cómo funciona{" "}
+              <MovelLogo variant="primary" size={32} animate={false} className="inline-block" />
+              ?
+            </h2>
             <p className="text-[15px] md:text-[16px] text-mute max-w-xl mx-auto">
               En 3 pasos tienes tu carro. Sin intermediarios, sin sorpresas.
             </p>
@@ -544,7 +548,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 reveal">
             <p className="text-[11px] font-bold text-movel-600 uppercase tracking-[0.15em] mb-3">Nuestra diferencia</p>
-            <h2 className="font-display text-[28px] md:text-[40px] gradient-text">¿Por qué elegir MOVEL?</h2>
+            <h2 className="font-display text-[28px] md:text-[40px] gradient-text flex items-center justify-center gap-2 flex-wrap">
+              ¿Por qué elegir{" "}
+              <MovelLogo variant="primary" size={32} animate={false} className="inline-block" />
+              ?
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -685,7 +693,7 @@ export default function HomePage() {
                     <span className="gradient-text-light">Tú decides cómo.</span>
                   </h2>
                   <p className="text-white/75 text-[15px] md:text-[16px] leading-relaxed">
-                    Publica gratis y manéjalo tú mismo, o deja que <strong className="text-white">Movel se encargue de todo</strong> por una comisión única del 3%. Sin tarifa fija, sin sorpresas.
+                    Publica gratis y manéjalo tú mismo, o deja que <strong className="text-white inline-flex items-center gap-1"><MovelLogo variant="white" size={18} animate={false} className="inline-block" /> se encargue de todo</strong> por una comisión única del 3%. Sin tarifa fija, sin sorpresas.
                   </p>
                 </div>
 

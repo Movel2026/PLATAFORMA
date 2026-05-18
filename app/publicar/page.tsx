@@ -11,6 +11,7 @@ import {
   Camera, Wrench, UsersThree, CalendarCheck,
 } from "@phosphor-icons/react";
 import BottomNav from "@/components/BottomNav";
+import { MovelLogo } from "@/components/MovelLogo";
 import { useUser } from "@/lib/hooks/useUser";
 import { getVersiones, EspecificacionesTecnicas } from "@/lib/specs-data";
 import { OfertasToggle }           from "@/components/publicar/OfertasToggle";
@@ -666,7 +667,7 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
                 te llevamos a WhatsApp con un mensaje listo para que nuestro equipo te contacte y agendemos el peritaje + fotos profesionales.
               </p>
               <p className="text-[12px] text-movel-200">
-                ⚡ Esto <strong>no publica</strong> tu carro automáticamente — Movel se encarga de todo el proceso.
+                ⚡ Esto <strong>no publica</strong> tu carro automáticamente — <MovelLogo variant="white" size={14} animate={false} className="inline-block align-middle" /> se encarga de todo el proceso.
               </p>
             </div>
           ) : (
@@ -1189,12 +1190,12 @@ Quiero que Movel se encargue de todo el proceso (fotos, peritaje, visitas, trasp
             {isServicioIntegral && !submitting && <WhatsappLogo size={22} weight="fill" />}
             {submitting
               ? (isServicioIntegral ? "Abriendo WhatsApp..." : "Enviando publicación...")
-              : (isServicioIntegral ? "Enviar a Movel por WhatsApp →" : "Publicar mi vehículo →")}
+              : (isServicioIntegral ? <>Enviar a <MovelLogo variant="white" size={16} animate={false} className="inline-block align-middle mx-1" /> por WhatsApp →</> : "Publicar mi vehículo →")}
           </button>
 
           <p className="text-center text-[13px] text-[#7A8195]">
             {isServicioIntegral ? (
-              <>Al enviar aceptas que el equipo Movel te contacte para coordinar el servicio integral.</>
+              <>Al enviar aceptas que el equipo <MovelLogo variant="primary" size={14} animate={false} className="inline-block align-middle mx-0.5" /> te contacte para coordinar el servicio integral.</>
             ) : (
               <>Al publicar aceptas nuestros{" "}
                 <a href="https://wa.me/573175737083?text=Quiero%20información%20sobre%20los%20términos%20de%20MOVEL" target="_blank" rel="noopener noreferrer" className="text-[#0B1E4E] hover:underline">

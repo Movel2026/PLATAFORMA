@@ -7,6 +7,7 @@ import { getAuctionVehicles, formatCOP } from "@/lib/mock-data";
 import BottomNav from "@/components/BottomNav";
 import ScrollReveal from "@/components/ScrollReveal";
 import MovelPageHeader from "@/components/MovelPageHeader";
+import { MovelLogo } from "@/components/MovelLogo";
 import {
   Gavel, Clock, WhatsappLogo, ArrowRight,
   Users, TrendUp, Fire, Warning
@@ -264,7 +265,7 @@ export default function SubastasPage() {
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-3">
             <Warning size={20} color="#d97706" className="flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-[14px] font-bold text-amber-800 mb-1">¿Cómo funcionan las subastas MOVEL?</p>
+              <p className="text-[14px] font-bold text-amber-800 mb-1 flex items-center gap-1.5">¿Cómo funcionan las subastas <MovelLogo variant="primary" size={16} animate={false} className="inline-block" />?</p>
               <p className="text-[13px] text-amber-700 leading-relaxed">
                 Las pujas se realizan directamente por WhatsApp con nuestro equipo. Todos los vehículos han sido verificados e inspeccionados previamente. El ganador tiene 24 horas para completar el proceso de compra con una cuota inicial del 10%.
               </p>

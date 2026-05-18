@@ -10,6 +10,7 @@ import {
   CurrencyDollar, PlusCircle,
 } from "@phosphor-icons/react";
 import MovelPageHeader from "@/components/MovelPageHeader";
+import { MovelLogo } from "@/components/MovelLogo";
 import BottomNav from "@/components/BottomNav";
 import { useUser } from "@/lib/hooks/useUser";
 
@@ -110,7 +111,7 @@ export default function PerfilPage() {
         <MovelPageHeader />
         <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
           <UserCircle size={80} color="rgba(255,255,255,0.15)" weight="fill" className="mb-4" />
-          <p className="text-white text-[22px] font-black mb-2">Tu perfil MOVEL</p>
+          <p className="text-white text-[22px] font-black mb-2 flex items-center justify-center gap-2">Tu perfil <MovelLogo variant="white" size={22} animate={false} className="inline-block" /></p>
           <p className="text-white/45 text-[14px] mb-8 max-w-xs">
             Inicia sesión o regístrate para publicar vehículos, guardar favoritos y más.
           </p>
@@ -249,7 +250,7 @@ export default function PerfilPage() {
                 Cerrar sesión
               </button>
               <p className="text-center text-white/20 text-[11px] mt-5 mb-2">
-                MOVEL v1.0 · Plataforma automotriz de Colombia
+                <MovelLogo variant="white" size={14} animate={false} className="inline-block align-middle" /> v1.0 · Plataforma automotriz de Colombia
               </p>
             </motion.div>
           )}

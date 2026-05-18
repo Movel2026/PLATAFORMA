@@ -22,6 +22,7 @@ import {
 } from "@phosphor-icons/react";
 import MovelPageHeader from "@/components/MovelPageHeader";
 import BottomNav from "@/components/BottomNav";
+import { MovelLogo } from "@/components/MovelLogo";
 
 /* ─── types ─────────────────────────────────────────────────────── */
 type Category = "todos" | "talleres" | "llantas" | "noticias" | "reseñas" | "general";
@@ -487,7 +488,7 @@ export default function ForoPage() {
         {/* page title */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
           <h1 className="text-white text-[24px] font-black mb-1">
-            Foro <span className="text-[#1978e5]">MOVEL</span>
+            Foro <MovelLogo variant="white" size={24} animate={false} className="inline-block align-middle" />
           </h1>
           <p className="text-white/40 text-[13px]">
             Fotos, videos, reseñas y recomendaciones — de la comunidad automotriz colombiana
