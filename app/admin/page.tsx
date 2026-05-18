@@ -6,7 +6,7 @@ import {
   Car, TrendUp, Gavel, MagnifyingGlass, User, ChartBar, Warning,
   WhatsappLogo, ShieldCheck, Lock, ChatCircle, ArrowClockwise,
   Spinner, Database, Users, Envelope, Globe, DeviceMobile,
-  Desktop, ArrowUp, ArrowDown, Minus, DownloadSimple,
+  Desktop, ArrowUp, ArrowDown, Minus, DownloadSimple, UploadSimple,
 } from "@phosphor-icons/react";
 import { exportToCSV } from "@/lib/export-csv";
 
