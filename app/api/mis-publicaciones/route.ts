@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 /**
  * GET   /api/mis-publicaciones?email=xxx          → publicaciones del usuario por email
  * GET   /api/mis-publicaciones?userId=xxx         → publicaciones del usuario por auth uuid

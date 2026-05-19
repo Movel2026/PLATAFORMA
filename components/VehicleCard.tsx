@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Star, MapPin, Gauge, Gear, Heart, Images, ShieldCheck, SignIn, X } from "@phosphor-icons/react";
+import { MapPin, Gauge, Gear, Heart, Images, ShieldCheck, SignIn, X } from "@phosphor-icons/react";
 import { formatCOP, Vehicle } from "@/lib/mock-data";
 import { useUser } from "@/lib/hooks/useUser";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -89,7 +89,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </Link>
 
-        {/* Badge top-left: Subasta o Ciudad + Verificado MOVEL */}
+        {/* Badge top-left: Subasta o Ciudad */}
         <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 z-[3] pointer-events-none">
           {vehicle.subasta?.activa ? (
             <span className="badge-live">Subasta</span>
@@ -97,12 +97,6 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
               <MapPin size={12} color="#7A8195" />
               <span className="text-[11px] font-semibold text-mute">{vehicle.ciudad}</span>
-            </div>
-          )}
-          {vehicle.verificado_movel && (
-            <div className="flex items-center gap-1 rounded-full px-2.5 py-1 shadow-sm" style={{ background: "linear-gradient(135deg,#0B1E4E,#1565c0)" }}>
-              <ShieldCheck size={11} color="white" weight="fill" />
-              <span className="text-[10px] font-bold text-white tracking-wide">Verificado MOVEL</span>
             </div>
           )}
         </div>
@@ -143,19 +137,17 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             )}
           </div>
 
-          {/* Estrellas + tipo de carrocería */}
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  size={12}
-                  weight={i < vehicle.rating ? "fill" : "regular"}
-                  color={i < vehicle.rating ? "#FF6B3D" : "#dce0e5"}
-                />
-              ))}
-              <span className="text-[11px] text-mute ml-1">({vehicle.rating}.0)</span>
-            </div>
+          {/* Verificado MOVEL (solo si aplica) + tipo de carrocería */}
+          <div className="flex items-center justify-between gap-2 mb-3 min-h-[22px]">
+            {vehicle.verificado_movel ? (
+              <div
+                className="flex items-center gap-1 rounded-full px-2.5 py-0.5 shadow-sm"
+                style={{ background: "linear-gradient(135deg,#0B1E4E,#1565c0)" }}
+              >
+                <ShieldCheck size={11} color="white" weight="fill" />
+                <span className="text-[10px] font-bold text-white tracking-wide">Verificado MOVEL</span>
+              </div>
+            ) : <span />}
             {vehicle.tipo && (
               <span className="bg-movel-gradient text-white rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-sm">
                 {vehicle.tipo}

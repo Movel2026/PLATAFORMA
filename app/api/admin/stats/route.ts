@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/admin/stats — métricas completas para el panel admin
 export async function GET(req: NextRequest) {
   const pin = req.headers.get("x-admin-pin");

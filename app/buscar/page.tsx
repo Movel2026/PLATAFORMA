@@ -8,7 +8,7 @@ import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
 import { fuzzyMatch } from "@/lib/fuzzy-search";
 
-const marcas = ["Toyota", "Mazda", "Chevrolet", "Kia", "Renault", "Hyundai", "Nissan", "Ford", "Honda", "Mitsubishi"];
+const marcas = ["Toyota", "Mazda", "Chevrolet", "Kia", "Renault", "Hyundai", "Nissan", "Ford", "Honda", "Mitsubishi", "Volkswagen", "Suzuki"];
 const tipos = ["Sedán", "Hatchback", "SUV / Camioneta", "Pick-up", "Coupé", "Convertible"];
 const transmisiones = ["Automático", "Manual"];
 const ciudades = ["Bogotá", "Medellín", "Cali", "Barranquilla"];

@@ -279,7 +279,7 @@ export default function MisPublicacionesPage() {
                       <div className="flex flex-wrap gap-2">
                         {p.estado === "activo" && (
                           <Link
-                            href={`/vehiculo/${p.marca.toLowerCase()}-${p.modelo.toLowerCase()}-${p.ano}-${p.id.slice(0, 6)}`.replace(/[^a-z0-9-]+/g, "-")}
+                            href={`/vehiculo/${`${p.marca}-${p.modelo}-${p.ano}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${p.id.slice(0, 6)}`}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold border border-[#dce0e5] text-ink rounded-lg hover:border-movel-900 hover:text-movel-900 transition-colors"
                           >
                             <Eye size={13} /> Ver en el sitio

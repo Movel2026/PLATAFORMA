@@ -33,137 +33,119 @@ const cardReveal = {
 } as const;
 
 const marcas = [
-  "Toyota", "Mazda", "Chevrolet", "Kia", "Renault",
-  "Hyundai", "Nissan", "Ford", "Honda", "Mitsubishi",
+  "Chevrolet", "Renault", "Toyota", "Kia", "Hyundai",
+  "Mazda", "Nissan", "Ford", "Volkswagen", "BMW",
+  "Mercedes-Benz", "Honda", "Suzuki", "Jeep", "Audi",
 ];
 
-// ── Carrocería icons — siluetas laterales realistas ──────────────────
+// ── Carrocería icons — siluetas laterales ─────────────────────────────
 
 function SuvIcon() {
+  // Alto, cuadrado, 3 ventanas, ruedas grandes — como Toyota Prado
   return (
     <svg viewBox="0 0 180 80" className="w-20 h-9">
-      <path d="M14,52 L164,52 L160,38 L150,30 L144,24 L128,18 L32,20 L22,28 L14,38 Z"
+      <path d="M14,54 L14,36 L20,24 L30,16 L38,14 L130,14 L140,18 L150,26 L158,36 L162,44 L164,54 Z"
         fill="currentColor" opacity="0.88"/>
-      <path d="M32,20 L32,38 L68,38 L68,18 Z" fill="white" opacity="0.35"/>
-      <path d="M72,18 L72,38 L118,38 L118,18 Z" fill="white" opacity="0.35"/>
-      <path d="M122,18 L128,18 L144,24 L150,30 L150,38 L122,38 Z" fill="white" opacity="0.35"/>
-      <circle cx="42" cy="64" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="42" cy="64" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="148" cy="64" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="148" cy="64" r="5"  fill="currentColor" opacity="0.4"/>
+      <path d="M38,14 L38,36 L70,36 L70,14 Z" fill="white" opacity="0.35"/>
+      <path d="M74,14 L74,36 L118,36 L118,14 Z" fill="white" opacity="0.35"/>
+      <path d="M122,14 L130,14 L140,18 L150,26 L150,36 L122,36 Z" fill="white" opacity="0.35"/>
+      <line x1="14" y1="38" x2="164" y2="38" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+      <circle cx="46" cy="66" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="46" cy="66" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="150" cy="66" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="150" cy="66" r="5"  fill="currentColor" opacity="0.4"/>
     </svg>
   );
 }
 
 function SedanIcon() {
+  // 3 cajas — cofre + habitáculo + maletero con escalón
   return (
     <svg viewBox="0 0 180 80" className="w-20 h-9">
-      {/* 3-box: bumper → trunk step → C-pillar → roof → A-pillar → hood → bumper */}
-      <path d="M14,52 L14,44 L20,44 L20,32 L40,32 L46,24 L52,18 L122,18 L130,22 L142,28 L150,34 L160,40 L164,44 L164,52 Z"
+      <path d="M14,54 L14,46 L18,44 L22,36 L38,28 L50,20 L58,17 L118,17 L126,20 L138,28 L150,36 L158,42 L164,46 L164,54 Z"
         fill="currentColor" opacity="0.88"/>
-      <path d="M52,18 L52,30 L84,30 L84,18 Z" fill="white" opacity="0.35"/>
-      <path d="M88,18 L88,30 L120,30 L120,18 Z" fill="white" opacity="0.35"/>
-      <path d="M124,18 L130,22 L142,28 L142,30 L124,30 Z" fill="white" opacity="0.35"/>
-      <circle cx="40" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="40" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="148" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <path d="M58,17 L58,32 L88,32 L88,17 Z" fill="white" opacity="0.35"/>
+      <path d="M92,17 L92,32 L120,32 L120,17 Z" fill="white" opacity="0.35"/>
+      <path d="M124,20 L126,20 L138,28 L138,32 L124,32 Z" fill="white" opacity="0.35"/>
+      <circle cx="40" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="40" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="148" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="148" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
     </svg>
   );
 }
 
 function HatchbackIcon() {
+  // 2 cajas — trasera cae directamente del techo al parachoques
   return (
     <svg viewBox="0 0 180 80" className="w-20 h-9">
-      {/* 2-box: rear slopes directly from roofline down to bumper */}
-      <path d="M14,52 L14,44 L20,36 L30,26 L44,18 L52,16 L122,16 L130,20 L142,28 L150,34 L160,40 L164,44 L164,52 Z"
+      <path d="M16,54 L16,46 L22,38 L34,28 L48,18 L58,15 L118,15 L126,18 L136,26 L148,36 L156,42 L162,46 L162,54 Z"
         fill="currentColor" opacity="0.88"/>
-      <path d="M52,16 L52,30 L84,30 L84,16 Z" fill="white" opacity="0.35"/>
-      <path d="M88,16 L88,30 L120,30 L120,16 Z" fill="white" opacity="0.35"/>
-      <path d="M124,16 L130,20 L142,28 L142,30 L124,30 Z" fill="white" opacity="0.35"/>
-      <circle cx="38" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="38" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="148" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
-    </svg>
-  );
-}
-
-function CamionetaIcon() {
-  return (
-    <svg viewBox="0 0 180 80" className="w-20 h-9">
-      {/* Grande y alta — más cuadrada que el SUV, carrocería tipo 4x4 */}
-      <path d="M12,52 L12,36 L18,24 L26,16 L136,14 L150,20 L156,28 L163,36 L166,44 L166,52 Z"
-        fill="currentColor" opacity="0.88"/>
-      <path d="M26,16 L26,36 L64,36 L64,14 Z" fill="white" opacity="0.35"/>
-      <path d="M68,14 L68,36 L120,36 L120,14 Z" fill="white" opacity="0.35"/>
-      <path d="M124,14 L136,14 L150,20 L156,28 L156,36 L124,36 Z" fill="white" opacity="0.35"/>
-      {/* Rack de techo */}
-      <line x1="30" y1="14" x2="132" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
-      <line x1="60" y1="10" x2="60" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
-      <line x1="90" y1="10" x2="90" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
-      <line x1="120" y1="10" x2="120" y2="14" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
-      <circle cx="44" cy="64" r="15" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="44" cy="64" r="5.5" fill="currentColor" opacity="0.4"/>
-      <circle cx="150" cy="64" r="15" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="150" cy="64" r="5.5" fill="currentColor" opacity="0.4"/>
+      <path d="M58,15 L58,32 L88,32 L88,15 Z" fill="white" opacity="0.35"/>
+      <path d="M92,15 L92,32 L120,32 L120,15 Z" fill="white" opacity="0.35"/>
+      <path d="M124,18 L126,18 L136,26 L136,32 L124,32 Z" fill="white" opacity="0.35"/>
+      <circle cx="40" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="40" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="148" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="148" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
     </svg>
   );
 }
 
 function CoupeIcon() {
+  // Muy bajo, cofre largo, techo cae suavemente hacia la cola — como Mazda MX-5
   return (
     <svg viewBox="0 0 180 80" className="w-20 h-9">
-      {/* Silueta baja, cofre largo, techo inclinado que cae hacia la cola */}
-      <path d="M14,52 L14,46 L24,44 L32,36 L48,24 L58,18 L106,16 L128,20 L146,28 L158,36 L166,42 L168,46 L168,52 Z"
+      <path d="M14,54 L14,48 L20,44 L28,38 L42,28 L58,20 L72,16 L112,15 L130,18 L148,26 L160,34 L168,42 L170,48 L170,54 Z"
         fill="currentColor" opacity="0.88"/>
-      <path d="M58,18 L58,32 L88,32 L88,16 Z" fill="white" opacity="0.35"/>
-      <path d="M92,16 L92,32 L122,32 L122,18 Z" fill="white" opacity="0.35"/>
-      <path d="M126,20 L128,20 L146,28 L146,32 L126,32 Z" fill="white" opacity="0.35"/>
-      <circle cx="40" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="40" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="152" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="152" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <path d="M72,16 L72,32 L100,32 L100,15 Z" fill="white" opacity="0.35"/>
+      <path d="M104,15 L104,32 L128,32 L130,18 Z" fill="white" opacity="0.35"/>
+      <path d="M132,18 L148,26 L148,32 L132,32 Z" fill="white" opacity="0.35"/>
+      <circle cx="42" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="42" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="154" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="154" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
     </svg>
   );
 }
 
 function PickupIcon() {
+  // Cabina doble + platón largo — como Toyota Hilux
   return (
     <svg viewBox="0 0 180 80" className="w-20 h-9">
+      {/* Platón */}
+      <path d="M12,54 L12,40 L14,38 L90,38 L90,54 Z" fill="currentColor" opacity="0.88"/>
+      <line x1="14" y1="38" x2="90" y2="38" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
+      <line x1="12" y1="40" x2="90" y2="40" stroke="white" strokeWidth="1" opacity="0.4"/>
       {/* Cabina */}
-      <path d="M88,52 L88,36 L94,26 L102,20 L130,18 L140,22 L150,30 L156,36 L162,42 L164,46 L164,52 Z"
+      <path d="M90,54 L90,34 L96,22 L108,16 L138,16 L148,20 L158,28 L164,36 L168,44 L168,54 Z"
         fill="currentColor" opacity="0.88"/>
-      <path d="M102,20 L102,36 L124,36 L124,18 Z" fill="white" opacity="0.35"/>
-      <path d="M128,18 L130,18 L140,22 L150,30 L150,36 L128,36 Z" fill="white" opacity="0.35"/>
-      {/* Platón / bed */}
-      <path d="M14,52 L14,42 L88,42 L88,52 Z" fill="currentColor" opacity="0.88"/>
-      {/* Riel del platón */}
-      <line x1="14" y1="42" x2="88" y2="42" stroke="currentColor" strokeWidth="1.5" opacity="0.6"/>
-      <circle cx="36" cy="63" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="36" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="148" cy="63" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      <path d="M108,16 L108,34 L132,34 L132,16 Z" fill="white" opacity="0.35"/>
+      <path d="M136,16 L138,16 L148,20 L158,28 L158,34 L136,34 Z" fill="white" opacity="0.35"/>
+      <circle cx="36" cy="65" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="36" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="152" cy="65" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="152" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
     </svg>
   );
 }
 
 function ConvertibleIcon() {
+  // Sin techo, parabrisas corto, perfil muy bajo — como Porsche 911 cabriolet
   return (
     <svg viewBox="0 0 180 80" className="w-20 h-9">
-      {/* Carrocería descapotable: sin techo, perfil muy bajo, cofre largo */}
-      <path d="M14,52 L14,46 L22,44 L32,40 L52,34 L68,28 L100,26 L134,26 L146,30 L156,36 L164,42 L166,46 L166,52 Z"
+      <path d="M14,54 L14,48 L20,44 L30,40 L46,36 L62,30 L80,26 L130,25 L142,28 L154,34 L164,40 L168,46 L168,54 Z"
         fill="currentColor" opacity="0.88"/>
-      {/* Parabrisas corto sin techo */}
-      <path d="M68,28 L68,36 L100,36 L100,26 Z" fill="white" opacity="0.4"/>
-      {/* Marco puerta conductor */}
-      <path d="M104,26 L104,36 L130,36 L134,26 Z" fill="white" opacity="0.3"/>
-      {/* Interior / cockpit hint */}
-      <path d="M56,34 L68,28 L68,34 Z" fill="white" opacity="0.2"/>
-      <circle cx="42" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="42" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="148" cy="63" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="148" cy="63" r="5"  fill="currentColor" opacity="0.4"/>
+      {/* Parabrisas */}
+      <path d="M80,26 L76,36 L104,36 L108,25 Z" fill="white" opacity="0.4"/>
+      {/* Interior / habitáculo */}
+      <path d="M108,25 L108,36 L130,36 L130,25 Z" fill="white" opacity="0.28"/>
+      {/* Capota plegada al fondo */}
+      <path d="M46,36 L62,30 L64,36 Z" fill="white" opacity="0.2"/>
+      <circle cx="44" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="44" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
+      <circle cx="152" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
+      <circle cx="152" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
     </svg>
   );
 }
