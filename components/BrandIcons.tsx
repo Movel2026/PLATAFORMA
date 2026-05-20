@@ -50,15 +50,21 @@ export function BrandIcon({ name, className = "", size = 36 }: BrandIconProps) {
       </svg>
     );
   }
+  // Caja cuadrada con la imagen contenida — todos los logos lucen del mismo
+  // tamaño visual aunque el aspect ratio interno varíe (Ford ancho, Mercedes alto).
   return (
-    <Image
-      src={`/icons/marcas/${file}.png`}
-      alt={`${name} logo`}
-      width={size}
-      height={size}
-      className={`object-contain ${className}`}
+    <div
+      className={`relative ${className}`}
       style={{ width: size, height: size }}
-    />
+    >
+      <Image
+        src={`/icons/marcas/${file}.png`}
+        alt={`${name} logo`}
+        fill
+        sizes={`${size}px`}
+        className="object-contain"
+      />
+    </div>
   );
 }
 

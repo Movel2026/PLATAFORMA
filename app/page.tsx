@@ -33,11 +33,12 @@ const cardReveal = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE_OUT } },
 } as const;
 
+// Orden por volumen estimado de unidades usadas en Colombia (mayor a menor).
 const marcas = [
-  "Chevrolet", "Renault", "Toyota", "Kia", "Mazda",
-  "Hyundai", "Nissan", "Ford", "Volkswagen", "BMW",
-  "Mercedes-Benz", "Honda", "Audi", "Jeep", "Mini",
-  "Porsche", "Fiat", "Isuzu", "BYD", "Dodge",
+  "Chevrolet", "Renault", "Mazda", "Toyota", "Kia",
+  "Nissan", "Hyundai", "Ford", "Volkswagen", "Mercedes-Benz",
+  "BMW", "Audi", "Honda", "Jeep", "Mini",
+  "Porsche", "Fiat", "Dodge", "Isuzu", "BYD",
 ];
 
 // Carrocerías: siluetas extraídas del set oficial (PNG en /public/icons/carrocerias/).
@@ -485,8 +486,8 @@ export default function HomePage() {
                 onMouseMove={onGlowMove}
                 className={`reveal reveal-delay-${(i % 5) + 1} cursor-glow cursor-glow-soft group flex items-center gap-3 p-3.5 rounded-xl bg-white border border-[#e5e7eb] hover:border-movel-300 hover:shadow-movel transition-all`}
               >
-                <div className="text-mute group-hover:text-movel-900 transition-colors flex-shrink-0 w-10 h-10 flex items-center justify-center">
-                  <BrandIcon name={m} size={36} />
+                <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center">
+                  <BrandIcon name={m} size={44} />
                 </div>
                 <span className="text-[14px] font-bold text-ink group-hover:text-movel-900 transition-colors">
                   {m}
