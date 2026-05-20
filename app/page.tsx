@@ -12,6 +12,7 @@ import {
   Sparkle, UploadSimple, UsersThree, Camera, Wrench,
   Lightning, ChatCircleDots, Database,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import { vehicles as mockVehicles, getAuctionVehicles, formatCOP, Vehicle } from "@/lib/mock-data";
 import VehicleCard from "@/components/VehicleCard";
 import BottomNav from "@/components/BottomNav";
@@ -33,130 +34,20 @@ const cardReveal = {
 } as const;
 
 const marcas = [
-  "Chevrolet", "Renault", "Toyota", "Kia", "Hyundai",
-  "Mazda", "Nissan", "Ford", "Volkswagen", "BMW",
-  "Mercedes-Benz", "Honda", "Suzuki", "Jeep", "Audi",
+  "Chevrolet", "Renault", "Toyota", "Kia", "Mazda",
+  "Hyundai", "Nissan", "Ford", "Volkswagen", "BMW",
+  "Mercedes-Benz", "Honda", "Audi", "Jeep", "Mini",
+  "Porsche", "Fiat", "Isuzu", "BYD", "Dodge",
 ];
 
-// ── Carrocería icons — siluetas laterales ─────────────────────────────
-
-function SuvIcon() {
-  // Alto, cuadrado, 3 ventanas, ruedas grandes — como Toyota Prado
-  return (
-    <svg viewBox="0 0 180 80" className="w-20 h-9">
-      <path d="M14,54 L14,36 L20,24 L30,16 L38,14 L130,14 L140,18 L150,26 L158,36 L162,44 L164,54 Z"
-        fill="currentColor" opacity="0.88"/>
-      <path d="M38,14 L38,36 L70,36 L70,14 Z" fill="white" opacity="0.35"/>
-      <path d="M74,14 L74,36 L118,36 L118,14 Z" fill="white" opacity="0.35"/>
-      <path d="M122,14 L130,14 L140,18 L150,26 L150,36 L122,36 Z" fill="white" opacity="0.35"/>
-      <line x1="14" y1="38" x2="164" y2="38" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-      <circle cx="46" cy="66" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="46" cy="66" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="150" cy="66" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="150" cy="66" r="5"  fill="currentColor" opacity="0.4"/>
-    </svg>
-  );
-}
-
-function SedanIcon() {
-  // 3 cajas — cofre + habitáculo + maletero con escalón
-  return (
-    <svg viewBox="0 0 180 80" className="w-20 h-9">
-      <path d="M14,54 L14,46 L18,44 L22,36 L38,28 L50,20 L58,17 L118,17 L126,20 L138,28 L150,36 L158,42 L164,46 L164,54 Z"
-        fill="currentColor" opacity="0.88"/>
-      <path d="M58,17 L58,32 L88,32 L88,17 Z" fill="white" opacity="0.35"/>
-      <path d="M92,17 L92,32 L120,32 L120,17 Z" fill="white" opacity="0.35"/>
-      <path d="M124,20 L126,20 L138,28 L138,32 L124,32 Z" fill="white" opacity="0.35"/>
-      <circle cx="40" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="40" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="148" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="148" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-    </svg>
-  );
-}
-
-function HatchbackIcon() {
-  // 2 cajas — trasera cae directamente del techo al parachoques
-  return (
-    <svg viewBox="0 0 180 80" className="w-20 h-9">
-      <path d="M16,54 L16,46 L22,38 L34,28 L48,18 L58,15 L118,15 L126,18 L136,26 L148,36 L156,42 L162,46 L162,54 Z"
-        fill="currentColor" opacity="0.88"/>
-      <path d="M58,15 L58,32 L88,32 L88,15 Z" fill="white" opacity="0.35"/>
-      <path d="M92,15 L92,32 L120,32 L120,15 Z" fill="white" opacity="0.35"/>
-      <path d="M124,18 L126,18 L136,26 L136,32 L124,32 Z" fill="white" opacity="0.35"/>
-      <circle cx="40" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="40" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="148" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="148" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-    </svg>
-  );
-}
-
-function CoupeIcon() {
-  // Muy bajo, cofre largo, techo cae suavemente hacia la cola — como Mazda MX-5
-  return (
-    <svg viewBox="0 0 180 80" className="w-20 h-9">
-      <path d="M14,54 L14,48 L20,44 L28,38 L42,28 L58,20 L72,16 L112,15 L130,18 L148,26 L160,34 L168,42 L170,48 L170,54 Z"
-        fill="currentColor" opacity="0.88"/>
-      <path d="M72,16 L72,32 L100,32 L100,15 Z" fill="white" opacity="0.35"/>
-      <path d="M104,15 L104,32 L128,32 L130,18 Z" fill="white" opacity="0.35"/>
-      <path d="M132,18 L148,26 L148,32 L132,32 Z" fill="white" opacity="0.35"/>
-      <circle cx="42" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="42" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="154" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="154" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-    </svg>
-  );
-}
-
-function PickupIcon() {
-  // Cabina doble + platón largo — como Toyota Hilux
-  return (
-    <svg viewBox="0 0 180 80" className="w-20 h-9">
-      {/* Platón */}
-      <path d="M12,54 L12,40 L14,38 L90,38 L90,54 Z" fill="currentColor" opacity="0.88"/>
-      <line x1="14" y1="38" x2="90" y2="38" stroke="currentColor" strokeWidth="2" opacity="0.5"/>
-      <line x1="12" y1="40" x2="90" y2="40" stroke="white" strokeWidth="1" opacity="0.4"/>
-      {/* Cabina */}
-      <path d="M90,54 L90,34 L96,22 L108,16 L138,16 L148,20 L158,28 L164,36 L168,44 L168,54 Z"
-        fill="currentColor" opacity="0.88"/>
-      <path d="M108,16 L108,34 L132,34 L132,16 Z" fill="white" opacity="0.35"/>
-      <path d="M136,16 L138,16 L148,20 L158,28 L158,34 L136,34 Z" fill="white" opacity="0.35"/>
-      <circle cx="36" cy="65" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="36" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="152" cy="65" r="14" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="152" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-    </svg>
-  );
-}
-
-function ConvertibleIcon() {
-  // Sin techo, parabrisas corto, perfil muy bajo — como Porsche 911 cabriolet
-  return (
-    <svg viewBox="0 0 180 80" className="w-20 h-9">
-      <path d="M14,54 L14,48 L20,44 L30,40 L46,36 L62,30 L80,26 L130,25 L142,28 L154,34 L164,40 L168,46 L168,54 Z"
-        fill="currentColor" opacity="0.88"/>
-      {/* Parabrisas */}
-      <path d="M80,26 L76,36 L104,36 L108,25 Z" fill="white" opacity="0.4"/>
-      {/* Interior / habitáculo */}
-      <path d="M108,25 L108,36 L130,36 L130,25 Z" fill="white" opacity="0.28"/>
-      {/* Capota plegada al fondo */}
-      <path d="M46,36 L62,30 L64,36 Z" fill="white" opacity="0.2"/>
-      <circle cx="44" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="44" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-      <circle cx="152" cy="65" r="13" fill="white" stroke="currentColor" strokeWidth="2.5"/>
-      <circle cx="152" cy="65" r="5"  fill="currentColor" opacity="0.4"/>
-    </svg>
-  );
-}
-
+// Carrocerías: siluetas extraídas del set oficial (PNG en /public/icons/carrocerias/).
 const tipos = [
-  { label: "SUV / Camioneta", icon: SuvIcon },
-  { label: "Sedán",           icon: SedanIcon },
-  { label: "Hatchback",       icon: HatchbackIcon },
-  { label: "Pick-up",         icon: PickupIcon },
-  { label: "Coupé",           icon: CoupeIcon },
-  { label: "Convertible",     icon: ConvertibleIcon },
+  { label: "SUV / Camioneta", file: "suv" },
+  { label: "Sedán",           file: "sedan" },
+  { label: "Hatchback",       file: "hatchback" },
+  { label: "Pick-up",         file: "pickup" },
+  { label: "Coupé",           file: "coupe" },
+  { label: "Convertible",     file: "descapotable" },
 ];
 
 // ── Cursor glow helper ───────────────────────────────────────────────
@@ -551,24 +442,27 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            {tipos.map((tipo, i) => {
-              const Icon = tipo.icon;
-              return (
-                <Link
-                  key={tipo.label}
-                  href={`/buscar?tipo=${tipo.label}`}
-                  onMouseMove={onGlowMove}
-                  className={`reveal reveal-delay-${(i % 5) + 1} cursor-glow cursor-glow-soft group flex flex-col sm:flex-row items-center gap-3 p-4 rounded-xl bg-white border border-[#e5e7eb] hover:border-movel-300 hover:shadow-movel transition-all cursor-pointer`}
-                >
-                  <div className="text-mute group-hover:text-movel-900 transition-colors flex-shrink-0">
-                    <Icon />
-                  </div>
-                  <span className="text-[13px] font-bold text-ink group-hover:text-movel-900 transition-colors">
-                    {tipo.label}
-                  </span>
-                </Link>
-              );
-            })}
+            {tipos.map((tipo, i) => (
+              <Link
+                key={tipo.label}
+                href={`/buscar?tipo=${tipo.label}`}
+                onMouseMove={onGlowMove}
+                className={`reveal reveal-delay-${(i % 5) + 1} cursor-glow cursor-glow-soft group flex flex-col sm:flex-row items-center gap-3 p-4 rounded-xl bg-white border border-[#e5e7eb] hover:border-movel-300 hover:shadow-movel transition-all cursor-pointer`}
+              >
+                <div className="relative w-20 h-12 flex-shrink-0">
+                  <Image
+                    src={`/icons/carrocerias/${tipo.file}.png`}
+                    alt={tipo.label}
+                    fill
+                    sizes="80px"
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-[13px] font-bold text-ink group-hover:text-movel-900 transition-colors">
+                  {tipo.label}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
